@@ -1,12 +1,18 @@
 import Link from 'next/link';
+import SignOutButton from "@/components/SignOutButton";
 
 export default function DashboardPage() {
   return (
     //main screen
     <div className="h-full w-full border border-amber-700">
 
+      {/* Top Bar */}
+      <div className="flex justify-end p-4">
+        <SignOutButton />
+      </div>
+
       {/*Todays Focus & Study Tools container*/}
-      <div className="flex flex-column justify-between h-3/5 m-8  border border-amber-300">
+      <div className="flex justify-between h-3/5 m-8  border border-amber-300">
         {/*Todays Focus*/}
         <div className="h-full w-6/12 border border-green-500">
           Todays Focus
