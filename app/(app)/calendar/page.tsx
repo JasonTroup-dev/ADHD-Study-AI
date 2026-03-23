@@ -1,15 +1,19 @@
-import React, { JSX } from "react";
-
-export const metadata = {
-    title: "Calendar",
-};
-
-export default function CalendarPage(): JSX.Element {
+export default function calendarApp() {
     return (
-        <main className="p-8">
-            <h1 className="text-2xl font-semibold mb-4">Calendar</h1>
-            <div className="border rounded-lg p-6 text-sm text-gray-500">
-                Placeholder calendar page. Replace with your calendar component.
+        <main
+            style={{
+                minHeight: "100vh",
+                display: "grid",
+                placeItems: "center",
+                padding: "2rem",
+                background: "linear-gradient(180deg,#fff,#f6f8fb)",
+            }}
+        >
+            <div style={{ textAlign: "center", maxWidth: 720 }}>
+                <h1 style={{ fontSize: "1.5rem", margin: "0 0 0.5rem" }}>Calendar</h1>
+                <p style={{ margin: 0, color: "#556", lineHeight: 1.4 }}>
+                    Placeholder page — content coming soon.
+                </p>
             </div>
         </main>
     );
