@@ -1,5 +1,6 @@
 "use client"
 
+import { getCalendarDays } from "./lib/getCalendarDays";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
@@ -12,56 +13,13 @@ export default function Page() {
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [currentMonth, setCurrentMonth] = useState(new Date());
 
+    const calendarDays = getCalendarDays(currentMonth);
+
     const formattedDate = selectedDate.toLocaleDateString("en-US", {
         weekday: "long",
         month: "long",
         day: "numeric",
     });
-
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-
-    const firstDayOfMonth = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const daysInPreviousMonth = new Date(year, month, 0).getDate();
-
-    type CalendarDay = {
-        day: number;
-        isCurrentMonth: boolean;
-        date: Date;
-    };
-
-    const calendarDays: CalendarDay[] = [];
-
-    //previous month days
-    for (let i = firstDayOfMonth - 1; i >= 0; i--) {
-        calendarDays.push({
-            day: daysInPreviousMonth - i,
-            isCurrentMonth: false,
-            date: new Date(year, month - 1, daysInPreviousMonth - i),
-        });
-    }
-
-    //current month days
-    for (let day = 1; day <= daysInMonth; day++) {
-        calendarDays.push({
-            day,
-            isCurrentMonth: true,
-            date: new Date(year, month, day),
-        });
-    }
-
-    while (calendarDays.length < 35) {
-        const nextMonthDay = 
-            calendarDays.length - firstDayOfMonth - daysInMonth + 1;
-
-        calendarDays.push({
-            day: nextMonthDay,
-            isCurrentMonth: false,
-            date: new Date(year, month + 1, nextMonthDay),
-        });
-    }
-
 
     const monthTitle = currentMonth.toLocaleDateString("en-US", {
         month: "long",
