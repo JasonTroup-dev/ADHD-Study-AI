@@ -2,6 +2,7 @@
 
 import { getCalendarDays } from "./lib/getCalendarDays";
 import { Button } from "@/components/ui/button";
+import { TaskCard, type StudyTask } from "@/components/ui/taskCard";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 
@@ -11,19 +12,7 @@ type ClassItem = {
     name: string;
 };
 
-type StudyTask = {
-    id: string;
-    title: string;
-    estimated_minutes: number | null;
-    priority: string;
-    status: string;
-    scheduled_date: string;
-    classes: {
-        name: string;
-    }[] | null;
-}
-
-export default function Page() {
+export default function PlannerPage() {
 
     { /* Calendar Variables */}
     const weekDays= ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
@@ -144,18 +133,18 @@ export default function Page() {
     }
 
     useEffect(() => {
-            async function loadUser() {
-                const {
-                    data: { user },
-                } = await supabase.auth.getUser();
-    
-                if (!user) return;
-    
-                setUserId(user.id);
-            }
-    
-            loadUser();
-        }, []);
+        async function loadUser() {
+            const {
+                data: { user },
+            } = await supabase.auth.getUser();
+
+            if (!user) return;
+
+            setUserId(user.id);
+        }
+
+        loadUser();
+    }, []);
 
     
     useEffect(() => {
@@ -362,50 +351,13 @@ export default function Page() {
 
                         {/* ToDo List Item Card */}
                         <div className="mt-8 flex-1 space-y-4 overflow-y-auto pr-2">
-                            {tasks.map((task) => {
-                                const isCompleted = task.status == "completed";
-
-                                return (
-                                    <div
-                                        key={task.id}
-                                        className={`flex w-full items-center justify-between rounded-xl border border-gray-200 p-4 ${
-                                            isCompleted ? "bg-gray-50 opacity-60" : "bg-white"
-                                        }`}
-                                    >
-                                        <div className="flex items-start gap-4">
-                                            <input
-                                                type="checkbox"
-                                                checked={isCompleted}
-                                                onChange={() => handleToggleTask(task)}
-                                                className="mt-1"
-                                            />
-
-                                            <div>
-                                                <h3
-                                                    className={`font-semibold ${
-                                                        isCompleted ? "text-gray-500 line-through" : "text-gray-900"
-                                                    }`}
-                                                >
-                                                    {task.title}
-                                                </h3>
-
-
-                                                <p className="mt-2 text-sm text-gray-600">
-                                                    {task.estimated_minutes ?? 0} min * {task.classes?.[0]?.name ?? "No class"}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            <span className="rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-600">
-                                                {task.priority}
-                                            </span>
-                                            
-                                            <div className="h-5 w-5 rounded-full border border-gray-300"/>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                            {tasks.map((task) => (
+                                <TaskCard
+                                    key={task.id}
+                                    task={task}
+                                    onToggle={handleToggleTask}
+                                />
+                            ))}
                         </div>
                         
                     </div>
