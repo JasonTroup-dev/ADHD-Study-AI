@@ -30,7 +30,7 @@ export function getCalendarDays(currentMonth: Date): CalendarDay[] {
     });
   }
 
-  while (calendarDays.length < 42) {
+  while (calendarDays.length < 35) {
     const nextMonthDay =
       calendarDays.length - firstDayOfMonth - daysInMonth + 1;
 
