@@ -17,7 +17,7 @@ export default function AppLayout({
 
   return (
     // Entire Screen
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
 
       {/*Sidebar*/}
       <aside className="flex flex-col w-64 shrink-0 bg-gray-600 border border-green-700">
@@ -80,8 +80,9 @@ export default function AppLayout({
             </div>
               {studyToolsOpen && (
               <div className="pl-8 pb-4 flex flex-col gap-2">
-                <Link href="/StudyTools/AItutor">AI Tutor</Link>
+                <Link href="/study/ai-tutor">AI Tutor</Link>
                 <Link href="/StudyTools/StudyGuides">Study Guides</Link>
+                <Link href="/study/flashcards">Flashcards</Link>
               </div>
             )}
           </div>
@@ -99,8 +100,7 @@ export default function AppLayout({
             </div>
               {plannerOpen && (
               <div className="pl-8 pb-4 flex flex-col gap-2">
-                <Link href="/Planner/Calendar">AI Tutor</Link>
-                <Link href="/Planner/StudyPlanner">Study Guides</Link>
+                <Link href="/calendar">Calendar</Link>
                 <Link href="/Planner/Progress">Progress</Link>
               </div>
             )}
@@ -110,7 +110,7 @@ export default function AppLayout({
       </aside>
 
       {/*Page Content*/}
-      <main className="flex-1 border border-red-500">
+      <main className="flex-1 overflow-hidden">
         {children}
       </main>
     </div>
