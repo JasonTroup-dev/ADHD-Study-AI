@@ -3,6 +3,9 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
 import Link from "next/link";
+import { Brain } from "lucide-react";
+import { Settings } from "lucide-react";
+import { Dot } from "lucide-react";
 
 export default function AppLayout({
   children,
@@ -20,90 +23,96 @@ export default function AppLayout({
     <div className="flex h-screen overflow-hidden">
 
       {/*Sidebar*/}
-      <aside className="flex flex-col w-64 shrink-0 bg-gray-600 border border-green-700">
+      <aside className="flex flex-col w-64 shrink-0 bg-gray-100 border">
         
         {/*Logo & Title*/}
-        <div className="flex flex-row border border-green-700">
+        <div className="flex flex-row p-4">
 
-          {/*Logo*/}
-          <div className="w-10 h-10 border border-red-500">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-purple-700">
             {/*Fix alt when actual image is used*/}
-            <img src="/logo.png" alt=""/>
+            <Brain className="items-center text-gray-100"/>
           </div>
-
-          {/*Title*/}
-          <div className="flex-1 flex justify-center">
-            <h1 className="text-3xl border border-blue-500">ADHD Study AI</h1>
+          
+          <div className="flex-1 flex justify-center items-center">
+            <h1 className="text-2xl font-semibold">ADHD Study AI</h1>
           </div>
         </div>
 
-        <div>
-        {/*Dashboard Tab*/}
-          <div className="border border-blue-500">
-            <div className="flex items-center justify-between py-4 px-4">
+        <div className="my-2 h-px w-full bg-gray-300"></div>
+
+        <div className="flex-1 flex flex-col justify-between p-4">
+          <div className="flex flex-col gap-4">
+            {/*Dashboard Tab*/}
+            <div className="flex items-center justify-between">
               <Link href="/dashboard" className="text-2xl">
                 Dashboard
               </Link>
             </div>
-          </div>
 
-        {/*Classes Tab*/}
-          <div className="border border-blue-500">
-            <div className="flex items-center justify-between py-4 px-4">
-              <Link href="/classes" className="text-2xl">
-                Classes
-              </Link>
+            {/*Classes Tab*/}
+            <div className="">
+              <div className="flex items-center justify-between">
+                <Link href="/classes" className="text-2xl">
+                  Classes
+                </Link>
+                <button
+                onClick={() => setClassesOpen(!classesOpen)} className="text-xl">{classesOpen ? "v" : ">"}
+                </button>
+              </div>
 
-            <button
-            onClick={() => setClassesOpen(!classesOpen)} className="text-xl">{classesOpen ? "v" : ">"}
-            </button>
-            </div>
               {classesOpen && (
-              <div className="pl-8 pb-4 flex flex-col gap-2">
+              <div className="pl-6 pt-2 flex flex-col gap-2">
                 <Link href="/classes/BIO101">Biology 101</Link>
                 <Link href="/classes/HIS203">History 203</Link>
               </div>
-            )}
+              )}
+            </div>
+
+
+            {/*Study Tools Tab*/}
+            <div className="">
+              <div className="flex items-center justify-between">
+                <Link href="/study" className="text-2xl">
+                  Study Tools
+                </Link>
+
+              <button
+              onClick={() => setStudyToolsOpen(!studyToolsOpen)} className="text-xl">{studyToolsOpen ? "v" : ">"}
+              </button>
+              </div>
+                {studyToolsOpen && (
+                <div className="pl-6 pt-2 flex flex-col gap-2">
+                  <Link href="/study/ai-tutor">AI Tutor</Link>
+                  <Link href="/StudyTools/StudyGuides">Study Guides</Link>
+                  <Link href="/study/flashcards">Flashcards</Link>
+                </div>
+              )}
+            </div>
+
+            {/*Planner Tab*/}
+            <div className="">
+              <div className="flex items-center justify-between">
+                <Link href="/planner" className="text-2xl">
+                  Planner
+                </Link>
+
+              <button
+              onClick={() => setPlannerOpen(!plannerOpen)} className="text-xl">{plannerOpen ? "v" : ">"}
+              </button>
+              </div>
+                {plannerOpen && (
+                <div className="pl-6 pt-2 flex flex-col gap-2">
+                  <Link href="/calendar">Calendar</Link>
+                  <Link href="/Planner/Progress">Progress</Link>
+                </div>
+              )}
+            </div>
+
           </div>
 
-
-        {/*Study Tools Tab*/}
-          <div className="border border-blue-500">
-            <div className="flex items-center justify-between py-4 px-4">
-              <Link href="/study" className="text-2xl">
-                Study Tools
-              </Link>
-
-            <button
-            onClick={() => setStudyToolsOpen(!studyToolsOpen)} className="text-xl">{studyToolsOpen ? "v" : ">"}
-            </button>
-            </div>
-              {studyToolsOpen && (
-              <div className="pl-8 pb-4 flex flex-col gap-2">
-                <Link href="/study/ai-tutor">AI Tutor</Link>
-                <Link href="/StudyTools/StudyGuides">Study Guides</Link>
-                <Link href="/study/flashcards">Flashcards</Link>
-              </div>
-            )}
-          </div>
-
-        {/*Planner Tab*/}
-          <div className="border border-blue-500">
-            <div className="flex items-center justify-between py-4 px-4">
-              <Link href="/planner" className="text-2xl">
-                Planner
-              </Link>
-
-            <button
-            onClick={() => setPlannerOpen(!plannerOpen)} className="text-xl">{plannerOpen ? "v" : ">"}
-            </button>
-            </div>
-              {plannerOpen && (
-              <div className="pl-8 pb-4 flex flex-col gap-2">
-                <Link href="/calendar">Calendar</Link>
-                <Link href="/Planner/Progress">Progress</Link>
-              </div>
-            )}
+          <div className="flex items-center">
+            <Settings className="m-2"/>
+            <p className="">Settings</p>
           </div>
 
         </div>
