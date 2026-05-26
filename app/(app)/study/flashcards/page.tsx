@@ -67,7 +67,9 @@ export default function Flashcards() {
                     </Button>
                 </div>
                 
-                <div className="mt-8 bg-gray-400 rounded-2xl flex flex-row border border-b-blue-400">
+
+                {/* AI Flashcard Generation Card */}
+                <div className="mt-8 bg-linear-to-r from-blue-200 to-purple-200 rounded-2xl flex flex-row border border-b-blue-400">
                     <div className="flex flex-1 flex-row m-8 border border-b-red-500">
                         <div>
                             <h1>
