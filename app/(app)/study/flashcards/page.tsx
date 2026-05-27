@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import Link from "next/link"
+import { Trash2, BookOpen, Astroid } from "lucide-react";
+
 
 type FlashcardSet = {
   id: string;
@@ -13,7 +15,7 @@ type FlashcardSet = {
 
 export default function Flashcards() {
 
-    const [flashcardSets, setflashcardSets] = useState<FlashcardSet[]>([]);
+    const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
     const [userId, setUserId] = useState<string | null>(null);
 
     async function fetchSets(currentUserId: string) {
@@ -28,7 +30,7 @@ export default function Flashcards() {
             return;
         }
 
-        setflashcardSets(data ??[]);
+        setFlashcardSets(data ??[]);
     }
 
     useEffect(() => {
@@ -51,9 +53,43 @@ export default function Flashcards() {
         console.log("flashcardSets:", flashcardSets);
     }
 
+    async function handleDeleteSet(setId: string, title: string) {
+        if (!userId) {
+            alert("You must be logged in to delete a set.");
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Delete "${title}"? This will also delete the flashcards inside this set.`
+        );
+
+        if (!confirmed) return;
+
+        const { data, error } = await supabase
+            .from("flashcard_sets")
+            .delete()
+            .eq("id", setId)
+            .eq("user_id", userId)
+            .select("id");
+
+        if (error) {
+            console.error("Error deleting flashcard set:", error);
+            alert("Could not delete this flashcard set.");
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            console.error("No rows deleted. Possible RLS/user_id mismatch.");
+            alert("No set was deleted. Check RLS or user ownership.");
+            return;
+        }
+
+        setFlashcardSets((prev) => prev.filter((set) => set.id !== setId));
+    }
+
     return (
-        <div className="flex flex-1 overflow-y-auto h-full w-full border border-green-500">
-            <div className="flex-1 mt-16 mx-32 border border-pink-400">
+        <div className="flex flex-1 overflow-y-auto h-full w-full background bg-gray-100">
+            <div className="flex-1 mt-16 mx-32">
                 <div className="flex items-start justify-between">
                     <div>
                         <h1 className="mb-2 text-4xl">Flashcards</h1>
@@ -67,30 +103,41 @@ export default function Flashcards() {
                     </Button>
                 </div>
                 
+<<<<<<< Updated upstream
 
                 {/* AI Flashcard Generation Card */}
                 <div className="mt-8 bg-linear-to-r from-blue-200 to-purple-200 rounded-2xl flex flex-row border border-b-blue-400">
+=======
+<<<<<<< Updated upstream
+                <div className="mt-8 bg-gray-400 rounded-2xl flex flex-row border border-b-blue-400">
+>>>>>>> Stashed changes
                     <div className="flex flex-1 flex-row m-8 border border-b-red-500">
+=======
+
+                {/* AI Flashcard Generation Card */}
+                <div className="mt-8 bg-linear-to-r from-blue-200 to-purple-200 rounded-2xl flex flex-row border border-purple-400">
+                    <div className="flex flex-1 flex-row m-8">
+>>>>>>> Stashed changes
                         <div>
-                            <h1>
-                                Image Area
-                            </h1>
+                            <Astroid className="mt-1 mr-2 text-purple-900 font-semibold"/>
                         </div>
-                        <div className="border border-b-blue-500">
-                            <h1 className="text-xl">
+
+                        <div>
+                            <h1 className="text-2xl font-semibold text-purple-900">
                                 AI-Powered Flashcard Generation
                             </h1>
-                            <h2>
+                            <h2 className="my-1 mb-2 text-lg text-purple-800">
                                 Paste your notes or study material and AI will automatically create flashcards for you!
                             </h2>
-                            <Button variant="outline" size="sm" onClick={buttonClick}>
-                                Generate from Text    
+                            <Button variant="outline" size="lg" onClick={buttonClick} className="flex items-center text-base border border-purple-400">
+                                    <Astroid className="mr-2"/>
+                                    <p>Generate from Text</p>
                             </Button>
                         </div>    
                     </div>
                 </div>
 
-                <div className="mt-8 border border-b-blue-600">
+                <div className="mt-8">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                     {flashcardSets.map((flashcardSet) => (
                         <Link
@@ -100,11 +147,22 @@ export default function Flashcards() {
                             >
                             <div className="flex items-start justify-between">
                                 <div className="h-12 w-12 rounded-xl bg-blue-500 flex items-center justify-center text-white text-lg font-semibold">
-                                    F
+                                    <BookOpen/>
                                 </div>
 
-                                <div className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                                    0 cards
+                                <div className="flex">
+                                    <div className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                                        0 cards
+                                    </div>
+
+                                    <Trash2
+                                        className="ml-2 h-5 w-5 cursor-pointer text-gray-500 hover:text-red-600"
+                                        onClick={(event) => {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            handleDeleteSet(flashcardSet.id, flashcardSet.title);
+                                        }}
+                                    />
                                 </div>
                             </div>
 
