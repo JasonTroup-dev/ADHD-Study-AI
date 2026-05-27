@@ -1,43 +1,87 @@
-import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link"
+import FlashcardViewer from "./FlashcardViewer";
 
 type FlashcardSetPageProps = {
-    params: Promise<{
-        setId: string;
-    }>;
+  params: Promise<{
+    setId: string;
+  }>;
 };
 
 export type FlashcardItem = {
-    id: string,
-    question: string,
-    answer: string,
-    card_order: number;
+  id: string;
+  question: string;
+  answer: string;
+  card_order: number;
 };
 
-export default async function FlashcardSetPage({params,}: FlashcardSetPageProps) {
+export default async function FlashcardSetPage({
+  params,
+}: FlashcardSetPageProps) {
+  const { setId } = await params;
+  const supabase = await createClient();
 
-    const { setId } = await params;
-    const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    const { data: flashcardSet, error: setError } = await supabase
-        .from("flashcard_sets")
-        .select("id, title")
-        .eq("id", setId)
-        .single()
-    
+  console.log("SERVER USER ID:", user?.id);
+  console.log("SET ID FROM URL:", setId);
+
+  if (!user) {
     return (
-            <div className="flex h-full w-full justify-center bg-gray-100">
-                <div className="flex h-full w-8/12 border border-b-blue-500">
-                    <div className="border border-b-red-500">
-                        <Link href="/study/flashcards">
-                            <Button variant="ghost" size="default">{"← Back"}</Button>
-                        </Link>
-                    </div>
-                    <div>
-
-                    </div>
-                </div>
-            </div>
+      <div className="min-h-full w-full bg-gray-100 p-8">
+        <p className="text-red-600">You are not logged in on the server.</p>
+      </div>
     );
+  }
+
+  const { data: flashcardSet, error: setError } = await supabase
+    .from("flashcard_sets")
+    .select("id, title, user_id")
+    .eq("id", setId)
+    .maybeSingle();
+
+  console.log("FLASHCARD SET:", flashcardSet);
+  console.log("SET ERROR:", setError);
+
+  if (setError) {
+    return (
+      <div className="min-h-full w-full bg-gray-100 p-8">
+        <p className="text-red-600">{setError.message}</p>
+      </div>
+    );
+  }
+
+  if (!flashcardSet) {
+    return (
+      <div className="min-h-full w-full bg-gray-100 p-8">
+        <p className="text-red-600">Flashcard set not found or blocked by RLS.</p>
+      </div>
+    );
+  }
+
+  const { data: flashcards, error: cardsError } = await supabase
+    .from("flashcards")
+    .select("id, question, answer, card_order")
+    .eq("set_id", setId)
+    .order("card_order", { ascending: true });
+
+  console.log("FLASHCARDS:", flashcards);
+  console.log("CARDS ERROR:", cardsError);
+
+  if (cardsError) {
+    return (
+      <div className="min-h-full w-full bg-gray-100 p-8">
+        <p className="text-red-600">{cardsError.message}</p>
+      </div>
+    );
+  }
+
+  return (
+    <FlashcardViewer
+      setId={setId}
+      title={flashcardSet.title}
+      flashcards={flashcards ?? []}
+    />
+  );
 }
