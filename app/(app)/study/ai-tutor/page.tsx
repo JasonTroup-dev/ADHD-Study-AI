@@ -81,7 +81,7 @@ export default function AiTutor() {
     }
 
     return (
-        <div className="flex h-screen w-full flex-col items-center overflow-hidden">
+        <div className="flex h-screen w-full flex-col items-center overflow-hidden bg-gray-100">
             <div className="flex items-center justify-center border border-red-500 px-4 py-2">
                 <h1 className="text-2xl font-semibold">AI Tutor</h1>
             </div>

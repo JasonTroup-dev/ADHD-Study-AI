@@ -258,7 +258,7 @@ export default function PlannerPage() {
                 </div>
 
                 {/* Progress Card */}
-                <div className="mt-8 rounded-2xl border bg-gradient-to-r from-blue-100 to-indigo-200 p-8">
+                <div className="mt-8 rounded-2xl border bg-linear-to-r from-blue-100 to-indigo-200 p-8">
                     <h2 className="text-xl font-semibold">Todays Progress</h2>
 
                     <div className="flex justify-between mt-8">
@@ -271,7 +271,7 @@ export default function PlannerPage() {
 
                     <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-white/70">
                         <div
-                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                        className="h-full rounded-full bg-linear-to-r from-blue-500 to-purple-500"
                         style={{ width: `${progressPercent}%` }}
                         ></div>
                     </div>
