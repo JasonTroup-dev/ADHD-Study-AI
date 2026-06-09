@@ -5,7 +5,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Brain } from "lucide-react";
 import { Settings } from "lucide-react";
-import { Dot } from "lucide-react";
+import { PanelLeftClose } from "lucide-react";
+import { PanelRightClose } from "lucide-react";
 
 export default function AppLayout({
   children,
@@ -16,6 +17,7 @@ export default function AppLayout({
   const [classesOpen, setClassesOpen] = useState(true);
   const [studyToolsOpen, setStudyToolsOpen] = useState(true);
   const [plannerOpen, setPlannerOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
 
   return (
@@ -23,7 +25,7 @@ export default function AppLayout({
     <div className="flex h-screen overflow-hidden">
 
       {/*Sidebar*/}
-      <aside className="flex flex-col w-64 shrink-0 bg-gray-100 border">
+      <aside className="flex flex-col w-64 shrink-0 bg-gray-100 border-r border-gray-300">
         
         {/*Logo & Title*/}
         <div className="flex flex-row p-4">
@@ -43,7 +45,7 @@ export default function AppLayout({
         <div className="flex-1 flex flex-col justify-between p-4">
           <div className="flex flex-col gap-4">
             {/*Dashboard Tab*/}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center">
               <Link href="/dashboard" className="text-2xl">
                 Dashboard
               </Link>
@@ -83,7 +85,7 @@ export default function AppLayout({
                 {studyToolsOpen && (
                 <div className="pl-6 pt-2 flex flex-col gap-2">
                   <Link href="/study/ai-tutor">AI Tutor</Link>
-                  <Link href="/StudyTools/StudyGuides">Study Guides</Link>
+                  <Link href="/study/study-guide">Study Guides</Link>
                   <Link href="/study/flashcards">Flashcards</Link>
                 </div>
               )}
@@ -103,16 +105,26 @@ export default function AppLayout({
                 {plannerOpen && (
                 <div className="pl-6 pt-2 flex flex-col gap-2">
                   <Link href="/calendar">Calendar</Link>
-                  <Link href="/Planner/Progress">Progress</Link>
+                  <Link href="/planner/progress">Progress</Link>
                 </div>
               )}
             </div>
 
           </div>
 
-          <div className="flex items-center">
-            <Settings className="m-2"/>
-            <p className="">Settings</p>
+          <div className="flex justify-between items-center">
+            <Link
+              href="/settings"
+              className="flex items-center rounded-full p-2 hover:bg-gray-200"
+            >
+              <Settings className="mr-2"/>
+              <p className="">Settings</p>
+            </Link>
+
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)} 
+              className="hover:bg-gray-200 rounded-lg p-2">{sidebarOpen ? (<PanelLeftClose className="opacity-25"/>) : (<PanelRightClose className="opacity-75"/>)}
+            </button>
           </div>
 
         </div>

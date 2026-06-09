@@ -1,14 +1,11 @@
 "use client"
 
 import { Button } from "@/components/ui/button";
-import {
-  getTaskClassName,
-  TaskCard,
-  type StudyTask,
-} from "@/components/ui/taskCard";
+import { getTaskClassName, TaskCard, type StudyTask, } from "@/components/ui/taskCard";
 import { Brain, CalendarDays, FileText, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import Link from "next/link";
 
 
 export default function DashboardPage() {
@@ -233,17 +230,18 @@ export default function DashboardPage() {
                   Summarize Notes
                 </button>
 
-                <button
-                  type="button"
+                
+                <Link 
+                  href="/study/flashcards/create?mode=ai"
                   className="flex h-20 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold transition hover:bg-gray-50"
                 >
                   <FileText className="h-4 w-4 text-gray-700" />
                   Create Flashcards
-                </button>
+                </Link>
+                
               </div>
             </div>
           </div>
-
 
           {/* Secondary Card Div */}
           <div className="lg:col-span-4">
