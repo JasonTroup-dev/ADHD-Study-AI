@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { TaskCard, type StudyTask } from "@/components/ui/taskCard";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import PlannerCalendar from "@/components/StudyPlanner/StudyPlannerCalendar";
 
 
 type ClassItem = {
@@ -17,23 +18,11 @@ export default function PlannerPage() {
     { /* Calendar Variables */}
     const weekDays= ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [currentMonth, setCurrentMonth] = useState(new Date());
-    const calendarDays = getCalendarDays(currentMonth);
     const formattedDate = selectedDate.toLocaleDateString("en-US", {
         weekday: "long",
         month: "long",
         day: "numeric",
     });
-    const monthTitle = currentMonth.toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-    });
-    
-    function goToNextMonth() {
-        setCurrentMonth((prev) => {
-            return new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
-        });
-    }
 
     function isSameDay(dateOne: Date, dateTwo: Date) {
         return (
@@ -85,13 +74,6 @@ export default function PlannerPage() {
     const [tasks, setTasks] = useState<StudyTask[]>([]);
 
     const selectedDateString = selectedDate.toISOString().split("T")[0];
-
-    function goToPreviousMonth() {
-        setCurrentMonth((prev) => {
-            return new Date(prev.getFullYear(), prev.getMonth() - 1, 1);
-        });
-    }
-
 
     async function handleAddTask () {
         if (!userId) return;
@@ -289,46 +271,12 @@ export default function PlannerPage() {
                         </div>
 
                 
-                        <div className="mt-6 rounded-xl border p-4">
-                            <div className="flex items-center justify-between">
-                                <Button variant="outline" size="sm" onClick={goToPreviousMonth}>Prev</Button>
-                                <p className="font-medium">{monthTitle}</p>
-                                <Button variant="outline" size="sm" onClick={goToNextMonth}>Next</Button>
-                            </div>
+                        <PlannerCalendar
+                            selectedDate={selectedDate}
+                            onSelectDate={setSelectedDate}
+                        />
 
-                            {/* Calendar Grid */}
-                            <div className="mt-4 grid grid-cols-7 gap-2 text-center">
-
-                                {/* Weekdays */}
-                                {weekDays.map((day) => (
-                                    <div key={day} className="text-sm text-gray-500">
-                                        {day}
-                                    </div>
-                                ))}
-
-                                {/* Calendar Days */}
-                                {calendarDays.map((date, index) => (
-                                    <Button 
-                                        key={index}
-                                        onClick={() => { 
-                                            setSelectedDate(date.date);
-                                            setCurrentMonth(new Date(date.date.getFullYear(), date.date.getMonth(), 1));
-                                        }}
-                                        className={`rounded-lg py-2 text-sm bg-white border transition ${
-                                            isSameDay(date.date, selectedDate)
-                                                ? "bg-blue-600 text-white border-blue-600"
-                                                : date.isCurrentMonth
-                                            ? "text-gray-900 hover:bg-gray-100"
-                                            : "text-gray-400 hover:bg-gray-100"
-                                        }`}
-                                    >
-                                        {date.day}
-                                    </Button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="my-6 h-px w-full bg-gray-300"></div>
+                        <div className="my-6 h-px w-full bg-gray-300" />
                     </div>
 
 
@@ -390,7 +338,7 @@ export default function PlannerPage() {
                             </div>
 
 
-                            <div className="flex grid grid-cols-1 gap-6 lg:grid-cols-12">
+                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                                 <div className="lg:col-span-5">
                                     <div className="mt-6 space-y-4">
                                         <div>
