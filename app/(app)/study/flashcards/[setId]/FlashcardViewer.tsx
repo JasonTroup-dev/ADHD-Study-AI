@@ -12,13 +12,11 @@ type FlashcardItem = {
 };
 
 type FlashcardViewerProps = {
-  setId: string;
   title: string;
   flashcards: FlashcardItem[];
 };
 
 export default function FlashcardViewer({
-  setId,
   title,
   flashcards,
 }: FlashcardViewerProps) {
