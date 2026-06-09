@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-type Message = {
+export type TutorMessage = {
     id: string;
     role: "user" | "assistant";
     content: string;
@@ -16,21 +16,16 @@ You are an ADHD-friendly AI tutor for college students.
 Your job is to make learning feel clear, manageable, and useful.
 
 Rules:
-- Keep responses short, structured, and easy to scan.
 - Format responses in clean markdown.
-- Use markdown headings for sections when helpful.
-- Use real bullet lists instead of stacking plain lines.
-- Use numbered lists for steps or processes.
-- Use bold text only for important terms.
-- When giving a diagram or text layout, ALWAYS use a fenced code block.
-- Do not fake formatting with random line breaks.
-- Keep spacing clean and readable.
-- When explaining a concept, include a practical explanation when helpful.
 `;
 
-export async function getTutorResponse(messages: Message[]) {
-    const response = await client.responses.create({
+export async function getTutorResponseStream(
+    messages: TutorMessage[],
+    signal?: AbortSignal,
+) {
+    return client.responses.create({
         model: "gpt-5.4-mini",
+        stream: true,
         input: [
             {
                 role: "system",
@@ -40,8 +35,8 @@ export async function getTutorResponse(messages: Message[]) {
             role: message.role,
             content: message.content,
             })),
-        ]
+        ],
+    }, {
+        signal,
     });
-
-    return response.output_text;
 }
