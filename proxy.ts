@@ -1,7 +1,30 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const protectedRoutes = [
+  "/dashboard",
+  "/classes",
+  "/study",
+  "/planner",
+  "/settings",
+];
+
+function matchesRoute(pathname: string, route: string) {
+  return pathname === route || pathname.startsWith(`${route}/`);
+}
+
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const isProtectedRoute = protectedRoutes.some((route) =>
+    matchesRoute(pathname, route)
+  );
+
+  if (!isProtectedRoute) {
+    return NextResponse.next({
+      request,
+    });
+  }
+
   let response = NextResponse.next({
     request,
   });
@@ -32,7 +55,21 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    const redirectResponse = NextResponse.redirect(
+      new URL("/login", request.url)
+    );
+
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+
+    return redirectResponse;
+  }
 
   return response;
 }
