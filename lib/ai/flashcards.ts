@@ -19,7 +19,7 @@ export async function generateFlashcardsFromText(
   cardCount: number,
 ): Promise<GenerateFlashcardsResult> {
   const response = await client.responses.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-5-mini",
     input: [
       {
         role: "system",
@@ -42,7 +42,12 @@ Rules:
 - The cards array must contain exactly ${cardCount} items.
 - Questions should be specific.
 - Answers should be short and easy to review.
-- Do not include markdown.
+- Do not include markdown except KaTeX-compatible math notation.
+- Put inline math inside single dollar signs, for example $x^2$.
+- Put display equations inside double dollar signs.
+- Use standard KaTeX notation for chemical expressions.
+- For chemistry, use notation such as \\mathrm{H_2O}; do not use \\ce.
+- Do not use \\(...\\) or \\[...\\] math delimiters.
         `,
       },
       {

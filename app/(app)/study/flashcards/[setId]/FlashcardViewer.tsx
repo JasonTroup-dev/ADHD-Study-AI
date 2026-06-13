@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AiMarkdown from "@/components/AiMarkdown";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -120,9 +121,12 @@ export default function FlashcardViewer({
               </div>
 
               <div className="flex-1 text-center my-8">
-                <p className="text-3xl font-semibold">
+                <AiMarkdown
+                  variant="flashcard"
+                  className="ai-markdown--flashcard text-3xl font-semibold"
+                >
                   {showAnswer ? currentCard.answer : currentCard.question}
-                </p>
+                </AiMarkdown>
               </div>
 
               <div className="flex-1 text-center">

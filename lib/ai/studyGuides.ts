@@ -31,13 +31,18 @@ Rules:
 - Make the material feel manageable.
 - Do not invent facts that are not supported by the source material.
 - Do not wrap the markdown in a code fence.
+- Put inline math inside single dollar signs, for example $x^2$.
+- Put display equations on their own lines inside double dollar signs.
+- Use KaTeX-compatible notation for formulas and chemical expressions.
+- For chemistry, use standard notation such as \\mathrm{H_2O}; do not use \\ce.
+- Do not use \\(...\\) or \\[...\\] math delimiters.
 `;
 
 export async function generateStudyGuideFromText(
   text: string,
 ): Promise<string> {
   const response = await client.responses.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-5-mini",
     max_output_tokens: 8_000,
     input: [
       {

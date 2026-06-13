@@ -3,6 +3,7 @@
 import StudyMaterialUploadModal, {
   type GeneratedStudyGuide,
 } from "@/components/StudyGuide/StudyMaterialUploadModal";
+import AiMarkdown from "@/components/AiMarkdown";
 import { Button } from "@/components/ui/button";
 import {
   BookOpenText,
@@ -11,7 +12,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
 
 export default function StudyGuidePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -87,55 +87,9 @@ export default function StudyGuidePage() {
             </div>
 
             <article className="px-6 py-7 sm:px-9 sm:py-9">
-              <ReactMarkdown
-                components={{
-                  h1: ({ children }) => (
-                    <h1 className="mb-6 text-3xl font-semibold tracking-tight text-slate-950">
-                      {children}
-                    </h1>
-                  ),
-                  h2: ({ children }) => (
-                    <h2 className="mb-3 mt-8 border-b border-slate-200 pb-2 text-xl font-semibold text-slate-950 first:mt-0">
-                      {children}
-                    </h2>
-                  ),
-                  h3: ({ children }) => (
-                    <h3 className="mb-2 mt-5 text-base font-semibold text-slate-900">
-                      {children}
-                    </h3>
-                  ),
-                  p: ({ children }) => (
-                    <p className="mb-4 max-w-3xl leading-7 text-slate-700">
-                      {children}
-                    </p>
-                  ),
-                  ul: ({ children }) => (
-                    <ul className="mb-5 max-w-3xl list-disc space-y-2 pl-6 text-slate-700">
-                      {children}
-                    </ul>
-                  ),
-                  ol: ({ children }) => (
-                    <ol className="mb-5 max-w-3xl list-decimal space-y-2 pl-6 text-slate-700">
-                      {children}
-                    </ol>
-                  ),
-                  li: ({ children }) => (
-                    <li className="leading-7">{children}</li>
-                  ),
-                  strong: ({ children }) => (
-                    <strong className="font-semibold text-slate-950">
-                      {children}
-                    </strong>
-                  ),
-                  blockquote: ({ children }) => (
-                    <blockquote className="mb-5 border-l-4 border-blue-200 bg-blue-50 px-4 py-3 text-slate-700">
-                      {children}
-                    </blockquote>
-                  ),
-                }}
-              >
+              <AiMarkdown variant="study-guide">
                 {generatedStudyGuide.content}
-              </ReactMarkdown>
+              </AiMarkdown>
             </article>
           </section>
         ) : (

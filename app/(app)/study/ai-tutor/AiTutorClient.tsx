@@ -1,19 +1,34 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import AiMarkdown from "@/components/AiMarkdown";
 import InputBar from "@/components/ai-tutor/InputBar";
 import PromptButtons from "@/components/ai-tutor/PromptButtons";
+import {
+    formatFileSize,
+    MAX_STUDY_FILE_BYTES,
+    MAX_TUTOR_FILES,
+} from "@/lib/files/uploadConstraints";
+
+type TutorAttachment = {
+    id: string;
+    name: string;
+    content: string;
+};
 
 type Message = {
     id: string;
     role: "user" | "assistant";
     content: string;
+    attachments?: TutorAttachment[];
 };
 
 export default function AiTutor() {
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
+    const [files, setFiles] = useState<File[]>([]);
+    const [composerError, setComposerError] = useState<string | null>(null);
+    const [loadingStatus, setLoadingStatus] = useState("Waiting for AI...");
     const [isLoading, setIsLoading] = useState(false);
 
     const lastAssistantRef = useRef<HTMLDivElement | null>(null);
@@ -39,30 +54,44 @@ export default function AiTutor() {
     }, [messages]);
 
     async function handleSend() {
-        if (!input.trim() || isLoading) return;
+        if ((!input.trim() && files.length === 0) || isLoading) return;
 
-        const newUserMessage: Message = {
-            id: Date.now().toString(),
-            role: "user",
-            content: input,
-        };
-
-        const updatedMessages = [...messages, newUserMessage];
-        const conversationForApi = updatedMessages.slice(-8);
-        const assistantMessageId = `${Date.now()}-assistant`;
-        const newAssistantMessage: Message = {
-            id: assistantMessageId,
-            role: "assistant",
-            content: "",
-        };
         const abortController = new AbortController();
+        const assistantMessageId = `${crypto.randomUUID()}-assistant`;
 
         abortControllerRef.current = abortController;
-        setMessages([...updatedMessages, newAssistantMessage]);
-        setInput("");
+        setComposerError(null);
+        setLoadingStatus(files.length > 0 ? "Reading attached files..." : "Waiting for AI...");
         setIsLoading(true);
 
         try {
+            const attachments = files.length > 0
+                ? await uploadTutorFiles(files, abortController.signal)
+                : [];
+            const messageContent = input.trim()
+                || "Please help me understand the attached study materials.";
+            const newUserMessage: Message = {
+                id: crypto.randomUUID(),
+                role: "user",
+                content: messageContent,
+                attachments: attachments.map((attachment) => ({
+                    ...attachment,
+                    id: crypto.randomUUID(),
+                })),
+            };
+            const updatedMessages = [...messages, newUserMessage];
+            const conversationForApi = updatedMessages.slice(-8);
+            const newAssistantMessage: Message = {
+                id: assistantMessageId,
+                role: "assistant",
+                content: "",
+            };
+
+            setMessages([...updatedMessages, newAssistantMessage]);
+            setInput("");
+            setFiles([]);
+            setLoadingStatus("Waiting for AI...");
+
             const response = await fetch("/api/chat", {
                 method: "POST",
                 headers: {
@@ -126,6 +155,11 @@ export default function AiTutor() {
 
             console.error("handleSend error:", error);
 
+            if (error instanceof TutorFileUploadError) {
+                setComposerError(error.message);
+                return;
+            }
+
             setMessages((prev) =>
                 prev.map((message) => {
                     if (message.id !== assistantMessageId) return message;
@@ -151,6 +185,34 @@ export default function AiTutor() {
         }
     }
 
+    function handleFilesSelected(selectedFiles: File[]) {
+        const nextFiles = [...files, ...selectedFiles];
+
+        if (nextFiles.length > MAX_TUTOR_FILES) {
+            setComposerError(`Attach no more than ${MAX_TUTOR_FILES} files at a time.`);
+            return;
+        }
+
+        const totalBytes = nextFiles.reduce((sum, file) => sum + file.size, 0);
+
+        if (totalBytes > MAX_STUDY_FILE_BYTES) {
+            setComposerError(
+                `Attachments can be up to ${formatFileSize(MAX_STUDY_FILE_BYTES)} total.`,
+            );
+            return;
+        }
+
+        setComposerError(null);
+        setFiles(nextFiles);
+    }
+
+    function handleRemoveFile(index: number) {
+        setComposerError(null);
+        setFiles((currentFiles) =>
+            currentFiles.filter((_, fileIndex) => fileIndex !== index)
+        );
+    }
+
     return (
         <div className="min-h-screen w-full flex justify-center bg-gray-100">
             <div className="min-h-screen min-w-4xl border-b-blue-500">
@@ -166,6 +228,11 @@ export default function AiTutor() {
                                     input={input}
                                     setInput={setInput}
                                     handleSend={handleSend}
+                                    files={files}
+                                    onFilesSelected={handleFilesSelected}
+                                    onRemoveFile={handleRemoveFile}
+                                    status={loadingStatus}
+                                    error={composerError}
                                     disabled={isLoading}
                                 />
 
@@ -190,42 +257,29 @@ export default function AiTutor() {
                                         }
                                     >
                                         {message.role === "user" ? (
-                                            <p>{message.content}</p>
+                                            <>
+                                                <p>{message.content}</p>
+                                                {message.attachments?.length ? (
+                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                        {message.attachments.map((attachment) => (
+                                                            <span
+                                                                key={attachment.id}
+                                                                className="max-w-64 truncate rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-600"
+                                                            >
+                                                                {attachment.name}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                ) : null}
+                                            </>
                                         ) : !message.content && isLoading ? (
                                             <p className="mb-4 animate-pulse leading-7 text-gray-500">
                                                 Thinking...
                                             </p>
                                         ) : (
-                                            <ReactMarkdown
-                                                components={{
-                                                    h1: ({ children }) => (
-                                                        <h1 className="mb-4 mt-6 text-3xl font-semibold">{children}</h1>
-                                                    ),
-                                                    h2: ({ children }) => (
-                                                        <h2 className="mb-3 mt-5 text-2xl font-semibold">{children}</h2>
-                                                    ),
-                                                    h3: ({ children }) => (
-                                                        <h3 className="mb-2 mt-4 text-lg font-semibold">{children}</h3>
-                                                    ),
-                                                    p: ({ children }) => (
-                                                        <p className="mb-4 leading-7 text-gray-800">{children}</p>
-                                                    ),
-                                                    ul: ({ children }) => (
-                                                        <ul className="mb-4 list-disc space-y-2 pl-6">{children}</ul>
-                                                    ),
-                                                    ol: ({ children }) => (
-                                                        <ol className="mb-4 list-decimal space-y-2 pl-6">{children}</ol>
-                                                    ),
-                                                    li: ({ children }) => (
-                                                        <li className="leading-7 text-gray-800">{children}</li>
-                                                    ),
-                                                    strong: ({ children }) => (
-                                                        <strong className="font-semibold text-black">{children}</strong>
-                                                    ),
-                                                }}
-                                            >
+                                            <AiMarkdown variant="tutor">
                                                 {message.content}
-                                            </ReactMarkdown>
+                                            </AiMarkdown>
                                         )}
                                     </div>
                                 ))}
@@ -236,6 +290,11 @@ export default function AiTutor() {
                                     input={input}
                                     setInput={setInput}
                                     handleSend={handleSend}
+                                    files={files}
+                                    onFilesSelected={handleFilesSelected}
+                                    onRemoveFile={handleRemoveFile}
+                                    status={loadingStatus}
+                                    error={composerError}
                                     disabled={isLoading}
                                 />
                             </div>
@@ -245,5 +304,73 @@ export default function AiTutor() {
                 </div>
             </div>
         </div>
+    );
+}
+
+type UploadedTutorAttachment = {
+    name: string;
+    content: string;
+};
+
+class TutorFileUploadError extends Error {}
+
+async function uploadTutorFiles(
+    files: File[],
+    signal: AbortSignal,
+): Promise<UploadedTutorAttachment[]> {
+    const formData = new FormData();
+
+    files.forEach((file) => {
+        formData.append("files", file);
+    });
+
+    const response = await fetch("/api/chat/files", {
+        method: "POST",
+        body: formData,
+        signal,
+    });
+    const payload = await readJsonResponse(response);
+
+    if (!response.ok) {
+        throw new TutorFileUploadError(
+            typeof payload.error === "string"
+                ? payload.error
+                : "Could not read the attached files.",
+        );
+    }
+
+    if (
+        !Array.isArray(payload.attachments)
+        || !payload.attachments.every(isUploadedTutorAttachment)
+    ) {
+        throw new TutorFileUploadError(
+            "The file upload response was incomplete.",
+        );
+    }
+
+    return payload.attachments;
+}
+
+async function readJsonResponse(response: Response): Promise<Record<string, unknown>> {
+    try {
+        const payload = await response.json();
+        return typeof payload === "object" && payload !== null
+            ? payload as Record<string, unknown>
+            : {};
+    } catch {
+        return {};
+    }
+}
+
+function isUploadedTutorAttachment(
+    value: unknown,
+): value is UploadedTutorAttachment {
+    return (
+        typeof value === "object"
+        && value !== null
+        && "name" in value
+        && typeof value.name === "string"
+        && "content" in value
+        && typeof value.content === "string"
     );
 }

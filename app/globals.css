@@ -124,3 +124,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+.ai-markdown .katex-display {
+  margin: 1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
+
+.ai-markdown .katex {
+  font-size: 1.05em;
+}
+
+.ai-markdown--flashcard .katex-display {
+  margin: 0.75rem 0;
+}

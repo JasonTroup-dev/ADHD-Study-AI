@@ -1,5 +1,6 @@
 "use client";
 
+import AiMarkdown from "@/components/AiMarkdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -747,6 +748,19 @@ function FlashcardsCreateContent() {
                         placeholder="What should you recognize later?"
                         className="mt-2 min-h-32 resize-y rounded-lg border-slate-200 bg-slate-50 text-base shadow-none focus-visible:border-blue-500 focus-visible:ring-blue-500/20"
                       />
+                      {card.question.trim() ? (
+                        <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            Rendered preview
+                          </p>
+                          <AiMarkdown
+                            variant="flashcard"
+                            className="ai-markdown--flashcard text-base text-slate-900"
+                          >
+                            {card.question}
+                          </AiMarkdown>
+                        </div>
+                      ) : null}
                     </div>
 
                     <div>
@@ -769,6 +783,19 @@ function FlashcardsCreateContent() {
                         placeholder="Write the answer in your own words."
                         className="mt-2 min-h-32 resize-y rounded-lg border-slate-200 bg-slate-50 text-base shadow-none focus-visible:border-blue-500 focus-visible:ring-blue-500/20"
                       />
+                      {card.answer.trim() ? (
+                        <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                            Rendered preview
+                          </p>
+                          <AiMarkdown
+                            variant="flashcard"
+                            className="ai-markdown--flashcard text-base text-slate-900"
+                          >
+                            {card.answer}
+                          </AiMarkdown>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </article>
