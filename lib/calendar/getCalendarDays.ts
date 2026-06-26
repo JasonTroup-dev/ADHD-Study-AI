@@ -4,6 +4,14 @@ export type CalendarDay = {
   isCurrentMonth: boolean;
 };
 
+export function toLocalDateString(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 export function getCalendarDays(currentMonth: Date): CalendarDay[] {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -30,7 +38,9 @@ export function getCalendarDays(currentMonth: Date): CalendarDay[] {
     });
   }
 
-  while (calendarDays.length < 35) {
+  // Keep a stable six-week grid so every month is fully represented and the
+  // calendar does not jump in height as the user navigates between months.
+  while (calendarDays.length < 42) {
     const nextMonthDay =
       calendarDays.length - firstDayOfMonth - daysInMonth + 1;
 

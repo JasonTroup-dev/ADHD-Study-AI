@@ -124,3 +124,40 @@
     @apply bg-background text-foreground;
   }
 }
+
+.ai-markdown .katex-display {
+  margin: 1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.25rem 0;
+}
+
+.ai-markdown .katex {
+  font-size: 1.05em;
+}
+
+.ai-markdown--flashcard .katex-display {
+  margin: 0.75rem 0;
+}
+
+@keyframes completion-progress-shimmer {
+  0%,
+  35% {
+    transform: translateX(-110%);
+  }
+  75%,
+  100% {
+    transform: translateX(110%);
+  }
+}
+
+.completion-progress-shimmer {
+  animation: completion-progress-shimmer 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .completion-progress-shimmer {
+    animation: none;
+    opacity: 0;
+  }
+}

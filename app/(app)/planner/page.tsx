@@ -1,15 +1,26 @@
 "use client"
 
-import { getCalendarDays } from "./lib/getCalendarDays";
+import {
+    getCalendarDays,
+    toLocalDateString,
+} from "@/lib/calendar/getCalendarDays";
 import { Button } from "@/components/ui/button";
 import { TaskCard, type StudyTask } from "@/components/ui/taskCard";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-
+import PlannerCalendar from "@/components/StudyPlanner/StudyPlannerCalendar";
+import type { ClassColor } from "@/lib/classColors";
+import StudyPlannerModal from "@/components/StudyPlanner/StudyPlannerModal";
+import type { StudyPlanImportSummary } from "@/types/syllabus";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CompletionProgress } from "@/components/ui/completionProgress";
+import { getActiveStudySession } from "@/lib/studySessions";
+import type { StudySession } from "@/types/database";
 
 type ClassItem = {
     id: string,
     name: string;
+    color: ClassColor | null;
 };
 
 export default function PlannerPage() {
@@ -17,22 +28,32 @@ export default function PlannerPage() {
     { /* Calendar Variables */}
     const weekDays= ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [currentMonth, setCurrentMonth] = useState(new Date());
-    const calendarDays = getCalendarDays(currentMonth);
+    const [calendarMonth, setCalendarMonth] = useState(
+        () => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
+    );
     const formattedDate = selectedDate.toLocaleDateString("en-US", {
         weekday: "long",
         month: "long",
         day: "numeric",
     });
-    const monthTitle = currentMonth.toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-    });
-    
-    function goToNextMonth() {
-        setCurrentMonth((prev) => {
-            return new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
-        });
+
+    function selectDate(date: Date) {
+        setSelectedDate(date);
+        setCalendarMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+    }
+
+    function changeSelectedDate(dayOffset: number) {
+        selectDate(
+            new Date(
+                selectedDate.getFullYear(),
+                selectedDate.getMonth(),
+                selectedDate.getDate() + dayOffset,
+            ),
+        );
+    }
+
+    function goToToday() {
+        selectDate(new Date());
     }
 
     function isSameDay(dateOne: Date, dateTwo: Date) {
@@ -43,17 +64,22 @@ export default function PlannerPage() {
         );
     }
 
-    //Modal variables
+    // Generate Modal Variables
+
+    const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+    const [studyPlanNotice, setStudyPlanNotice] = useState<string | null>(null);
+
+
+    // Task Modal Variables
 
     const [title, setTitle] = useState("");
     const [priority, setPriority] = useState("low");
     const [selectedClassId, setSelectedClassId] = useState("");
-    const [estimatedTime, setEstimatedTime] = useState("");
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
 
 
-    //Modal Calendar variables
+    // Task Modal Calendar variables
 
     const [modalSelectedDate, setModalSelectedDate] = useState(new Date());
     const [modalCurrentMonth, setModalCurrentMonth] = useState(new Date());
@@ -74,24 +100,17 @@ export default function PlannerPage() {
             return new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
         });
     }
-    
-    
 
-    
     //Supabase variables
 
     const [userId, setUserId] = useState<string | null>(null);
     const [classes, setClasses] = useState<ClassItem[]>([]);
     const [tasks, setTasks] = useState<StudyTask[]>([]);
+    const [activeStudySession, setActiveStudySession] =
+        useState<StudySession | null>(null);
+    const [taskRefreshToken, setTaskRefreshToken] = useState(0);
 
-    const selectedDateString = selectedDate.toISOString().split("T")[0];
-
-    function goToPreviousMonth() {
-        setCurrentMonth((prev) => {
-            return new Date(prev.getFullYear(), prev.getMonth() - 1, 1);
-        });
-    }
-
+    const selectedDateString = toLocalDateString(selectedDate);
 
     async function handleAddTask () {
         if (!userId) return;
@@ -99,24 +118,24 @@ export default function PlannerPage() {
         const classId = selectedClassId;
         const trimmedTaskTitle = title.trim();
 
-        if (!trimmedTaskTitle == null) return;
-
-        const trimmedEstimatedTime = estimatedTime.trim();
+        if (!trimmedTaskTitle) return;
 
         if (!trimmedTaskTitle == null) return;
 
         const importance = priority;
 
-        const scheduledDate = modalSelectedDate.toISOString().split("T")[0];
+        const scheduledDate = toLocalDateString(modalSelectedDate);
 
         const { error } = await supabase.from("study_plan_tasks").insert({
             user_id: userId,
-            class_id: classId,
+            class_id: classId || null,
             title: trimmedTaskTitle,
-            estimated_minutes: trimmedEstimatedTime ? Number(trimmedEstimatedTime) : null,
             priority: importance,
             status: "todo",
             scheduled_date: scheduledDate,
+            source: "manual",
+            context_version: 0,
+            user_edited: false,
 
         });
 
@@ -125,9 +144,8 @@ export default function PlannerPage() {
             return;
         }
 
-        setIsModalOpen(false);
+        setIsTaskModalOpen(false);
         setTitle("");
-        setEstimatedTime("");
         setPriority("");
         setSelectedClassId("");
     }
@@ -153,7 +171,7 @@ export default function PlannerPage() {
 
             const { data, error } = await supabase
                 .from("classes")
-                .select("id, name")
+                .select("id, name, color")
                 .eq("user_id", userId)
                 .order("name", { ascending: true });
 
@@ -174,36 +192,48 @@ export default function PlannerPage() {
         async function loadTasks() {
             if (!userId) return;
 
-            const { data, error } = await supabase
-            .from("study_plan_tasks")
-            .select(`
-                id,
-                title,
-                estimated_minutes,
-                priority,
-                status,
-                scheduled_date,
-                classes (
-                name
-                )
-            `)
-            .eq("user_id", userId)
-            .eq("scheduled_date", selectedDateString)
-            .order("created_at", { ascending: true });
+            const [tasksResult, activeSession] = await Promise.all([
+                supabase
+                    .from("study_plan_tasks")
+                    .select(`
+                        id,
+                        class_id,
+                        assignment_id,
+                        title,
+                        priority,
+                        status,
+                        scheduled_date,
+                        source,
+                        context_version,
+                        user_edited,
+                        classes (
+                        name,
+                        color
+                        )
+                    `)
+                    .eq("user_id", userId)
+                    .eq("scheduled_date", selectedDateString)
+                    .order("created_at", { ascending: true }),
+                getActiveStudySession().catch((error: unknown) => {
+                    console.error("Error loading active study session:", error);
+                    return null;
+                }),
+            ]);
 
-            if (error) {
-            console.error("Error loading tasks:", error);
+            if (tasksResult.error) {
+            console.error("Error loading tasks:", tasksResult.error);
             return;
             }
 
-            setTasks(data ?? []);
+            setTasks(tasksResult.data ?? []);
+            setActiveStudySession(activeSession);
         }
 
         loadTasks();
-    }, [userId, selectedDateString]);
+    }, [userId, selectedDateString, taskRefreshToken]);
 
 
-     //Prograss Bar Variables
+    // Prograss Bar Variables
     const completedTasks = tasks.filter((task) => task.status === "completed").length;
     const totalTasks = tasks.length;
 
@@ -239,6 +269,27 @@ export default function PlannerPage() {
         }
     }
 
+    function handleCreateStudyPlan(summary: StudyPlanImportSummary) {
+        setTaskRefreshToken((currentToken) => currentToken + 1);
+        if (summary.classCreated) {
+            setClasses((currentClasses) =>
+                currentClasses.some((classItem) => classItem.id === summary.classId)
+                    ? currentClasses
+                    : [
+                        ...currentClasses,
+                        {
+                            id: summary.classId,
+                            name: summary.className,
+                            color: "blue",
+                        },
+                    ],
+            );
+        }
+        setStudyPlanNotice(
+            `${summary.classCreated ? `${summary.className} was created. ` : ""}Study plan created with ${summary.assignmentCount} assignment${summary.assignmentCount === 1 ? "" : "s"} and ${summary.studySessionCount} study block${summary.studySessionCount === 1 ? "" : "s"}.`,
+        );
+    }
+
     return (
         <div className="min-h-full w-full bg-gray-100">
             <div className="mx-auto w-full max-w-screen-2xl px-6 py-8 lg:px-8">
@@ -251,36 +302,65 @@ export default function PlannerPage() {
                     </div>
 
                     <div className="pt-2">
-                        <Button className="text-base" variant="default" size="lg">
+                        <Button
+                            className="text-base bg-linear-to-br from-purple-500 to-blue-500"
+                            variant="default"
+                            size="lg"
+                            onClick={() => setIsGenerateModalOpen(true)}>
                             Generate AI Study Plan
                         </Button>
                     </div>
                 </div>
 
-                {/* Progress Card */}
-                <div className="mt-8 rounded-2xl border bg-gradient-to-r from-blue-100 to-indigo-200 p-8">
-                    <h2 className="text-xl font-semibold">Todays Progress</h2>
 
-                    <div className="flex justify-between mt-8">
-                        <p className="text-lg text-gray-600">
-                        {completedTasks} of {totalTasks} tasks completed
-                        </p>
+                <StudyPlannerModal
+                    isOpen={isGenerateModalOpen}
+                    classes={classes}
+                    onClose={() => setIsGenerateModalOpen(false)}
+                    onStudyPlanCreated={handleCreateStudyPlan}
+                />
 
-                        <p className="text-xl font-semibold">{progressPercent}%</p>
+                {studyPlanNotice ? (
+                    <div
+                        className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+                        role="status"
+                    >
+                        <span>{studyPlanNotice}</span>
+                        <button
+                            type="button"
+                            className="font-semibold text-emerald-900 hover:text-emerald-700"
+                            onClick={() => setStudyPlanNotice(null)}
+                        >
+                            Dismiss
+                        </button>
                     </div>
-
-                    <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-white/70">
-                        <div
-                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
-                        style={{ width: `${progressPercent}%` }}
-                        ></div>
-                    </div>
-                </div>
+                ) : null}
 
 
-                {/* Main Section */}
-                <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-12">
-                    
+                        {/* Progress Card */}
+                        <div className="mt-8 rounded-2xl border bg-linear-to-r from-blue-100 to-indigo-200 p-8">
+                            <h2 className="text-xl font-semibold">Todays Progress</h2>
+
+                            <div className="flex justify-between mt-8">
+                                <p className="text-lg text-gray-600">
+                                {completedTasks} of {totalTasks} tasks completed
+                                </p>
+
+                                <p className="text-xl font-semibold">{progressPercent}%</p>
+                            </div>
+
+                            <CompletionProgress
+                                value={progressPercent}
+                                label={`${completedTasks} of ${totalTasks} tasks completed`}
+                                className="mt-4 bg-white/70"
+                                indicatorClassName="bg-linear-to-r from-blue-500 to-purple-500"
+                            />
+                        </div>
+
+
+                        {/* Main Section */}
+                        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12">
+
                     {/* Calendar Card */}
                     <div className="rounded-2xl bg-white p-6 lg:col-span-4">
                         <div>
@@ -289,64 +369,65 @@ export default function PlannerPage() {
                         </div>
 
                 
-                        <div className="mt-6 rounded-xl border p-4">
-                            <div className="flex items-center justify-between">
-                                <Button variant="outline" size="sm" onClick={goToPreviousMonth}>Prev</Button>
-                                <p className="font-medium">{monthTitle}</p>
-                                <Button variant="outline" size="sm" onClick={goToNextMonth}>Next</Button>
-                            </div>
+                        <PlannerCalendar
+                            selectedDate={selectedDate}
+                            currentMonth={calendarMonth}
+                            onSelectDate={selectDate}
+                            onChangeMonth={setCalendarMonth}
+                        />
 
-                            {/* Calendar Grid */}
-                            <div className="mt-4 grid grid-cols-7 gap-2 text-center">
-
-                                {/* Weekdays */}
-                                {weekDays.map((day) => (
-                                    <div key={day} className="text-sm text-gray-500">
-                                        {day}
-                                    </div>
-                                ))}
-
-                                {/* Calendar Days */}
-                                {calendarDays.map((date, index) => (
-                                    <Button 
-                                        key={index}
-                                        onClick={() => { 
-                                            setSelectedDate(date.date);
-                                            setCurrentMonth(new Date(date.date.getFullYear(), date.date.getMonth(), 1));
-                                        }}
-                                        className={`rounded-lg py-2 text-sm bg-white border transition ${
-                                            isSameDay(date.date, selectedDate)
-                                                ? "bg-blue-600 text-white border-blue-600"
-                                                : date.isCurrentMonth
-                                            ? "text-gray-900 hover:bg-gray-100"
-                                            : "text-gray-400 hover:bg-gray-100"
-                                        }`}
-                                    >
-                                        {date.day}
-                                    </Button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="my-6 h-px w-full bg-gray-300"></div>
+                        <div className="my-6 h-px w-full bg-gray-300" />
                     </div>
 
 
                     {/* Daily TODO Card */}
                     <div className="flex max-h-[55vh] flex-col rounded-2xl border border-gray-200 bg-white p-6 lg:col-span-8">
-                        <div className="flex items-start justify-between">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
-                                <h2 className="text-xl font-semibold">{ formattedDate }</h2>
+                                <h2 className="text-xl font-semibold" aria-live="polite">{ formattedDate }</h2>
                                 <p className="text-gray-600">{tasks.length} tasks scheduled</p>
                             </div>
 
-                            <Button 
-                                variant="default" 
-                                size="default"
-                                onClick={() => setIsModalOpen(true)}
+                            <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex items-center rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        aria-label="Previous day"
+                                        title="Previous day"
+                                        onClick={() => changeSelectedDate(-1)}
+                                    >
+                                        <ChevronLeft aria-hidden="true" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={goToToday}
+                                    >
+                                        Today
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon-sm"
+                                        aria-label="Next day"
+                                        title="Next day"
+                                        onClick={() => changeSelectedDate(1)}
+                                    >
+                                        <ChevronRight aria-hidden="true" />
+                                    </Button>
+                                </div>
+
+                                <Button
+                                    variant="default"
+                                    size="default"
+                                    onClick={() => setIsTaskModalOpen(true)}
                                 >
                                     + Add Task
-                            </Button>
+                                </Button>
+                            </div>
                         </div>
 
                         {/* ToDo List Item Card */}
@@ -355,18 +436,21 @@ export default function PlannerPage() {
                                 <TaskCard
                                     key={task.id}
                                     task={task}
+                                    activeStudySession={activeStudySession}
                                     onToggle={handleToggleTask}
                                 />
                             ))}
                         </div>
                         
                     </div>
-                </div>
+                        </div>
+
+
             </div>
 
 
             {/* Pop-Up Section */}
-            {isModalOpen && (
+            {isTaskModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                     <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-lg">
 
@@ -382,7 +466,7 @@ export default function PlannerPage() {
                                 </div>
 
                                 <button
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={() => setIsTaskModalOpen(false)}
                                     className="text-gray-500 hover:text-gray-900"
                                 >
                                     ✕
@@ -390,7 +474,7 @@ export default function PlannerPage() {
                             </div>
 
 
-                            <div className="flex grid grid-cols-1 gap-6 lg:grid-cols-12">
+                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                                 <div className="lg:col-span-5">
                                     <div className="mt-6 space-y-4">
                                         <div>
@@ -418,17 +502,6 @@ export default function PlannerPage() {
                                                 onChange={(e) => setTitle(e.target.value)}
                                                 className="mt-1 w-full rounded-lg border px-3 py-2"
                                                 placeholder="Example: Review Chapter 4"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="text-sm font-medium">Estimated Time</label>
-                                            <input
-                                                type="number"
-                                                value={estimatedTime}
-                                                onChange={(e) => setEstimatedTime(e.target.value)}
-                                                className="mt-1 w-full rounded-lg border px-3 py-2"
-                                                placeholder="Example: 45 minutes"
                                             />
                                         </div>
 
@@ -496,7 +569,7 @@ export default function PlannerPage() {
                             <div className="flex justify-end gap-3 pt-4">
                                 <Button
                                     variant="outline"
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={() => setIsTaskModalOpen(false)}
                                 >
                                     Cancel
                                 </Button>
