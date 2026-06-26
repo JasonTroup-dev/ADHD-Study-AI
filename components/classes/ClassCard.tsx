@@ -75,7 +75,7 @@ export default function ClassCard({
                 <div className="flex divide-x divide-gray-200">
                     <div className="flex-1 text-center">
                     <p className="font-bold">45</p>
-                    <p>Flashcards</p>
+                    <p>Flashcard Sets</p>
                     </div>
                     <div className="flex-1 text-center">
                     <p className="font-bold">12</p>

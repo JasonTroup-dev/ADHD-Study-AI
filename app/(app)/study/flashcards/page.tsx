@@ -14,6 +14,7 @@ type FlashcardSet = {
   created_at: string;
   class_id: string | null;
   classColor: string | null;
+  cardCount: number;
 };
 
 export default function Flashcards() {
@@ -24,7 +25,7 @@ export default function Flashcards() {
     async function fetchSets(currentUserId: string) {
         const { data: sets, error: setsError } = await supabase
             .from("flashcard_sets")
-            .select("id, title, created_at, class_id")
+            .select("id, title, created_at, class_id, flashcards(id)")
             .eq("user_id", currentUserId)
             .order("created_at", { ascending: false });
 
@@ -50,8 +51,12 @@ export default function Flashcards() {
         );
 
         const setsWithColors = (sets ?? []).map((set) => ({
-            ...set,
+            id: set.id,
+            title: set.title,
+            created_at: set.created_at,
+            class_id: set.class_id,
             classColor: set.class_id ? classColorById.get(set.class_id) ?? null : null,
+            cardCount: Array.isArray(set.flashcards) ? set.flashcards.length : 0,
         }));
 
         setFlashcardSets(setsWithColors);
@@ -137,6 +142,7 @@ export default function Flashcards() {
                             key={flashcardSet.id}
                             id={flashcardSet.id}
                             title={flashcardSet.title}
+                            cardCount={flashcardSet.cardCount}
                             classColor={flashcardSet.classColor}
                             onDelete={handleDeleteSet}
                         />

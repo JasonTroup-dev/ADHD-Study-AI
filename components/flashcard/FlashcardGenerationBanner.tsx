@@ -21,7 +21,7 @@ export default function FlashcardGenerationBanner({ onGenerateClick, }: Flashcar
                     <h2 className="my-1 mb-2 text-lg text-purple-800">
                         Upload a study document and AI will automatically create flashcards for you!
                     </h2>
-                    <Button variant="outline" size="lg" onClick={onGenerateClick} className="flex items-center text-base border border-purple-400">
+                    <Button variant="default" size="default" onClick={onGenerateClick} className="flex items-center text-lg bg-linear-to-br from-purple-500 to-blue-500">
                             <Astroid className="mr-2"/>
                             <p>Generate from File</p>
                     </Button>

@@ -149,6 +149,7 @@ function FlashcardsCreateContent() {
   });
 
 	const searchParams = useSearchParams();
+  const studySessionId = searchParams.get("studySessionId");
 	const [isAiModalOpen, setIsAiModalOpen] = useState(
 		() => searchParams.get("mode") === "ai",
 	);
@@ -419,7 +420,11 @@ function FlashcardsCreateContent() {
 
       setMessage({ type: "success", text: "Flashcard set saved." });
       router.push(
-        selectedClassId ? `/classes/${selectedClassId}` : "/study/flashcards",
+        studySessionId
+          ? `/study/flashcards/${payload.set.id}?studySessionId=${studySessionId}`
+          : selectedClassId
+            ? `/classes/${selectedClassId}`
+            : "/study/flashcards",
       );
     } catch (error) {
       console.error("Error adding flashcard set:", error);
@@ -572,7 +577,7 @@ function FlashcardsCreateContent() {
 				type="button"
 				variant="outline"
 				onClick={() => setIsAiModalOpen(true)}
-				className="h-10 rounded-lg px-4 text-sm font-semibold bg-linear-to-r from-blue-200 to-purple-200"
+				className="h-10 cursor-pointer rounded-lg border-slate-200 bg-linear-to-r from-blue-200 to-purple-200 px-4 text-sm font-semibold text-slate-950 shadow-none hover:from-blue-300 hover:to-purple-300"
 			>
 				<Sparkles className="h-4 w-4" aria-hidden="true" />
 				Generate with AI

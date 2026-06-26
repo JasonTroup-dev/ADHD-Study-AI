@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import {  type ClassColor ,} from "@/lib/classColors"
+import { notifyClassesChanged } from "@/lib/classEvents";
 import ClassCard from "@/components/classes/ClassCard";
 import AddClassModal from "@/components/classes/AddClassModal";
 
@@ -60,6 +61,7 @@ export default function ClassesPage() {
 
     setIsModalOpen(false);
     await fetchClasses(userId);
+    notifyClassesChanged();
   }
 
   async function handleDeleteClass(classId: string, name: string) {
@@ -94,6 +96,7 @@ export default function ClassesPage() {
       }
 
       setClasses((prev) => prev.filter((classItem) => classItem.id !== classId));
+      notifyClassesChanged();
   }
 
   useEffect(() => {

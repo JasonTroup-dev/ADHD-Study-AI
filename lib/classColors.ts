@@ -75,7 +75,7 @@ export const classColorOptions = [
   {
     name: "Gray",
     value: "gray",
-    bg: "bg-gray-100",
+    bg: "bg-gray-200",
     border: "border-gray-300",
     text: "text-gray-800",
     accent: "bg-gray-500",
