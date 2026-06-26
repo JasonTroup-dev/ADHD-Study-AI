@@ -6,6 +6,7 @@ const protectedRoutes = [
   "/classes",
   "/study",
   "/planner",
+  "/report-bug",
   "/settings",
 ];
 
