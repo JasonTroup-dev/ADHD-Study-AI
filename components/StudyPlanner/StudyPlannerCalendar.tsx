@@ -1,5 +1,4 @@
 import { Button } from "../ui/button";
-import { useState } from "react";
 
 type CalendarDay = {
     date: Date;
@@ -9,7 +8,9 @@ type CalendarDay = {
 
 type PlannerCalendarProps = {
     selectedDate: Date,
+    currentMonth: Date,
     onSelectDate: (date: Date) => void;
+    onChangeMonth: (date: Date) => void;
 };
 
 
@@ -55,7 +56,7 @@ function getCalendarDays(currentMonth: Date): CalendarDay[] {
         });
     }
 
-    const remainingDays = 42 - days.length;
+    const remainingDays = 35 - days.length;
 
     for (let day = 1; day <= remainingDays; day++) {
         days.push({
@@ -71,12 +72,10 @@ function getCalendarDays(currentMonth: Date): CalendarDay[] {
 
 export default function PlannerCalendar({
     selectedDate,
+    currentMonth,
     onSelectDate,
+    onChangeMonth,
 }: PlannerCalendarProps) {
-    const [currentMonth, setCurrentMonth] = useState(
-        new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
-    );
-
     const monthTitle = currentMonth.toLocaleString("default", {
         month: "long",
         year: "numeric",
@@ -85,13 +84,13 @@ export default function PlannerCalendar({
     const calendarDays = getCalendarDays(currentMonth);
 
     function goToPreviousMonth() {
-        setCurrentMonth(
+        onChangeMonth(
             new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
         );
     }
 
     function goToNextMonth() {
-            setCurrentMonth(
+        onChangeMonth(
             new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
         );
     }
@@ -122,13 +121,6 @@ export default function PlannerCalendar({
                     key={date.date.toISOString()}
                     onClick={() => {
                         onSelectDate(date.date);
-                        setCurrentMonth(
-                            new Date(
-                                date.date.getFullYear(),
-                                date.date.getMonth(),
-                                1
-                            )
-                        );
                     }}
                     className={`rounded-lg py-2 text-sm bg-white border transition ${
                         isSameDay(date.date, selectedDate)
@@ -144,4 +136,4 @@ export default function PlannerCalendar({
             </div>
         </div>
     );
-}   
+}
