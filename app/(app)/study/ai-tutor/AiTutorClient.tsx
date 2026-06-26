@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import AiMarkdown from "@/components/AiMarkdown";
 import InputBar from "@/components/ai-tutor/InputBar";
 import PromptButtons from "@/components/ai-tutor/PromptButtons";
+import TutorWorkspace from "@/components/ai-tutor/TutorWorkspace";
 import {
     formatFileSize,
     MAX_STUDY_FILE_BYTES,
@@ -31,27 +31,13 @@ export default function AiTutor() {
     const [loadingStatus, setLoadingStatus] = useState("Waiting for AI...");
     const [isLoading, setIsLoading] = useState(false);
 
-    const lastAssistantRef = useRef<HTMLDivElement | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
-
-    const hasMessages = messages.length > 0;
 
     useEffect(() => {
         return () => {
             abortControllerRef.current?.abort();
         };
     }, []);
-
-    useEffect(() => {
-        const lastMessage = messages[messages.length - 1];
-
-        if (lastMessage?.role === "assistant") {
-            lastAssistantRef.current?.scrollIntoView({
-                behavior: "smooth",
-                block: "start",
-            });
-        }
-    }, [messages]);
 
     async function handleSend() {
         if ((!input.trim() && files.length === 0) || isLoading) return;
@@ -214,96 +200,24 @@ export default function AiTutor() {
     }
 
     return (
-        <div className="min-h-screen w-full flex justify-center bg-gray-100">
-            <div className="min-h-screen min-w-4xl border-b-blue-500">
-
-                {/* Center AI Response Area */}
-                <div className="min-h-screen relative">
-                    {!hasMessages ? (
-                        <div className="min-h-screen flex items-center">
-                            <div className="w-full flex flex-col items-center">
-                                <header className="text-3xl">What are you working on?</header>
-
-                                <InputBar
-                                    input={input}
-                                    setInput={setInput}
-                                    handleSend={handleSend}
-                                    files={files}
-                                    onFilesSelected={handleFilesSelected}
-                                    onRemoveFile={handleRemoveFile}
-                                    status={loadingStatus}
-                                    error={composerError}
-                                    disabled={isLoading}
-                                />
-
-                                <PromptButtons />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="min-h-screen flex flex-col">
-                            <div className="flex-1 pt-8">
-                                {messages.map((message, index) => (
-                                    <div
-                                        key={message.id}
-                                        ref={
-                                            message.role === "assistant" && index === messages.length - 1
-                                            ? lastAssistantRef
-                                            : null
-                                        }
-                                        className={
-                                            message.role === "user"
-                                                ? "ml-auto mb-6 w-fit max-w-2xl rounded-3xl bg-white px-5 py-3"
-                                                : "mb-4 max-w-3xl"
-                                        }
-                                    >
-                                        {message.role === "user" ? (
-                                            <>
-                                                <p>{message.content}</p>
-                                                {message.attachments?.length ? (
-                                                    <div className="mt-3 flex flex-wrap gap-2">
-                                                        {message.attachments.map((attachment) => (
-                                                            <span
-                                                                key={attachment.id}
-                                                                className="max-w-64 truncate rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-600"
-                                                            >
-                                                                {attachment.name}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                ) : null}
-                                            </>
-                                        ) : !message.content && isLoading ? (
-                                            <p className="mb-4 animate-pulse leading-7 text-gray-500">
-                                                Thinking...
-                                            </p>
-                                        ) : (
-                                            <AiMarkdown variant="tutor">
-                                                {message.content}
-                                            </AiMarkdown>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="sticky bottom-0 bg-linear-to-t from-gray-100 via-gray-100 to-transparent pb-6 pt-4">
-                                <InputBar
-                                    input={input}
-                                    setInput={setInput}
-                                    handleSend={handleSend}
-                                    files={files}
-                                    onFilesSelected={handleFilesSelected}
-                                    onRemoveFile={handleRemoveFile}
-                                    status={loadingStatus}
-                                    error={composerError}
-                                    disabled={isLoading}
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                </div>
-            </div>
-        </div>
+        <TutorWorkspace
+            messages={messages}
+            isLoading={isLoading}
+            composer={(
+                <InputBar
+                    input={input}
+                    setInput={setInput}
+                    handleSend={handleSend}
+                    files={files}
+                    onFilesSelected={handleFilesSelected}
+                    onRemoveFile={handleRemoveFile}
+                    status={loadingStatus}
+                    error={composerError}
+                    disabled={isLoading}
+                />
+            )}
+            emptyActions={<PromptButtons />}
+        />
     );
 }
 

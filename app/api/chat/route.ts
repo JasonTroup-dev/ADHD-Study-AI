@@ -1,7 +1,12 @@
 import {
     getTutorResponseStream,
+    type TutorAttachment,
     type TutorMessage,
 } from "@/lib/ai/tutor";
+import {
+    MAX_TUTOR_ATTACHMENT_CHARS,
+    MAX_TUTOR_FILES,
+} from "@/lib/files/uploadConstraints";
 
 export async function POST(req: Request) {
     let body: unknown;
@@ -89,5 +94,28 @@ function isTutorMessage(value: unknown): value is TutorMessage {
         && typeof value.id === "string"
         && (value.role === "user" || value.role === "assistant")
         && typeof value.content === "string"
+        && value.content.length <= 20_000
+        && (
+            value.attachments === undefined
+            || (
+                value.role === "user"
+                && Array.isArray(value.attachments)
+                && value.attachments.length <= MAX_TUTOR_FILES
+                && value.attachments.every(isTutorAttachment)
+            )
+        )
+    );
+}
+
+function isTutorAttachment(value: unknown): value is TutorAttachment {
+    return (
+        isRecord(value)
+        && typeof value.id === "string"
+        && typeof value.name === "string"
+        && value.name.length > 0
+        && value.name.length <= 255
+        && typeof value.content === "string"
+        && value.content.length > 0
+        && value.content.length <= MAX_TUTOR_ATTACHMENT_CHARS
     );
 }

@@ -2,6 +2,7 @@ import mammoth from "mammoth";
 import { PDFParse } from "pdf-parse";
 
 import {
+  MAX_TUTOR_ATTACHMENT_CHARS,
   SUPPORTED_STUDY_FILE_EXTENSIONS,
   SUPPORTED_STUDY_FILE_LABEL,
   type SupportedStudyFileExtension,
@@ -82,6 +83,14 @@ export function prepareStudyGuideSourceText(text: string) {
   );
 }
 
+export function prepareTutorSourceText(text: string, maxChars = MAX_TUTOR_ATTACHMENT_CHARS) {
+  return prepareSourceText(
+    text,
+    "[Document shortened before being shared with the AI tutor. Middle content omitted.]",
+    maxChars,
+  );
+}
+
 export function normalizeExtractedText(text: string) {
   return text
     .normalize("NFKC")
@@ -95,15 +104,19 @@ export function normalizeExtractedText(text: string) {
     .trim();
 }
 
-function prepareSourceText(text: string, omittedMessage: string) {
+function prepareSourceText(
+  text: string,
+  omittedMessage: string,
+  maxChars = MAX_FLASHCARD_SOURCE_CHARS,
+) {
   const normalizedText = normalizeExtractedText(text);
 
-  if (normalizedText.length <= MAX_FLASHCARD_SOURCE_CHARS) {
+  if (normalizedText.length <= maxChars) {
     return normalizedText;
   }
 
   const omittedNotice = `\n\n${omittedMessage}\n\n`;
-  const availableChars = MAX_FLASHCARD_SOURCE_CHARS - omittedNotice.length;
+  const availableChars = maxChars - omittedNotice.length;
   const headLength = Math.floor(availableChars * 0.7);
   const tailLength = availableChars - headLength;
 

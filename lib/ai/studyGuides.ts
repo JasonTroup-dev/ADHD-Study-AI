@@ -35,6 +35,8 @@ Rules:
 - Put display equations on their own lines inside double dollar signs.
 - Use KaTeX-compatible notation for formulas and chemical expressions.
 - For chemistry, use standard notation such as \\mathrm{H_2O}; do not use \\ce.
+- Every LaTeX command must be inside math delimiters. For example, write $\\mathrm{Na^+}$, never bare \\mathrm{Na^+}.
+- When a sentence contains several formulas or ions, delimit each one separately, such as $\\mathrm{Na^+}$ out / $\\mathrm{K^+}$ in.
 - Do not use \\(...\\) or \\[...\\] math delimiters.
 `;
 
