@@ -101,7 +101,7 @@ export default function StudyGuidePage() {
               Your next study guide starts here
             </h2>
             <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
-              Upload a supported study file and get a focused guide you can
+              Upload a supported study file and get a targeted guide you can
               work through one section at a time.
             </p>
             <Button

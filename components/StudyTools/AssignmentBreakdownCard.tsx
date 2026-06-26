@@ -1,10 +1,14 @@
 import { ListChecks } from "lucide-react"
 import { Dot } from "lucide-react"
 import { Button } from "../ui/button"
+import ComingSoonOverlay from "./ComingSoonOverlay"
 
 export default function AssignmentBreakdownCard() {
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 min-h-60 flex flex-col justify-between shadow-sm hover:shadow-xl lg:col-span-4">
+        <div
+            className="relative isolate cursor-not-allowed overflow-hidden rounded-2xl border border-gray-300 bg-gray-50 p-6 min-h-60 flex flex-col justify-between shadow-sm grayscale lg:col-span-4"
+            aria-disabled="true"
+        >
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-100">
                 <ListChecks className="text-orange-500"/>
             </div>
@@ -33,9 +37,12 @@ export default function AssignmentBreakdownCard() {
             <Button
                 variant="outline"
                 className="font-semibold text-md"
+                disabled
             >
                 Break Down Assignment
             </Button>
+
+            <ComingSoonOverlay />
         </div>
     )
 }

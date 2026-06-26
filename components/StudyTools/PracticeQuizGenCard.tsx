@@ -1,5 +1,5 @@
-import { Button } from "../ui/button"
-import { FileQuestionMark, ArrowRight } from "lucide-react"
+import { FileQuestionMark } from "lucide-react"
+import { StartStudySessionButton } from "@/components/study-sessions/StartStudySessionButton";
 
 export default function PracticeQuizGenCard() {
     return (
@@ -28,14 +28,11 @@ export default function PracticeQuizGenCard() {
                         <p>Instant Feedback</p>
                     </div>
                 </div>
-                <Button 
-                    variant="default"
-                    size="lg"
-                    className="w-full bg-white mt-4 text-black border border-blue-300"
-                >
-                    Create Quiz
-                    <ArrowRight />
-                </Button>
+                <StartStudySessionButton
+                    title="Practice quiz"
+                    sessionType="practice_quiz"
+                    className="mt-4 w-full"
+                />
             </div>
         </div>
     )

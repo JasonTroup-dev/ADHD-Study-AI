@@ -4,6 +4,7 @@ import { useState } from "react";
 import AiMarkdown from "@/components/AiMarkdown";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { FlashcardStudySessionBar } from "@/components/study-sessions/FlashcardStudySessionBar";
 
 type FlashcardItem = {
   id: string;
@@ -15,11 +16,13 @@ type FlashcardItem = {
 type FlashcardViewerProps = {
   title: string;
   flashcards: FlashcardItem[];
+  studySessionId?: string;
 };
 
 export default function FlashcardViewer({
   title,
   flashcards,
+  studySessionId,
 }: FlashcardViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -61,6 +64,9 @@ export default function FlashcardViewer({
   return (
     <div className="min-h-full w-full bg-gray-100">
       <div className="mx-auto w-full max-w-screen-xl px-6 py-8 lg:px-8">
+        {studySessionId ? (
+          <FlashcardStudySessionBar sessionId={studySessionId} />
+        ) : null}
         <div>
           <Link href="/study/flashcards">
             <Button variant="ghost" size="default" className="text-md">

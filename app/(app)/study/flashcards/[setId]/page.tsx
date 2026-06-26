@@ -5,6 +5,9 @@ type FlashcardSetPageProps = {
   params: Promise<{
     setId: string;
   }>;
+  searchParams: Promise<{
+    studySessionId?: string;
+  }>;
 };
 
 export type FlashcardItem = {
@@ -16,8 +19,10 @@ export type FlashcardItem = {
 
 export default async function FlashcardSetPage({
   params,
+  searchParams,
 }: FlashcardSetPageProps) {
   const { setId } = await params;
+  const { studySessionId } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -81,6 +86,7 @@ export default async function FlashcardSetPage({
     <FlashcardViewer
       title={flashcardSet.title}
       flashcards={flashcards ?? []}
+      studySessionId={studySessionId}
     />
   );
 }
