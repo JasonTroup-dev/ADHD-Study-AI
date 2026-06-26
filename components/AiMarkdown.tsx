@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { normalizeMathDelimiters } from "@/components/aiMarkdownText";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
@@ -100,26 +101,6 @@ const componentsByVariant: Record<AiMarkdownVariant, Components> = {
   "study-guide": studyGuideComponents,
   flashcard: flashcardComponents,
 };
-
-function normalizeMathDelimiters(content: string) {
-  return content
-    .split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`)/g)
-    .map((segment, index) => {
-      if (index % 2 === 1) return segment;
-
-      return segment
-        .replace(
-          /\\\[([\s\S]*?)\\\]/g,
-          (_match, expression: string) =>
-            `\n\n$$\n${expression.trim()}\n$$\n\n`,
-        )
-        .replace(
-          /\\\(([\s\S]*?)\\\)/g,
-          (_match, expression: string) => `$${expression.trim()}$`,
-        );
-    })
-    .join("");
-}
 
 export default function AiMarkdown({
   children,
