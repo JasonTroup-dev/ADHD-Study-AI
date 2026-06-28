@@ -1,8 +1,22 @@
 "use client"
 
 import { Button } from "@/components/ui/button";
-import { TaskCard, type StudyTask, } from "@/components/ui/taskCard";
-import { BookOpen, Brain, CalendarCheck2, CalendarDays, Clock3, FileText, Sparkles } from "lucide-react";
+import { StartStudySessionButton } from "@/components/study-sessions/StartStudySessionButton";
+import {
+  TaskCard,
+  getTaskClassName,
+  type StudyTask,
+} from "@/components/ui/taskCard";
+import {
+  ArrowRight,
+  BookOpen,
+  Brain,
+  CalendarCheck2,
+  CalendarDays,
+  FileText,
+  ListChecks,
+  Sparkles,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -11,9 +25,10 @@ import {
   getSessionTypeLabel,
   getTodayCompletedStudySessions,
   getTodayTotalStudyMinutes,
+  inferTaskSessionType,
 } from "@/lib/studySessions";
 import type { AssignmentImportance } from "@/types/assignments";
-import type { StudySession, StudySessionType } from "@/types/database";
+import type { StudySession } from "@/types/database";
 import StudyPlannerModal from "@/components/StudyPlanner/StudyPlannerModal";
 import type { StudyPlanImportSummary } from "@/types/syllabus";
 import { CompletionProgress } from "@/components/ui/completionProgress";
@@ -46,10 +61,6 @@ export default function DashboardPage() {
   >([]);
   const [todayStudyMinutes, setTodayStudyMinutes] = useState(0);
   const [todayStudySessionCount, setTodayStudySessionCount] = useState(0);
-  const [todayAssignmentStudySessionCount, setTodayAssignmentStudySessionCount] =
-    useState(0);
-  const [mostRecentSessionType, setMostRecentSessionType] =
-    useState<StudySessionType | null>(null);
   const [isStudyLoading, setIsStudyLoading] = useState(true);
   const [studyError, setStudyError] = useState<string | null>(null);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
@@ -75,6 +86,9 @@ export default function DashboardPage() {
   const totalTasks = tasks.length;
   const progressPercent =
     totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const remainingTasks = tasks.filter((task) => task.status !== "completed");
+  const recommendedTask = [...remainingTasks].sort(compareStudyTasks)[0] ?? null;
+  const nextDeadline = upcomingAssignments[0] ?? null;
 
   function formatDeadlineDate(date: string) {
     const [year, month, day] = date.split("-").map(Number);
@@ -82,6 +96,29 @@ export default function DashboardPage() {
       month: "short",
       day: "numeric",
     });
+  }
+
+  function formatDueDistance(date: string) {
+    const [dueYear, dueMonth, dueDay] = date.split("-").map(Number);
+    const [todayYear, todayMonth, todayDay] = dateString.split("-").map(Number);
+    const due = new Date(dueYear, dueMonth - 1, dueDay);
+    const today = new Date(todayYear, todayMonth - 1, todayDay);
+    const daysUntilDue = Math.round(
+      (due.getTime() - today.getTime()) / 86_400_000,
+    );
+
+    if (daysUntilDue === 0) return "Due today";
+    if (daysUntilDue === 1) return "Due tomorrow";
+    return `Due in ${daysUntilDue} days`;
+  }
+
+  function formatStartedAt(value: string | null) {
+    if (!value) return "Started recently";
+
+    return `Started ${new Date(value).toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    })}`;
   }
 
   useEffect(() => {
@@ -214,12 +251,7 @@ export default function DashboardPage() {
         const totalMinutes = await getTodayTotalStudyMinutes(sessions);
 
         setTodayStudySessionCount(sessions.length);
-        setTodayAssignmentStudySessionCount(
-          sessions.filter((session) => session.session_type === "assignment")
-            .length,
-        );
         setTodayStudyMinutes(totalMinutes);
-        setMostRecentSessionType(sessions[0]?.session_type ?? null);
       } catch (error) {
         console.error("Error loading today's study sessions:", error);
         setStudyError("Could not load today's study progress.");
@@ -411,44 +443,153 @@ export default function DashboardPage() {
 
           {/* Secondary Card Div */}
           <div className="lg:col-span-4">
-            <div className="rounded-2xl border border-blue-200 bg-linear-to-br from-blue-50 to-indigo-100 p-6">
-              <div className="flex items-center gap-2">
-                <Clock3 className="h-5 w-5 text-blue-700" />
-                <header className="text-xl font-semibold">Today&apos;s Study</header>
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
+                    <ListChecks className="h-4 w-4" aria-hidden="true" />
+                    Start here
+                  </div>
+                  <header className="mt-2 text-xl font-semibold text-gray-950">
+                    Your next useful move
+                  </header>
+                </div>
+                <span className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                  {remainingTasks.length} left
+                </span>
               </div>
 
-              {isStudyLoading ? (
-                <p className="mt-6 text-sm text-gray-600">Loading study progress...</p>
-              ) : studyError ? (
-                <p className="mt-6 text-sm text-red-700">{studyError}</p>
-              ) : (
-                <div className="mt-6 space-y-2">
-                  <p className="text-3xl font-semibold text-gray-950">
-                    {todayStudyMinutes} minutes studied
-                  </p>
-                  <p className="text-gray-600">
-                    {todayStudySessionCount}{" "}
-                    {todayStudySessionCount === 1 ? "session" : "sessions"} completed
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {todayAssignmentStudySessionCount} assignment{" "}
-                    {todayAssignmentStudySessionCount === 1 ? "session" : "sessions"}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Most recent:{" "}
-                    <span className="font-medium text-gray-900">
-                      {mostRecentSessionType
-                        ? getSessionTypeLabel(mostRecentSessionType)
-                        : "No sessions yet"}
-                    </span>
-                  </p>
-                  {todayStudySessionCount > 0 ? (
-                    <p className="pt-2 text-sm font-medium text-blue-800">
-                      You got started. That counts.
+              {isTasksLoading ? (
+                <p className="mt-6 text-sm text-gray-600">
+                  Finding the best next task...
+                </p>
+              ) : activeStudySession ? (
+                <div className="mt-6 space-y-5">
+                  <div className="border-l-4 border-emerald-500 pl-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                      Active session
                     </p>
-                  ) : null}
+                    <h2 className="mt-2 text-lg font-semibold text-gray-950">
+                      {activeStudySession.title ?? "Study session"}
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                      {getSessionTypeLabel(activeStudySession.session_type)} ·{" "}
+                      {formatStartedAt(activeStudySession.started_at)}
+                    </p>
+                  </div>
+
+                  <Button asChild className="w-full justify-between">
+                    <Link href={`/study-session/${activeStudySession.id}`}>
+                      Resume session
+                      <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : recommendedTask ? (
+                <div className="mt-6 space-y-5">
+                  <div className="border-l-4 border-gray-900 pl-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Recommended now
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold text-gray-950">
+                      {recommendedTask.title}
+                    </h2>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600">
+                      <span>{getTaskClassName(recommendedTask)}</span>
+                      <span className="capitalize">
+                        {recommendedTask.priority} priority
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-3">
+                    <StartStudySessionButton
+                      plannerTaskId={recommendedTask.id}
+                      assignmentId={recommendedTask.assignment_id}
+                      classId={recommendedTask.class_id}
+                      title={recommendedTask.title}
+                      sessionType={inferTaskSessionType(recommendedTask.title)}
+                      label="Start this"
+                      variant="default"
+                    />
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href="/planner">View plan</Link>
+                    </Button>
+                  </div>
+                </div>
+              ) : nextDeadline ? (
+                <div className="mt-6 space-y-5">
+                  <div className="border-l-4 border-amber-500 pl-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                      No task today
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold text-gray-950">
+                      {nextDeadline.title}
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                      {formatDueDistance(nextDeadline.due_date)} ·{" "}
+                      {nextDeadline.classes?.[0]?.name ?? "No class"}
+                    </p>
+                  </div>
+
+                  <Button asChild className="w-full justify-between">
+                    <Link href="/planner/assignments">
+                      Break it into tasks
+                      <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-5">
+                  <div className="border-l-4 border-emerald-500 pl-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                      Clear runway
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold text-gray-950">
+                      Nothing needs your attention today
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-600">
+                      Add a study plan when you want the dashboard to queue up
+                      the next concrete step.
+                    </p>
+                  </div>
+
+                  <Button
+                    type="button"
+                    className="w-full justify-between"
+                    onClick={() => setIsGenerateModalOpen(true)}
+                  >
+                    Generate study plan
+                    <Sparkles className="h-4 w-4" aria-hidden="true" />
+                  </Button>
                 </div>
               )}
+
+              <div className="mt-6 grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
+                <div>
+                  <p className="text-xs font-medium text-gray-500">Today</p>
+                  {isStudyLoading ? (
+                    <p className="mt-1 text-sm text-gray-600">Loading...</p>
+                  ) : studyError ? (
+                    <p className="mt-1 text-xs text-red-600">{studyError}</p>
+                  ) : (
+                    <p className="mt-1 text-sm font-semibold text-gray-950">
+                      {todayStudyMinutes} min · {todayStudySessionCount}{" "}
+                      {todayStudySessionCount === 1 ? "session" : "sessions"}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500">
+                    Next deadline
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-gray-950">
+                    {nextDeadline
+                      ? formatDueDistance(nextDeadline.due_date)
+                      : "None this week"}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
@@ -500,4 +641,20 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+const priorityRank: Record<string, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+};
+
+function compareStudyTasks(firstTask: StudyTask, secondTask: StudyTask) {
+  const firstRank = priorityRank[firstTask.priority.toLowerCase()] ?? 4;
+  const secondRank = priorityRank[secondTask.priority.toLowerCase()] ?? 4;
+
+  if (firstRank !== secondRank) return firstRank - secondRank;
+
+  return firstTask.title.localeCompare(secondTask.title);
 }
