@@ -35,15 +35,15 @@ Students with ADHD can have the syllabus, the assignment, the textbook, the note
 
 I built ADHD Study AI to solve that gap.
 
-The goal is not to replace studying. The goal is to remove the friction around starting, planning, and staying focused. The app helps students answer:
+The goal is not to replace studying. The goal is to protect the momentum it takes to start.
 
-- What do I need to work on today?
-- What is the next small step?
-- What does this assignment actually require?
-- Which study material is relevant when I get stuck?
-- How can I make progress without getting overwhelmed?
+When you have ADHD and finally feel ready to focus, you do not want to spend that energy answering a dozen setup questions before you can begin. What do I need to work on today? What is the next step? What does this assignment actually require? Which study material is relevant to what I am working on? What can I do right now without getting overwhelmed?
 
-This project is personal because it reflects the kind of tool I wish I had while trying to balance coursework, focus, deadlines, and the executive dysfunction that can come with ADHD.
+ADHD Study AI is built to answer those questions faster, so students can move from intention to action while their focus is still there.
+
+This project is very personal to me because it reflects the kind of tool I wish I had while trying to balance coursework, maintaining focus, deadlines, and the executive dysfunction that can come with ADHD.
+
+This project is very personal to me because it reflects the kind of tool I wish I had while trying to balance coursework, maintaining focus, deadlines, and the executive dysfunction that can come with ADHD.
 
 ---
 
