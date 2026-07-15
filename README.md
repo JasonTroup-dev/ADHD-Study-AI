@@ -22,6 +22,7 @@ ADHD Study AI is a full-stack web app built to help students reduce overwhelm, u
 - [Screenshots](#screenshots)
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
+- [Build and Checks](#build-and-checks)
 - [Project Status](#project-status)
 - [What This Project Demonstrates](#what-this-project-demonstrates)
 
@@ -31,7 +32,7 @@ ADHD Study AI is a full-stack web app built to help students reduce overwhelm, u
 
 As a student with ADHD, I know that the hardest part of studying is not always the material itself. A lot of the time, the hardest part is figuring out where to start.
 
-Students with ADHD can have the syllabus, the assignment, the textbook, the notes, and the deadline in front of them and still feel stuck because the task is too large and too unclear. Traditional planners often assume the student already knows how to break the work down. Traditional AI tools can explain topics, but they usually are not aware of the student’s actual class, deadlines, uploaded materials, or current task.
+Students with ADHD can have the syllabus, the assignment, the textbook, the notes, and the deadline in front of them and still feel stuck because the task is too large and too unclear. Traditional planners often assume the student already knows how to break the work down. Traditional AI tools can explain topics, but they usually are not aware of the student's actual class, deadlines, uploaded materials, or current task.
 
 I built ADHD Study AI to solve that gap.
 
@@ -40,8 +41,6 @@ The goal is not to replace studying. The goal is to protect the momentum it take
 When you have ADHD and finally feel ready to focus, you do not want to spend that energy answering a dozen setup questions before you can begin. What do I need to work on today? What is the next step? What does this assignment actually require? Which study material is relevant to what I am working on? What can I do right now without getting overwhelmed?
 
 ADHD Study AI is built to answer those questions faster, so students can move from intention to action while their focus is still there.
-
-This project is very personal to me because it reflects the kind of tool I wish I had while trying to balance coursework, maintaining focus, deadlines, and the executive dysfunction that can come with ADHD.
 
 This project is very personal to me because it reflects the kind of tool I wish I had while trying to balance coursework, maintaining focus, deadlines, and the executive dysfunction that can come with ADHD.
 
@@ -65,11 +64,11 @@ Instead of giving students another blank productivity app, ADHD Study AI uses up
 
 ### ADHD-Friendly Dashboard
 
-The dashboard is designed around the question: **“What should I do today?”**
+The dashboard is designed around the question: **"What should I do today?"**
 
 It includes:
 
-- Today’s scheduled study tasks
+- Today's scheduled study tasks
 - Upcoming deadlines
 - Daily study progress
 - Study minutes and session counts
@@ -124,7 +123,7 @@ Each class has its own workspace so students can keep assignments, study materia
 
 A class workspace includes:
 
-- “Next Up” card for the most relevant upcoming work
+- "Next Up" card for the most relevant upcoming work
 - Assignments for that class
 - Uploaded class materials
 - Flashcard sets connected to the class
@@ -270,7 +269,7 @@ The app tries to avoid making the student decide between too many options at onc
 
 ### 2. Review before saving AI output
 
-AI-generated plans, syllabus imports, flashcards, and file classifications are designed to be reviewed before they become part of the user’s workspace. This keeps the user in control while still reducing manual work.
+AI-generated plans, syllabus imports, flashcards, and file classifications are designed to be reviewed before they become part of the user's workspace. This keeps the user in control while still reducing manual work.
 
 ### 3. Break large assignments into smaller sessions
 
@@ -332,19 +331,19 @@ The UI favors short sections, clear labels, predictable actions, and minimal clu
 
 ```text
 Upload syllabus
-   ↓
+   ->
 Extract file text
-   ↓
+   ->
 AI analyzes course + assignments
-   ↓
+   ->
 User reviews results
-   ↓
+   ->
 Create or match class
-   ↓
+   ->
 Create assignments
-   ↓
+   ->
 Generate study plan tasks
-   ↓
+   ->
 Show tasks in planner, dashboard, and calendar
 ```
 
@@ -352,17 +351,17 @@ Show tasks in planner, dashboard, and calendar
 
 ```text
 Select assignment or study task
-   ↓
+   ->
 Start guided study session
-   ↓
+   ->
 Load assignment instructions + materials
-   ↓
+   ->
 AI tutor guides the student step-by-step
-   ↓
+   ->
 Session messages and timer are saved
-   ↓
+   ->
 Student completes or cancels session
-   ↓
+   ->
 Task and assignment status can be updated
 ```
 
@@ -370,15 +369,15 @@ Task and assignment status can be updated
 
 ```text
 Upload class files
-   ↓
+   ->
 Extract text
-   ↓
+   ->
 AI classifies file purpose
-   ↓
+   ->
 AI suggests assignment match or new assignment
-   ↓
+   ->
 User reviews before saving
-   ↓
+   ->
 Material becomes available to tutor and study sessions
 ```
 
@@ -386,7 +385,7 @@ Material becomes available to tutor and study sessions
 
 ## Screenshots
 
-> Suggested file location: save these images in `docs/screenshots/` so they render directly on GitHub.
+The screenshots below are stored in `docs/screenshots/` so they render directly on GitHub.
 
 ### Landing Page
 
@@ -396,7 +395,7 @@ The landing page explains the core value proposition clearly: ADHD Study AI turn
 
 ### Dashboard
 
-The dashboard focuses on the student’s next useful move. It shows today’s scheduled work, progress, an active session card, quick actions, and upcoming deadlines in one place.
+The dashboard focuses on the student's next useful move. It shows today's scheduled work, progress, an active session card, quick actions, and upcoming deadlines in one place.
 
 ![Dashboard showing scheduled study tasks, active session, and upcoming deadlines](docs/screenshots/dashboard.png)
 
@@ -455,7 +454,7 @@ Depending on your local setup, you may also need any Supabase service keys, site
 
 ### 4. Set up Supabase
 
-Apply the database migrations in the project and make sure the required storage bucket exists for assignment and study material uploads.
+Apply the SQL migrations in `supabase/migrations/` to your Supabase project and create a private storage bucket named `assignment-files` for assignment and study material uploads.
 
 The app expects Supabase-backed persistence for:
 
@@ -486,6 +485,20 @@ Open the local app in your browser and sign up or log in to begin testing the fu
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public Supabase anon key for authenticated client access |
 | `OPENAI_API_KEY` | OpenAI API key used by AI routes |
 | Additional Supabase/server variables | Used as needed for server-side storage, auth, or deployment configuration |
+
+---
+
+## Build and Checks
+
+Before sharing or deploying changes, run:
+
+```bash
+npm run lint
+npm run test:scheduling
+npm run build
+```
+
+These commands check formatting/lint rules, verify the syllabus scheduling logic, and confirm the production Next.js build.
 
 ---
 
