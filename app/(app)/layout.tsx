@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Brain,
   Bug,
@@ -83,6 +84,7 @@ export default function AppLayout({
   children: ReactNode;
 }) {
 
+  const pathname = usePathname();
   const [classesOpen, setClassesOpen] = useState(true);
   const [studyToolsOpen, setStudyToolsOpen] = useState(true);
   const [plannerOpen, setPlannerOpen] = useState(true);
@@ -219,7 +221,12 @@ export default function AppLayout({
               <Link
                 href="/settings"
                 aria-label="Settings"
-                className="flex items-center rounded-full p-2 hover:bg-gray-200"
+                aria-current={pathname === "/settings" ? "page" : undefined}
+                className={`flex items-center rounded-full p-2 transition-colors ${
+                  pathname === "/settings"
+                    ? "bg-gray-900 text-white"
+                    : "hover:bg-gray-200"
+                }`}
               >
                 <Settings className={sidebarOpen ? "mr-2" : ""}/>
                 <p className={sidebarOpen ? "" : "hidden"}>Settings</p>
