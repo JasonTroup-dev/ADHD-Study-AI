@@ -46,34 +46,34 @@ const studyGuideComponents: Components = {
     </h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mb-3 mt-8 border-b border-slate-200 pb-2 text-xl font-semibold text-slate-950 first:mt-0">
+    <h2 className="mb-2 mt-4 border-b border-slate-200 pb-1.5 text-lg font-semibold text-slate-950 first:mt-0">
       {children}
     </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mb-2 mt-5 text-base font-semibold text-slate-900">
+    <h3 className="mb-1.5 mt-3 text-sm font-semibold text-slate-900">
       {children}
     </h3>
   ),
   p: ({ children }) => (
-    <p className="mb-4 max-w-3xl leading-7 text-slate-700">{children}</p>
+    <p className="mb-3 max-w-3xl leading-6 text-slate-700">{children}</p>
   ),
   ul: ({ children }) => (
-    <ul className="mb-5 max-w-3xl list-disc space-y-2 pl-6 text-slate-700">
+    <ul className="mb-3 max-w-3xl list-disc space-y-1.5 pl-6 text-slate-700">
       {children}
     </ul>
   ),
   ol: ({ children }) => (
-    <ol className="mb-5 max-w-3xl list-decimal space-y-2 pl-6 text-slate-700">
+    <ol className="mb-3 max-w-3xl list-decimal space-y-1.5 pl-6 text-slate-700">
       {children}
     </ol>
   ),
-  li: ({ children }) => <li className="leading-7">{children}</li>,
+  li: ({ children }) => <li className="leading-6">{children}</li>,
   strong: ({ children }) => (
     <strong className="font-semibold text-slate-950">{children}</strong>
   ),
   blockquote: ({ children }) => (
-    <blockquote className="mb-5 border-l-4 border-blue-200 bg-blue-50 px-4 py-3 text-slate-700">
+    <blockquote className="mb-3 border-l-4 border-blue-200 bg-blue-50 px-4 py-2 text-slate-700">
       {children}
     </blockquote>
   ),
@@ -108,7 +108,13 @@ export default function AiMarkdown({
   variant = "tutor",
 }: AiMarkdownProps) {
   return (
-    <div className={cn("ai-markdown min-w-0", className)}>
+    <div
+      className={cn(
+        "ai-markdown min-w-0",
+        `ai-markdown--${variant}`,
+        className,
+      )}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[[rehypeKatex, { strict: false, throwOnError: false }]]}

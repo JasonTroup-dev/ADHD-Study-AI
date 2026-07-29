@@ -6,16 +6,6 @@ const client = new OpenAI({
   timeout: 4 * 60 * 1000,
 });
 
-const requiredSectionHeadings = [
-  "Quick Summary",
-  "Key Concepts",
-  "Important Vocabulary",
-  "Step-by-Step Explanation",
-  "Common Mistakes",
-  "Practice Questions",
-  "Estimated Study Plan",
-] as const;
-
 const studyGuideInstructions = `
 You create ADHD-friendly study guides from uploaded course material.
 
