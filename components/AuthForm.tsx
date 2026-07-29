@@ -94,8 +94,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#f7f3ea] text-[#19241f]">
-      <div className="mx-auto grid min-h-screen min-w-0 max-w-[100rem] lg:grid-cols-[minmax(0,1.06fr)_minmax(29rem,0.94fr)]">
+    <main className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#f7f3ea] text-[#19241f]">
+      <div className="mx-auto grid min-h-screen w-full min-w-0 max-w-[100rem] lg:grid-cols-[minmax(0,1.06fr)_minmax(29rem,0.94fr)]">
         <section className="relative hidden min-h-screen overflow-hidden bg-[#1c2b24] px-12 py-10 text-[#fffaf0] lg:flex lg:flex-col xl:px-16 xl:py-12">
           <div
             aria-hidden="true"
@@ -183,16 +183,16 @@ export function AuthForm({ mode }: AuthFormProps) {
           </div>
         </section>
 
-        <section className="flex min-h-screen min-w-0 flex-col px-5 py-5 sm:px-8 sm:py-7 lg:px-12 xl:px-20">
-          <div className="flex items-center justify-between">
+        <section className="flex min-h-screen w-full min-w-0 max-w-full flex-col overflow-hidden px-5 py-5 sm:px-8 sm:py-7 lg:px-12 xl:px-20">
+          <div className="flex min-w-0 items-center justify-between gap-2">
             <Link
               href="/"
-              className="inline-flex items-center gap-2.5 font-semibold tracking-[-0.02em] lg:hidden"
+              className="inline-flex min-w-0 items-center gap-2.5 font-semibold tracking-[-0.02em] lg:hidden"
             >
               <span className="flex size-9 items-center justify-center rounded-full bg-[#19241f] text-[#fffaf0]">
                 <Brain className="size-[18px]" strokeWidth={1.8} />
               </span>
-              ADHD Study AI
+              <span className="truncate">ADHD Study AI</span>
             </Link>
 
             <div className="ml-auto flex items-center gap-3 text-sm text-[#66736c]">
@@ -201,14 +201,14 @@ export function AuthForm({ mode }: AuthFormProps) {
               </span>
               <Link
                 href={isSignUp ? "/login" : "/signup"}
-                className="rounded-full border border-[#19241f]/15 bg-[#fffaf0] px-4 py-2 font-semibold text-[#26382f] transition-colors hover:bg-[#eee7d8]"
+                className="shrink-0 rounded-full border border-[#19241f]/15 bg-[#fffaf0] px-3 py-2 font-semibold text-[#26382f] transition-colors hover:bg-[#eee7d8] sm:px-4"
               >
                 {isSignUp ? "Sign in" : "Create account"}
               </Link>
             </div>
           </div>
 
-          <div className="mx-auto flex w-full min-w-0 max-w-[27rem] flex-1 flex-col justify-center py-14 sm:py-16">
+          <div className="mx-auto flex w-[min(100%,27rem)] min-w-0 flex-1 flex-col justify-center py-14 sm:py-16">
             <div className="mb-7 flex size-12 items-center justify-center rounded-2xl bg-[#e5eddf] text-[#3e6a53]">
               {isSignUp ? (
                 <Sparkles className="size-5" strokeWidth={1.9} />
@@ -332,7 +332,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             </p>
           </div>
 
-          <p className="text-center text-xs leading-5 text-[#87928c]">
+          <p className="max-w-full text-center text-xs leading-5 text-[#87928c]">
             By continuing, you agree to use ADHD Study AI responsibly.
           </p>
         </section>
