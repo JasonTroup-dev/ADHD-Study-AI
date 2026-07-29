@@ -1,0 +1,50 @@
+course,number,title,due,points,type,pdf
+PSY 240,1,Applied Cognition Note 1: Attention Audit,"Tuesday, September 1 at 11:59 PM",15,500-700 word analysis,PSY240/01_Applied_Cognition_Note_1_Attention_Audit.pdf
+PSY 240,2,Laboratory Brief 1: Visual Search,"Thursday, September 10 at 11:59 PM",55,Individual laboratory brief,PSY240/02_Laboratory_Brief_1_Visual_Search.pdf
+PSY 240,3,Applied Cognition Note 2: Change Blindness,"Tuesday, September 15 at 11:59 PM",15,500-700 word analysis,PSY240/03_Applied_Cognition_Note_2_Change_Blindness.pdf
+PSY 240,4,Applied Cognition Note 3: Working-Memory Load,"Tuesday, September 29 at 11:59 PM",15,500-700 word analysis,PSY240/04_Applied_Cognition_Note_3_Working_Memory_Load.pdf
+PSY 240,5,Laboratory Brief 2: Serial Position,"Thursday, October 8 at 11:59 PM",55,Individual laboratory brief,PSY240/05_Laboratory_Brief_2_Serial_Position.pdf
+PSY 240,6,Midterm Examination,"Thursday, October 15 at 10:00 AM",180,75-minute in-class examination,PSY240/06_Midterm_Examination.pdf
+PSY 240,7,Applied Cognition Note 4: Retrieval Practice,"Tuesday, October 20 at 11:59 PM",15,500-700 word analysis,PSY240/07_Applied_Cognition_Note_4_Retrieval_Practice.pdf
+PSY 240,8,Proposal Milestone 1: Question and Sources,"Thursday, October 29 at 11:59 PM",25,Replication project milestone,PSY240/08_Proposal_Milestone_1_Question_and_Sources.pdf
+PSY 240,9,Applied Cognition Note 5: Language Framing,"Tuesday, November 3 at 11:59 PM",15,500-700 word analysis,PSY240/09_Applied_Cognition_Note_5_Language_Framing.pdf
+PSY 240,10,Laboratory Brief 3: Category Learning,"Thursday, November 5 at 11:59 PM",55,Individual laboratory brief,PSY240/10_Laboratory_Brief_3_Category_Learning.pdf
+PSY 240,11,Proposal Milestone 2: Evidence Table,"Thursday, November 12 at 11:59 PM",50,Replication project milestone,PSY240/11_Proposal_Milestone_2_Evidence_Table.pdf
+PSY 240,12,Applied Cognition Note 6: Heuristics Diary,"Tuesday, November 17 at 11:59 PM",15,500-700 word analysis,PSY240/12_Applied_Cognition_Note_6_Heuristics_Diary.pdf
+PSY 240,13,Proposal Milestone 3: Methods Sketch,"Thursday, November 19 at 11:59 PM",50,Replication project milestone,PSY240/13_Proposal_Milestone_3_Methods_Sketch.pdf
+PSY 240,14,Peer Review of Replication Proposal,"Tuesday, November 24 at 11:59 PM",25,Structured peer review,PSY240/14_Peer_Review_of_Replication_Proposal.pdf
+PSY 240,15,Applied Cognition Note 7: Metacognition,"Tuesday, December 1 at 11:59 PM",15,500-700 word analysis,PSY240/15_Applied_Cognition_Note_7_Metacognition.pdf
+PSY 240,16,Laboratory Brief 4: Decision Framing,"Thursday, December 3 at 11:59 PM",55,Individual laboratory brief,PSY240/16_Laboratory_Brief_4_Decision_Framing.pdf
+PSY 240,17,Applied Cognition Note 8: Design Recommendation,"Tuesday, December 8 at 11:59 PM",15,500-700 word design memo,PSY240/17_Applied_Cognition_Note_8_Design_Recommendation.pdf
+PSY 240,18,Final Replication Proposal,"Thursday, December 10 at 11:59 PM",150,6-8 page APA-style proposal,PSY240/18_Final_Replication_Proposal.pdf
+BIO 210,1,"Problem Set 1: Scale, Units, and Microscopy","Sunday, August 30 at 11:59 PM",25,Five-question problem set,BIO210/01_Problem_Set_1_Scale_Units_and_Microscopy.pdf
+BIO 210,2,Problem Set 2: Macromolecular Interactions,"Sunday, September 13 at 11:59 PM",25,Five-question problem set,BIO210/02_Problem_Set_2_Macromolecular_Interactions.pdf
+BIO 210,3,Laboratory Report 1: Microscopy and Measurement,"Wednesday, September 23 at 11:59 PM",100,Individual scientific report,BIO210/03_Laboratory_Report_1_Microscopy_and_Measurement.pdf
+BIO 210,4,Problem Set 3: Membrane Transport,"Sunday, September 27 at 11:59 PM",25,Five-question problem set,BIO210/04_Problem_Set_3_Membrane_Transport.pdf
+BIO 210,5,Laboratory Notebook Check 1,"Wednesday, September 30 at 3:50 PM",30,In-lab notebook audit,BIO210/05_Laboratory_Notebook_Check_1.pdf
+BIO 210,6,Unit Examination 1,"Wednesday, October 7 at 9:00 AM",125,50-minute in-class examination,BIO210/06_Unit_Examination_1.pdf
+BIO 210,7,Problem Set 4: Enzyme Kinetics,"Sunday, October 18 at 11:59 PM",25,Five-question problem set,BIO210/07_Problem_Set_4_Enzyme_Kinetics.pdf
+BIO 210,8,Laboratory Report 2: Enzyme Kinetics,"Wednesday, October 28 at 11:59 PM",100,Individual scientific report,BIO210/08_Laboratory_Report_2_Enzyme_Kinetics.pdf
+BIO 210,9,Problem Set 5: Cellular Respiration,"Sunday, November 1 at 11:59 PM",25,Five-question problem set,BIO210/09_Problem_Set_5_Cellular_Respiration.pdf
+BIO 210,10,Laboratory Notebook Check 2,"Wednesday, November 4 at 3:50 PM",30,In-lab notebook audit,BIO210/10_Laboratory_Notebook_Check_2.pdf
+BIO 210,11,Problem Set 6: Photosynthesis,"Sunday, November 15 at 11:59 PM",25,Five-question problem set,BIO210/11_Problem_Set_6_Photosynthesis.pdf
+BIO 210,12,Unit Examination 2,"Wednesday, November 18 at 9:00 AM",125,50-minute in-class examination,BIO210/12_Unit_Examination_2.pdf
+BIO 210,13,Problem Set 7: Gene Expression,"Sunday, November 29 at 11:59 PM",25,Five-question problem set,BIO210/13_Problem_Set_7_Gene_Expression.pdf
+BIO 210,14,Laboratory Notebook Check 3,"Wednesday, December 2 at 3:50 PM",40,Comprehensive notebook audit,BIO210/14_Laboratory_Notebook_Check_3.pdf
+BIO 210,15,Problem Set 8: Cell Cycle and Signaling,"Sunday, December 6 at 11:59 PM",25,Five-question problem set,BIO210/15_Problem_Set_8_Cell_Cycle_and_Signaling.pdf
+BIO 210,16,Laboratory Report 3: Membrane Transport,"Wednesday, December 9 at 11:59 PM",100,Individual scientific report,BIO210/16_Laboratory_Report_3_Membrane_Transport.pdf
+BIO 210,17,Cumulative Final Examination,"Wednesday, December 16 at 8:00 AM",150,Two-hour in-class final examination,BIO210/17_Cumulative_Final_Examination.pdf
+HIST 115,1,Primary Source Annotation 1: Revolutionary Claims,"Friday, September 4 at 11:59 PM",30,600-word primary-source annotation,HIST115/01_Primary_Source_Annotation_1_Revolutionary_Claims.pdf
+HIST 115,2,Spatial History Map 1: Atlantic Revolutions,"Monday, September 14 at 11:59 PM",40,Annotated historical map,HIST115/02_Spatial_History_Map_1_Atlantic_Revolutions.pdf
+HIST 115,3,Primary Source Annotation 2: Factory Testimony,"Friday, September 18 at 11:59 PM",30,600-word primary-source annotation,HIST115/03_Primary_Source_Annotation_2_Factory_Testimony.pdf
+HIST 115,4,Digital Exhibit Proposal,"Monday, September 28 at 11:59 PM",50,Two-page project proposal,HIST115/04_Digital_Exhibit_Proposal.pdf
+HIST 115,5,Primary Source Annotation 3: Imperial Advertisement,"Friday, October 2 at 11:59 PM",30,600-word visual-source annotation,HIST115/05_Primary_Source_Annotation_3_Imperial_Advertisement.pdf
+HIST 115,6,Spatial History Map 2: Commodity and Empire,"Monday, October 12 at 11:59 PM",40,Annotated historical map,HIST115/06_Spatial_History_Map_2_Commodity_and_Empire.pdf
+HIST 115,7,Comparative Essay 1: Industry and Social Change,"Friday, October 16 at 11:59 PM",175,"1,500-1,800 word comparative essay",HIST115/07_Comparative_Essay_1_Industry_and_Social_Change.pdf
+HIST 115,8,Primary Source Annotation 4: Wartime Letter,"Friday, October 23 at 11:59 PM",30,600-word primary-source annotation,HIST115/08_Primary_Source_Annotation_4_Wartime_Letter.pdf
+HIST 115,9,Digital Exhibit Curated Source Set,"Friday, October 30 at 11:59 PM",50,Six-item source dossier,HIST115/09_Digital_Exhibit_Curated_Source_Set.pdf
+HIST 115,10,Primary Source Annotation 5: Anticolonial Speech,"Friday, November 6 at 11:59 PM",30,600-word rhetorical-source annotation,HIST115/10_Primary_Source_Annotation_5_Anticolonial_Speech.pdf
+HIST 115,11,Spatial History Map 3: Migration after 1945,"Monday, November 16 at 11:59 PM",40,Annotated historical map,HIST115/11_Spatial_History_Map_3_Migration_after_1945.pdf
+HIST 115,12,Comparative Essay 2: Decolonization Choices,"Monday, November 30 at 11:59 PM",175,"1,500-1,800 word comparative essay",HIST115/12_Comparative_Essay_2_Decolonization_Choices.pdf
+HIST 115,13,Primary Source Annotation 6: Memory and Testimony,"Friday, December 4 at 11:59 PM",30,600-word oral-history annotation,HIST115/13_Primary_Source_Annotation_6_Memory_and_Testimony.pdf
+HIST 115,14,Final Digital Exhibit,"Friday, December 11 at 11:59 PM",150,Six-item public digital exhibit,HIST115/14_Final_Digital_Exhibit.pdf
