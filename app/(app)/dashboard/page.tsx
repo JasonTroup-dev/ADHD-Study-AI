@@ -47,6 +47,8 @@ type UpcomingAssignment = {
   classes: { name: string }[] | null;
 };
 
+const STUDY_PLAN_NOTICE_DURATION_MS = 5_000;
+
 
 export default function DashboardPage() {
 
@@ -67,6 +69,17 @@ export default function DashboardPage() {
   const [studyPlanNotice, setStudyPlanNotice] = useState<string | null>(null);
   const [studyPlanRefreshToken, setStudyPlanRefreshToken] = useState(0);
   const [currentDate] = useState(new Date());
+
+  useEffect(() => {
+    if (!studyPlanNotice) return;
+
+    const timeoutId = window.setTimeout(
+      () => setStudyPlanNotice(null),
+      STUDY_PLAN_NOTICE_DURATION_MS,
+    );
+
+    return () => window.clearTimeout(timeoutId);
+  }, [studyPlanNotice]);
  
   const formattedDate = currentDate.toLocaleDateString("en-US", {
         weekday: "long",

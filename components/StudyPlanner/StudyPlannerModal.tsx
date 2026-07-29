@@ -3,10 +3,17 @@
 import { type FormEvent, useState } from "react";
 import {
   ArrowLeft,
+  BookOpen,
+  CalendarDays,
   CheckCircle2,
+  ChevronDown,
   CircleAlert,
+  Clock3,
   FileText,
+  ListChecks,
   LoaderCircle,
+  ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Trash2,
   Upload,
@@ -14,6 +21,12 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -335,50 +348,58 @@ export default function StudyPlannerModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-8"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) closeModal();
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) closeModal();
       }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="study-plan-upload-title"
-        aria-describedby="study-plan-upload-description"
+      <DialogContent
+        showCloseButton={false}
         aria-busy={isBusy}
-        className="max-h-[calc(100vh-4rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl"
+        onEscapeKeyDown={(event) => {
+          if (isBusy) event.preventDefault();
+        }}
+        onPointerDownOutside={(event) => {
+          if (isBusy) event.preventDefault();
+        }}
+        className={`h-[calc(100svh-1rem)] max-h-[calc(100svh-1rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden gap-0 border-slate-200 bg-slate-50 p-0 sm:max-h-[calc(100svh-3rem)] ${
+          step === "upload"
+            ? "max-w-4xl sm:h-auto sm:grid-rows-none"
+            : "max-w-6xl sm:h-[calc(100svh-3rem)]"
+        }`}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2
-              id="study-plan-upload-title"
-              className="text-xl font-semibold text-slate-950"
-            >
-              Generate Study Plan
-            </h2>
-            <p
-              id="study-plan-upload-description"
-              className="mt-1 text-sm text-slate-500"
-            >
-              {step === "upload"
-                ? "Upload a syllabus to build your plan."
-                : "Review the AI-extracted details before anything is saved."}
-            </p>
+        <header className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-white shadow-sm">
+              <Sparkles className="size-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <DialogTitle className="truncate text-lg text-slate-950">
+                Build your study plan
+              </DialogTitle>
+              <DialogDescription className="mt-1 hidden text-xs text-slate-500 sm:block">
+                Turn one syllabus into a realistic, ready-to-use schedule.
+              </DialogDescription>
+            </div>
           </div>
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={closeModal}
-            disabled={isBusy}
-            aria-label="Close generate study plan dialog"
-            className="shrink-0 rounded-lg text-slate-500"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </Button>
-        </div>
+          <div className="flex items-center gap-3">
+            <StepIndicator step={step} />
+            <div className="h-6 w-px bg-slate-200" aria-hidden="true" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={closeModal}
+              disabled={isBusy}
+              aria-label="Close generate study plan dialog"
+              className="rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-950"
+            >
+              <X className="size-4" aria-hidden="true" />
+            </Button>
+          </div>
+        </header>
 
         {step === "upload" ? (
           <UploadStep
@@ -454,7 +475,33 @@ export default function StudyPlannerModal({
             onCreate={createStudyPlan}
           />
         )}
-      </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function StepIndicator({ step }: { step: "upload" | "review" }) {
+  const isReview = step === "review";
+
+  return (
+    <div className="hidden items-center gap-2 text-xs font-medium sm:flex" aria-label="Study plan progress">
+      <span className="flex items-center gap-1.5 text-slate-950">
+        <span
+          className={`flex size-5 items-center justify-center rounded-full text-[10px] ${
+            isReview ? "bg-emerald-100 text-emerald-700" : "bg-slate-950 text-white"
+          }`}
+        >
+          {isReview ? <CheckCircle2 className="size-3.5" aria-hidden="true" /> : "1"}
+        </span>
+        Syllabus
+      </span>
+      <span className="h-px w-5 bg-slate-200" aria-hidden="true" />
+      <span className={isReview ? "flex items-center gap-1.5 text-slate-950" : "flex items-center gap-1.5 text-slate-400"}>
+        <span className={`flex size-5 items-center justify-center rounded-full text-[10px] ${isReview ? "bg-slate-950 text-white" : "bg-slate-100"}`}>
+          2
+        </span>
+        Review
+      </span>
     </div>
   );
 }
@@ -479,80 +526,129 @@ function UploadStep({
   onFileChange: (file: File | null) => void;
 }) {
   return (
-    <form onSubmit={onSubmit} className="mt-6">
-      <input
-        id="study-plan-source-file"
-        type="file"
-        accept={SYLLABUS_FILE_ACCEPT}
-        disabled={isAnalyzing}
-        onChange={(event) => {
-          onFileChange(event.target.files?.[0] ?? null);
-          event.target.value = "";
-        }}
-        className="sr-only"
-      />
-
-      <label
-        htmlFor="study-plan-source-file"
-        onDragOver={(event) => {
-          event.preventDefault();
-          onDraggingChange(true);
-        }}
-        onDragLeave={() => onDraggingChange(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          onDraggingChange(false);
-          onFileChange(event.dataTransfer.files?.[0] ?? null);
-        }}
-        className={`flex min-h-72 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition ${
-          isDragging
-            ? "border-slate-500 bg-slate-100"
-            : "border-slate-300 bg-white hover:bg-slate-50"
-        }`}
-      >
-        {sourceFile ? (
-          <>
-            <FileText className="h-8 w-8 text-slate-600" aria-hidden="true" />
-            <p className="mt-3 max-w-sm truncate text-sm font-medium text-slate-800">
-              {sourceFile.name}
+    <form onSubmit={onSubmit} className="min-h-0 overflow-y-auto">
+      <div className="grid gap-5 p-5 sm:p-6 md:grid-cols-[0.9fr_1.1fr]">
+        <section className="relative overflow-hidden rounded-2xl bg-slate-950 p-5 text-white sm:p-7">
+          <div className="absolute -right-16 -top-20 size-52 rounded-full bg-blue-500/25 blur-3xl" aria-hidden="true" />
+          <div className="absolute -bottom-16 left-4 size-44 rounded-full bg-violet-500/20 blur-3xl" aria-hidden="true" />
+          <div className="relative">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
+              <Sparkles className="size-3.5 text-blue-300" aria-hidden="true" />
+              AI-powered planning
+            </span>
+            <h2 className="mt-4 max-w-xs text-xl font-semibold leading-tight tracking-tight sm:mt-6 sm:text-3xl">
+              Your syllabus, turned into a plan you can follow.
+            </h2>
+            <p className="mt-3 max-w-sm text-sm leading-6 text-slate-300">
+              We’ll find important dates, estimate the workload, and spread the work into manageable study blocks.
             </p>
-            <p className="mt-1 text-xs text-slate-500">
-              Click or drag another file to replace it
-            </p>
-          </>
-        ) : (
-          <>
-            <Upload className="h-8 w-8 text-slate-600" aria-hidden="true" />
-            <p className="mt-3 text-sm text-slate-600">Drag syllabus here</p>
-            <p className="mt-1 text-xs text-slate-400">
-              {SUPPORTED_SYLLABUS_FILE_LABEL}, up to{" "}
-              {formatFileSize(MAX_STUDY_FILE_BYTES)}
-            </p>
-          </>
-        )}
-      </label>
 
-      {error ? <ErrorMessage message={error} /> : null}
+            <div className="mt-8 hidden space-y-3 md:block">
+              <Feature icon={BookOpen} label="Detect class details and assignments" />
+              <Feature icon={CalendarDays} label="Build around every due date" />
+              <Feature icon={SlidersHorizontal} label="Keep your daily workload realistic" />
+            </div>
+          </div>
+        </section>
 
-      <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-          disabled={isAnalyzing}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={!sourceFile || isAnalyzing}>
-          {isAnalyzing ? (
-            <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
-          )}
-          {isAnalyzing ? "Reading syllabus..." : "Generate study plan"}
-        </Button>
+        <section className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Step 1 of 2</p>
+            <h3 className="mt-2 text-xl font-semibold text-slate-950">Add your syllabus</h3>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Upload the file your instructor provided. You’ll review everything before it is added.
+            </p>
+          </div>
+
+          <input
+            id="study-plan-source-file"
+            type="file"
+            accept={SYLLABUS_FILE_ACCEPT}
+            disabled={isAnalyzing}
+            onChange={(event) => {
+              onFileChange(event.target.files?.[0] ?? null);
+              event.target.value = "";
+            }}
+            className="sr-only"
+          />
+
+          <label
+            htmlFor="study-plan-source-file"
+            onDragOver={(event) => {
+              event.preventDefault();
+              onDraggingChange(true);
+            }}
+            onDragLeave={() => onDraggingChange(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              onDraggingChange(false);
+              onFileChange(event.dataTransfer.files?.[0] ?? null);
+            }}
+            className={`mt-5 flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 text-center transition-all md:min-h-56 ${
+              isDragging
+                ? "scale-[1.01] border-blue-500 bg-blue-50"
+                : sourceFile
+                  ? "border-emerald-300 bg-emerald-50/60 hover:bg-emerald-50"
+                  : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100/70"
+            }`}
+          >
+            <span className={`flex size-12 items-center justify-center rounded-2xl shadow-sm ${sourceFile ? "bg-emerald-600 text-white" : "bg-white text-slate-700"}`}>
+              {sourceFile ? <FileText className="size-6" aria-hidden="true" /> : <Upload className="size-6" aria-hidden="true" />}
+            </span>
+            {sourceFile ? (
+              <>
+                <p className="mt-4 max-w-full truncate text-sm font-semibold text-slate-900">{sourceFile.name}</p>
+                <p className="mt-1 text-xs text-slate-500">{formatFileSize(sourceFile.size)} · Ready to analyze</p>
+                <span className="mt-3 text-xs font-semibold text-emerald-700">Choose a different file</span>
+              </>
+            ) : (
+              <>
+                <p className="mt-4 text-sm font-semibold text-slate-900">Drop your syllabus here</p>
+                <p className="mt-1 text-xs text-slate-500">or click to browse your files</p>
+                <p className="mt-4 text-[11px] text-slate-400">{SUPPORTED_SYLLABUS_FILE_LABEL} · Max {formatFileSize(MAX_STUDY_FILE_BYTES)}</p>
+              </>
+            )}
+          </label>
+
+          <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-slate-500">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-slate-400" aria-hidden="true" />
+            Your file is only used to extract the course details needed for this plan.
+          </div>
+
+          {error ? <ErrorMessage message={error} /> : null}
+        </section>
       </div>
+
+      <footer className="sticky bottom-0 flex flex-col-reverse gap-3 border-t border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <p className="hidden text-xs text-slate-400 sm:block">Nothing is saved until you confirm the next step.</p>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isAnalyzing}
+            className="sm:min-w-24"
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!sourceFile || isAnalyzing} className="min-w-44 bg-blue-600 text-white hover:bg-blue-700">
+            {isAnalyzing ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : <Sparkles className="size-4" aria-hidden="true" />}
+            {isAnalyzing ? "Reading syllabus..." : "Analyze syllabus"}
+          </Button>
+        </div>
+      </footer>
     </form>
+  );
+}
+
+function Feature({ icon: Icon, label }: { icon: typeof BookOpen; label: string }) {
+  return (
+    <div className="flex items-center gap-3 text-sm text-slate-200">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/10">
+        <Icon className="size-4 text-blue-300" aria-hidden="true" />
+      </span>
+      {label}
+    </div>
   );
 }
 
@@ -623,403 +719,246 @@ function ReviewStep({
     "Unknown course";
 
   return (
-    <div className="mt-5">
-      <div
-        className={`rounded-xl border p-4 ${
-          classMatch
-            ? "border-emerald-200 bg-emerald-50"
-            : "border-amber-200 bg-amber-50"
-        }`}
-      >
-        <div className="flex items-start gap-3">
-          {classMatch ? (
-            <CheckCircle2
-              className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700"
-              aria-hidden="true"
-            />
-          ) : (
-            <CircleAlert
-              className="mt-0.5 h-5 w-5 shrink-0 text-amber-700"
-              aria-hidden="true"
-            />
-          )}
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-slate-950">
-              AI detected {detectedLabel}
-            </p>
-            {classMatch ? (
-              <>
-                <p className="mt-1 text-sm text-slate-600">
-                  Matched to your existing class: {classMatch.name}
-                </p>
-                {classResolution === "matched" ? (
-                  <button
-                    type="button"
-                    className="mt-2 text-xs font-semibold text-slate-700 underline"
-                    onClick={() => onClassResolutionChange("existing")}
-                    disabled={isBusy}
-                  >
-                    Choose a different class
-                  </button>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <p className="mt-1 text-sm text-slate-700">
-                  This does not match any of your classes. Would you like to
-                  create a new class?
-                </p>
-                {classResolution === null ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => onClassResolutionChange("create")}
-                    >
-                      Yes, create class
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      disabled={classes.length === 0}
-                      onClick={() => onClassResolutionChange("existing")}
-                    >
-                      Choose existing
-                    </Button>
+    <div className="flex min-h-0 flex-col overflow-hidden">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="grid items-start gap-5 p-5 sm:p-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <aside className="space-y-4 lg:sticky lg:top-0">
+            <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-100 p-4">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  <BookOpen className="size-3.5" aria-hidden="true" />
+                  Course
+                </div>
+                <h3 className="mt-3 text-base font-semibold leading-snug text-slate-950">{detectedLabel}</h3>
+                <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                  <span>{course?.instructor || "Instructor not found"}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{Math.round((course?.confidence ?? 0) * 100)}% confidence</span>
+                </div>
+              </div>
+
+              <div className="p-4">
+                {classMatch && classResolution === "matched" ? (
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" aria-hidden="true" />
+                      <div>
+                        <p className="text-xs font-semibold text-emerald-900">Matched to your class</p>
+                        <p className="mt-1 text-sm text-emerald-800">{classMatch.name}</p>
+                      </div>
+                    </div>
+                    <button type="button" className="mt-3 text-xs font-semibold text-emerald-800 underline underline-offset-2" onClick={() => onClassResolutionChange("existing")} disabled={isBusy}>
+                      Use a different class
+                    </button>
                   </div>
                 ) : null}
-              </>
-            )}
-          </div>
-        </div>
 
-        {classResolution === "existing" ? (
-          <div className="mt-4">
-            <Label htmlFor="study-plan-existing-class">Use class</Label>
-            <select
-              id="study-plan-existing-class"
-              value={selectedClassId}
-              disabled={isBusy}
-              onChange={(event) => onSelectedClassChange(event.target.value)}
-              className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-3 text-sm"
-            >
-              <option value="">Choose a class</option>
-              {classes.map((classItem) => (
-                <option key={classItem.id} value={classItem.id}>
-                  {classItem.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="mt-2 text-xs font-semibold text-slate-700 underline"
-              disabled={isBusy}
-              onClick={() => onClassResolutionChange("create")}
-            >
-              Create a new class instead
-            </button>
-          </div>
-        ) : null}
+                {!classMatch && classResolution === null ? (
+                  <div>
+                    <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                      <CircleAlert className="mt-0.5 size-4 shrink-0 text-amber-700" aria-hidden="true" />
+                      <p className="text-xs leading-5 text-amber-900">We couldn’t match this syllabus to one of your classes.</p>
+                    </div>
+                    <div className="mt-3 grid gap-2">
+                      <Button type="button" size="sm" onClick={() => onClassResolutionChange("create")}>Create detected class</Button>
+                      <Button type="button" size="sm" variant="outline" disabled={classes.length === 0} onClick={() => onClassResolutionChange("existing")}>Choose existing class</Button>
+                    </div>
+                  </div>
+                ) : null}
 
-        {classResolution === "create" ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="detected-class-name">Class name</Label>
-              <Input
-                id="detected-class-name"
-                value={newClassName}
-                disabled={isBusy}
-                onChange={(event) => onNewClassNameChange(event.target.value)}
-              />
-            </div>
-            <div>
-              <Label htmlFor="detected-class-code">Course code</Label>
-              <Input
-                id="detected-class-code"
-                value={newClassCode}
-                disabled={isBusy}
-                onChange={(event) => onNewClassCodeChange(event.target.value)}
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <Label htmlFor="detected-class-instructor">Instructor</Label>
-              <Input
-                id="detected-class-instructor"
-                value={newClassInstructor}
-                disabled={isBusy}
-                onChange={(event) =>
-                  onNewClassInstructorChange(event.target.value)
-                }
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <Label id="detected-class-color-label">Class color</Label>
-              <div
-                role="radiogroup"
-                aria-labelledby="detected-class-color-label"
-                className="mt-2 flex flex-wrap gap-2"
-              >
-                {classColorOptions.map((color) => (
-                  <button
-                    key={color.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={newClassColor === color.value}
-                    aria-label={color.name}
-                    disabled={isBusy}
-                    onClick={() => onNewClassColorChange(color.value)}
-                    className={`flex h-9 w-9 items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                      newClassColor === color.value
-                        ? "ring-2 ring-slate-950 ring-offset-2"
-                        : "hover:scale-105"
-                    }`}
-                  >
-                    <span className={`h-6 w-6 rounded-full ${color.accent}`} />
-                  </button>
-                ))}
+                {classResolution === "existing" ? (
+                  <div>
+                    <Label htmlFor="study-plan-existing-class" className="text-xs text-slate-600">Use an existing class</Label>
+                    <div className="relative mt-2">
+                      <select id="study-plan-existing-class" value={selectedClassId} disabled={isBusy} onChange={(event) => onSelectedClassChange(event.target.value)} className={selectClassName}>
+                        <option value="">Choose a class</option>
+                        {classes.map((classItem) => <option key={classItem.id} value={classItem.id}>{classItem.name}</option>)}
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                    </div>
+                    <button type="button" className="mt-3 text-xs font-semibold text-slate-600 underline underline-offset-2" disabled={isBusy} onClick={() => onClassResolutionChange("create")}>
+                      Create a new class instead
+                    </button>
+                  </div>
+                ) : null}
+
+                {classResolution === "create" ? (
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="detected-class-name" className="text-xs text-slate-600">Class name</Label>
+                      <Input id="detected-class-name" value={newClassName} disabled={isBusy} onChange={(event) => onNewClassNameChange(event.target.value)} className="mt-1.5" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="detected-class-code" className="text-xs text-slate-600">Course code</Label>
+                        <Input id="detected-class-code" value={newClassCode} disabled={isBusy} onChange={(event) => onNewClassCodeChange(event.target.value)} className="mt-1.5" />
+                      </div>
+                      <div>
+                        <Label htmlFor="detected-class-instructor" className="text-xs text-slate-600">Instructor</Label>
+                        <Input id="detected-class-instructor" value={newClassInstructor} disabled={isBusy} onChange={(event) => onNewClassInstructorChange(event.target.value)} className="mt-1.5" />
+                      </div>
+                    </div>
+                    <div>
+                      <Label id="detected-class-color-label" className="text-xs text-slate-600">Color</Label>
+                      <div role="radiogroup" aria-labelledby="detected-class-color-label" className="mt-2 flex flex-wrap gap-2">
+                        {classColorOptions.map((color) => (
+                          <button key={color.value} type="button" role="radio" aria-checked={newClassColor === color.value} aria-label={color.name} disabled={isBusy} onClick={() => onNewClassColorChange(color.value)} className={`flex size-7 items-center justify-center rounded-full transition disabled:opacity-50 ${newClassColor === color.value ? "ring-2 ring-slate-900 ring-offset-2" : "hover:scale-110"}`}>
+                            <span className={`size-5 rounded-full ${color.accent}`} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {classes.length > 0 ? (
+                      <button type="button" className="text-xs font-semibold text-slate-600 underline underline-offset-2" onClick={() => onClassResolutionChange("existing")}>
+                        Use an existing class
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2 sm:col-span-2">
-              {classes.length > 0 ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onClassResolutionChange("existing")}
-                >
-                  Use an existing class instead
-                </Button>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-      </div>
+            </section>
 
-      <div className="mt-5 flex items-start justify-between gap-4">
-        <div>
-          <h3 className="font-semibold text-slate-950">
-            Review extracted assignments
-          </h3>
-          <p className="mt-1 text-xs text-slate-500">
-            {assignments.length} found in {analysisFileName}
-          </p>
-        </div>
-        <div className="w-36 shrink-0">
-          <Label htmlFor="study-plan-daily-limit">Daily task limit</Label>
-          <select
-            id="study-plan-daily-limit"
-            value={maxTasksPerDay}
-            disabled={isBusy}
-            onChange={(event) =>
-              onMaxTasksPerDayChange(Number(event.target.value))
-            }
-            className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
-          >
-            {[1, 2, 3, 4, 5].map((limit) => (
-              <option key={limit} value={limit}>
-                {limit} {limit === 1 ? "task" : "tasks"}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="mt-3 space-y-3">
-        {assignments.map((assignment, index) => (
-          <div
-            key={assignment.id}
-            className="rounded-xl border border-slate-200 bg-slate-50 p-3"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold text-slate-500">
-                Assignment {index + 1} · {Math.round(assignment.confidence * 100)}%
-                confidence
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                disabled={isBusy}
-                aria-label={`Remove ${assignment.title || "assignment"}`}
-                onClick={() => onAssignmentRemove(assignment.id)}
-              >
-                <Trash2 className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            </div>
-
-            {getAssignmentReviewWarning(assignment) ? (
-              <div className="mt-2 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800">
-                <CircleAlert
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                  aria-hidden="true"
-                />
-                <span>{getAssignmentReviewWarning(assignment)}</span>
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
+                <SlidersHorizontal className="size-3.5" aria-hidden="true" />
+                Workload
               </div>
-            ) : null}
-
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
-              <div>
-                <Label htmlFor={`${assignment.id}-title`}>Title</Label>
-                <Input
-                  id={`${assignment.id}-title`}
-                  value={assignment.title}
-                  disabled={isBusy}
-                  onChange={(event) =>
-                    onAssignmentChange(assignment.id, {
-                      title: event.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor={`${assignment.id}-kind`}>Type</Label>
-                <select
-                  id={`${assignment.id}-kind`}
-                  value={assignment.kind}
-                  disabled={isBusy}
-                  onChange={(event) =>
-                    onAssignmentChange(assignment.id, {
-                      kind: event.target.value as SyllabusItemKind,
-                    })
-                  }
-                  className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
-                >
-                  {itemKindOptions.map((kind) => (
-                    <option key={kind} value={kind}>
-                      {capitalize(kind)}
-                    </option>
-                  ))}
+              <Label htmlFor="study-plan-daily-limit" className="mt-4 text-xs text-slate-600">Maximum study blocks per day</Label>
+              <div className="relative mt-2">
+                <select id="study-plan-daily-limit" value={maxTasksPerDay} disabled={isBusy} onChange={(event) => onMaxTasksPerDayChange(Number(event.target.value))} className={selectClassName}>
+                  {[1, 2, 3, 4, 5].map((limit) => <option key={limit} value={limit}>{limit} {limit === 1 ? "block" : "blocks"} per day</option>)}
                 </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
               </div>
+              <div className="mt-3 flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">
+                <Clock3 className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                We’ll spread work across available days and never exceed this limit.
+              </div>
+            </section>
+          </aside>
+
+          <section className="min-w-0">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <Label htmlFor={`${assignment.id}-due-date`}>Due date</Label>
-                <Input
-                  id={`${assignment.id}-due-date`}
-                  type="date"
-                  value={assignment.dueDate ?? ""}
-                  disabled={isBusy}
-                  onChange={(event) =>
-                    onAssignmentChange(assignment.id, {
-                      dueDate: event.target.value || null,
-                      dueDateStatus: event.target.value
-                        ? "explicit"
-                        : "missing",
-                    })
-                  }
-                />
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Step 2 of 2</p>
+                <h2 className="mt-2 text-xl font-semibold text-slate-950">Review your assignments</h2>
+                <p className="mt-1 text-sm text-slate-500">Check the details we found before building your schedule.</p>
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:col-span-2">
-                <div>
-                  <Label htmlFor={`${assignment.id}-points`}>Points</Label>
-                  <Input
-                    id={`${assignment.id}-points`}
-                    type="number"
-                    min="0"
-                    value={assignment.points ?? ""}
-                    disabled={isBusy}
-                    onChange={(event) =>
-                      onAssignmentChange(assignment.id, {
-                        points:
-                          event.target.value === ""
-                            ? null
-                            : Number(event.target.value),
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor={`${assignment.id}-difficulty`}>
-                    Difficulty
-                  </Label>
-                  <select
-                    id={`${assignment.id}-difficulty`}
-                    value={assignment.difficulty}
-                    disabled={isBusy}
-                    onChange={(event) =>
-                      onAssignmentChange(assignment.id, {
-                        difficulty: event.target
-                          .value as SyllabusAssignmentDifficulty,
-                      })
-                    }
-                    className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
-                  >
-                    {difficultyOptions.map((difficulty) => (
-                      <option key={difficulty} value={difficulty}>
-                        {capitalize(difficulty)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="sm:col-span-2">
-                <Label htmlFor={`${assignment.id}-notes`}>Notes</Label>
-                <Textarea
-                  id={`${assignment.id}-notes`}
-                  value={assignment.notes}
-                  disabled={isBusy}
-                  rows={2}
-                  onChange={(event) =>
-                    onAssignmentChange(assignment.id, {
-                      notes: event.target.value,
-                    })
-                  }
-                />
+              <div className="flex max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500">
+                <FileText className="size-3.5 shrink-0" aria-hidden="true" />
+                <span className="max-w-48 truncate">{analysisFileName}</span>
+                <span className="font-semibold text-slate-700">· {assignments.length} found</span>
               </div>
             </div>
-          </div>
-        ))}
+
+            <div className="mt-4 space-y-3">
+              {assignments.map((assignment, index) => {
+                const warning = getAssignmentReviewWarning(assignment);
+                const confidence = Math.round(assignment.confidence * 100);
+
+                return (
+                  <article key={assignment.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-semibold text-slate-600">{index + 1}</span>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-slate-900">{assignment.title || `Assignment ${index + 1}`}</p>
+                          <p className={`mt-0.5 text-[11px] font-medium ${confidence >= 80 ? "text-emerald-600" : "text-amber-600"}`}>{confidence}% extraction confidence</p>
+                        </div>
+                      </div>
+                      <Button type="button" variant="ghost" size="icon-sm" disabled={isBusy} aria-label={`Remove ${assignment.title || "assignment"}`} onClick={() => onAssignmentRemove(assignment.id)} className="text-slate-400 hover:bg-red-50 hover:text-red-600">
+                        <Trash2 className="size-4" aria-hidden="true" />
+                      </Button>
+                    </div>
+
+                    {warning ? (
+                      <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                        <CircleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
+                        <span>{warning}</span>
+                      </div>
+                    ) : null}
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-12">
+                      <div className="xl:col-span-6">
+                        <Label htmlFor={`${assignment.id}-title`} className="text-xs text-slate-600">Assignment title</Label>
+                        <Input id={`${assignment.id}-title`} value={assignment.title} disabled={isBusy} onChange={(event) => onAssignmentChange(assignment.id, { title: event.target.value })} className="mt-1.5" />
+                      </div>
+                      <div className="xl:col-span-3">
+                        <Label htmlFor={`${assignment.id}-kind`} className="text-xs text-slate-600">Type</Label>
+                        <div className="relative mt-1.5">
+                          <select id={`${assignment.id}-kind`} value={assignment.kind} disabled={isBusy} onChange={(event) => onAssignmentChange(assignment.id, { kind: event.target.value as SyllabusItemKind })} className={selectClassName}>
+                            {itemKindOptions.map((kind) => <option key={kind} value={kind}>{capitalize(kind)}</option>)}
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                        </div>
+                      </div>
+                      <div className="xl:col-span-3">
+                        <Label htmlFor={`${assignment.id}-due-date`} className="text-xs text-slate-600">Due date</Label>
+                        <Input id={`${assignment.id}-due-date`} type="date" value={assignment.dueDate ?? ""} disabled={isBusy} onChange={(event) => onAssignmentChange(assignment.id, { dueDate: event.target.value || null, dueDateStatus: event.target.value ? "explicit" : "missing" })} className="mt-1.5" />
+                      </div>
+                      <div className="xl:col-span-3">
+                        <Label htmlFor={`${assignment.id}-points`} className="text-xs text-slate-600">Points <span className="font-normal text-slate-400">(optional)</span></Label>
+                        <Input id={`${assignment.id}-points`} type="number" min="0" value={assignment.points ?? ""} disabled={isBusy} onChange={(event) => onAssignmentChange(assignment.id, { points: event.target.value === "" ? null : Number(event.target.value) })} className="mt-1.5" />
+                      </div>
+                      <div className="xl:col-span-3">
+                        <Label htmlFor={`${assignment.id}-difficulty`} className="text-xs text-slate-600">Difficulty</Label>
+                        <div className="relative mt-1.5">
+                          <select id={`${assignment.id}-difficulty`} value={assignment.difficulty} disabled={isBusy} onChange={(event) => onAssignmentChange(assignment.id, { difficulty: event.target.value as SyllabusAssignmentDifficulty })} className={selectClassName}>
+                            {difficultyOptions.map((difficulty) => <option key={difficulty} value={difficulty}>{capitalize(difficulty)}</option>)}
+                          </select>
+                          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                        </div>
+                      </div>
+                      <div className="sm:col-span-2 xl:col-span-6">
+                        <Label htmlFor={`${assignment.id}-notes`} className="text-xs text-slate-600">Notes <span className="font-normal text-slate-400">(optional)</span></Label>
+                        <Textarea id={`${assignment.id}-notes`} value={assignment.notes} disabled={isBusy} rows={1} onChange={(event) => onAssignmentChange(assignment.id, { notes: event.target.value })} placeholder="Reading, chapters, or anything helpful" className="mt-1.5 min-h-9 resize-none" />
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            <label className={`mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border bg-white p-4 shadow-sm transition ${isReviewConfirmed ? "border-emerald-300 ring-2 ring-emerald-100" : "border-slate-200 hover:border-slate-300"}`}>
+              <input type="checkbox" checked={isReviewConfirmed} disabled={isBusy} onChange={(event) => onReviewConfirmedChange(event.target.checked)} className="mt-0.5 size-4 rounded border-slate-300 accent-emerald-600" />
+              <span>
+                <span className="block text-sm font-semibold text-slate-900">Everything looks right</span>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">I reviewed the course, workload, and assignment details above.</span>
+              </span>
+            </label>
+
+            {error ? <ErrorMessage message={error} /> : null}
+          </section>
+        </div>
       </div>
 
-      <label className="mt-4 flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700">
-        <input
-          type="checkbox"
-          checked={isReviewConfirmed}
-          disabled={isBusy}
-          onChange={(event) =>
-            onReviewConfirmedChange(event.target.checked)
-          }
-          className="mt-0.5 h-4 w-4 rounded border-slate-300"
-        />
-        <span>
-          I reviewed the detected class and assignments and confirm the
-          information is correct.
-        </span>
-      </label>
-
-      {error ? <ErrorMessage message={error} /> : null}
-
-      <div className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+      <footer className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <Button
           type="button"
           variant="outline"
           onClick={onBack}
           disabled={isBusy}
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Back
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          Back to upload
         </Button>
-        <Button
-          type="button"
-          onClick={onCreate}
-          disabled={
-            isBusy ||
-            assignments.length === 0 ||
-            !classResolution ||
-            !isReviewConfirmed
-          }
-        >
-          {isImporting ? (
-            <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
-          ) : (
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
-          )}
-          {isImporting ? "Creating study plan..." : "Confirm & create plan"}
-        </Button>
-      </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="hidden items-center gap-2 pr-2 text-xs text-slate-500 md:flex">
+            <ListChecks className="size-4" aria-hidden="true" />
+            {assignments.length} assignment{assignments.length === 1 ? "" : "s"} ready
+          </div>
+          <Button type="button" onClick={onCreate} disabled={isBusy || assignments.length === 0 || !classResolution || !isReviewConfirmed} className="min-w-48 bg-blue-600 text-white hover:bg-blue-700">
+            {isImporting ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : <Sparkles className="size-4" aria-hidden="true" />}
+            {isImporting ? "Building your plan..." : "Create study plan"}
+          </Button>
+        </div>
+      </footer>
     </div>
   );
 }
+
+const selectClassName =
+  "h-9 w-full appearance-none rounded-md border border-input bg-white px-3 pr-9 text-sm shadow-xs outline-none transition focus:border-ring focus:ring-[3px] focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50";
 
 function ErrorMessage({ message }: { message: string }) {
   return (

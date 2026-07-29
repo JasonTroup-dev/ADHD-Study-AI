@@ -23,6 +23,8 @@ type ClassItem = {
     color: ClassColor | null;
 };
 
+const STUDY_PLAN_NOTICE_DURATION_MS = 5_000;
+
 export default function PlannerPage() {
 
     { /* Calendar Variables */}
@@ -68,6 +70,17 @@ export default function PlannerPage() {
 
     const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
     const [studyPlanNotice, setStudyPlanNotice] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!studyPlanNotice) return;
+
+        const timeoutId = window.setTimeout(
+            () => setStudyPlanNotice(null),
+            STUDY_PLAN_NOTICE_DURATION_MS,
+        );
+
+        return () => window.clearTimeout(timeoutId);
+    }, [studyPlanNotice]);
 
 
     // Task Modal Variables
