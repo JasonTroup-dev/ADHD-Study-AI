@@ -3,7 +3,9 @@ import ClassMaterialsPanel, {
   type ClassAssignmentOption,
   type ClassMaterial,
 } from "@/components/classes/ClassMaterialsPanel";
+import DeleteClassButton from "@/components/classes/DeleteClassButton";
 import { StartStudySessionButton } from "@/components/study-sessions/StartStudySessionButton";
+import { getClassColor, type ClassColor } from "@/lib/classColors";
 import { createClient } from "@/lib/supabase/server";
 import type { StudySessionType } from "@/types/database";
 import {
@@ -39,6 +41,7 @@ type Course = {
   name: string;
   code: string;
   instructor: string;
+  color: ClassColor;
 };
 
 type FlashcardSet = {
@@ -115,6 +118,7 @@ type ClassRow = {
   name: string | null;
   class_code: string | null;
   prof_name: string | null;
+  color: string | null;
 };
 
 type FlashcardSetRow = {
@@ -179,6 +183,7 @@ const fallbackCourse: Course = {
   name: "Calculus II",
   code: "MATH 2414",
   instructor: "Dr. Sarah Chen",
+  color: "blue",
 };
 
 export default async function ClassPage({ params }: PageProps) {
@@ -198,6 +203,7 @@ export default async function ClassPage({ params }: PageProps) {
   const quickActions = getQuickActions(classId);
   const nextUp = getNextUp({
     classId,
+    classColor: course.color,
     activeSession,
     plannerTasks,
     assignments: assignmentSummaries,
@@ -259,6 +265,7 @@ export default async function ClassPage({ params }: PageProps) {
 
             <AssignmentsSection
               classId={classId}
+              classColor={course.color}
               assignments={assignmentSummaries}
             />
 
@@ -325,6 +332,18 @@ export default async function ClassPage({ params }: PageProps) {
             </Panel>
           </aside>
         </div>
+
+        <section className="mt-10 flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-950">
+              Delete this class
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Permanently remove this class and all of its study data.
+            </p>
+          </div>
+          <DeleteClassButton classId={classId} className={course.name} />
+        </section>
       </div>
     </main>
   );
@@ -426,9 +445,11 @@ function NextUpButton({ action }: { action: NextUpAction }) {
 
 function AssignmentsSection({
   classId,
+  classColor,
   assignments,
 }: {
   classId: string;
+  classColor: ClassColor;
   assignments: CourseAssignment[];
 }) {
   return (
@@ -458,6 +479,7 @@ function AssignmentsSection({
             <CourseAssignmentCard
               key={assignment.id}
               classId={classId}
+              classColor={classColor}
               assignment={assignment}
             />
           ))}
@@ -482,23 +504,26 @@ function AssignmentsSection({
 
 function CourseAssignmentCard({
   classId,
+  classColor,
   assignment,
 }: {
   classId: string;
+  classColor: ClassColor;
   assignment: CourseAssignment;
 }) {
-  const dueState = getDueState(assignment);
+  const classColorOption = getClassColor(classColor);
+  const dueState = getDueState(assignment, classColor);
   const isCompleted = assignment.status === "completed";
   const statusBadge = getAssignmentStatusBadge(assignment.status);
   const contextBadge = getContextBadge(assignment);
 
   return (
     <article
-      className={`relative flex flex-col gap-4 overflow-hidden rounded-xl border bg-white p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between ${dueState.cardClass}`}
+      className={`relative flex flex-col gap-4 overflow-hidden rounded-xl border bg-white p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between ${classColorOption.border} ${dueState.cardClass}`}
     >
       <span
         aria-hidden="true"
-        className={`absolute inset-y-0 left-0 w-1 ${dueState.accentClass}`}
+        className={`absolute inset-y-0 left-0 w-1 ${classColorOption.accent}`}
       />
       <div className="min-w-0 flex-1 pl-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -804,7 +829,7 @@ async function getClassWorkspaceData(classId: string) {
     ] = await Promise.all([
       supabase
         .from("classes")
-        .select("name, class_code, prof_name")
+        .select("name, class_code, prof_name, color")
         .eq("id", classId)
         .maybeSingle(),
       supabase
@@ -857,6 +882,7 @@ async function getClassWorkspaceData(classId: string) {
           name: courseRow.name ?? fallbackCourse.name,
           code: courseRow.class_code ?? fallbackCourse.code,
           instructor: courseRow.prof_name ?? fallbackCourse.instructor,
+          color: getClassColor(courseRow.color).value,
         }
       : fallbackCourse;
 
@@ -1113,6 +1139,7 @@ function getCourseProgress({
 
 function getNextUp({
   classId,
+  classColor,
   activeSession,
   plannerTasks,
   assignments,
@@ -1120,6 +1147,7 @@ function getNextUp({
   materialCount,
 }: {
   classId: string;
+  classColor: ClassColor;
   activeSession: StudySessionRow | null;
   plannerTasks: PlannerTaskRow[];
   assignments: CourseAssignment[];
@@ -1180,7 +1208,7 @@ function getNextUp({
   });
 
   if (dueSoonAssignment) {
-    const dueState = getDueState(dueSoonAssignment);
+    const dueState = getDueState(dueSoonAssignment, classColor);
     return {
       eyebrow: dueState.label,
       title: dueSoonAssignment.title,
@@ -1358,16 +1386,16 @@ function getStudyStreakDays(studySessions: StudySessionRow[]) {
   return streakDays;
 }
 
-function getDueState(assignment: CourseAssignment) {
+function getDueState(assignment: CourseAssignment, classColor: ClassColor) {
   const todayKey = getDateKey();
   const dueDate = assignment.dueDate?.slice(0, 10);
+  const colorOption = getClassColor(classColor);
 
   if (assignment.status === "completed") {
     return {
       label: "Completed",
       icon: <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />,
-      cardClass: "border-emerald-200",
-      accentClass: "bg-emerald-500",
+      cardClass: "",
       badgeClass: "border-emerald-200 bg-emerald-50 text-emerald-700",
       isUrgent: false,
     };
@@ -1377,9 +1405,8 @@ function getDueState(assignment: CourseAssignment) {
     return {
       label: "Unscheduled",
       icon: <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />,
-      cardClass: "border-slate-200",
-      accentClass: "bg-slate-300",
-      badgeClass: "border-slate-200 bg-slate-50 text-slate-700",
+      cardClass: "",
+      badgeClass: `${colorOption.border} ${colorOption.bg} ${colorOption.text}`,
       isUrgent: false,
     };
   }
@@ -1388,8 +1415,7 @@ function getDueState(assignment: CourseAssignment) {
     return {
       label: "Overdue",
       icon: <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />,
-      cardClass: "border-red-200 bg-red-50/40",
-      accentClass: "bg-red-500",
+      cardClass: "bg-red-50/40",
       badgeClass: "border-red-200 bg-red-50 text-red-700",
       isUrgent: true,
     };
@@ -1399,8 +1425,7 @@ function getDueState(assignment: CourseAssignment) {
     return {
       label: "Due today",
       icon: <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />,
-      cardClass: "border-amber-200 bg-amber-50/40",
-      accentClass: "bg-amber-500",
+      cardClass: "bg-amber-50/40",
       badgeClass: "border-amber-200 bg-amber-50 text-amber-700",
       isUrgent: true,
     };
@@ -1409,9 +1434,8 @@ function getDueState(assignment: CourseAssignment) {
   return {
     label: `Due ${formatShortDate(dueDate)}`,
     icon: <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />,
-    cardClass: "border-slate-200",
-    accentClass: "bg-blue-500",
-    badgeClass: "border-blue-200 bg-blue-50 text-blue-700",
+    cardClass: "",
+    badgeClass: `${colorOption.border} ${colorOption.bg} ${colorOption.text}`,
     isUrgent: false,
   };
 }
