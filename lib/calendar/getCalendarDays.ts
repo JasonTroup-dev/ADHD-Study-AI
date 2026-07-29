@@ -38,9 +38,9 @@ export function getCalendarDays(currentMonth: Date): CalendarDay[] {
     });
   }
 
-  // Keep a stable six-week grid so every month is fully represented and the
-  // calendar does not jump in height as the user navigates between months.
-  while (calendarDays.length < 42) {
+  // Add only enough next-month days to finish the final week. This keeps the
+  // entire current month visible without reserving an unnecessary sixth row.
+  while (calendarDays.length % 7 !== 0) {
     const nextMonthDay =
       calendarDays.length - firstDayOfMonth - daysInMonth + 1;
 

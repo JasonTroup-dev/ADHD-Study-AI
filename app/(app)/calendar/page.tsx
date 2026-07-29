@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarDays,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -226,71 +225,27 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="min-h-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-[1600px]">
-        <header className="mb-6 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-600">
-              <CalendarDays className="h-4 w-4" aria-hidden="true" />
-              Study schedule
-            </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-              Calendar
+    <div className="h-[calc(100svh-4rem)] min-h-0 w-full overflow-hidden bg-white md:h-svh">
+      <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-white">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-3 py-2 sm:px-5">
+          <div className="min-w-0">
+            <h1
+              className="truncate text-lg font-semibold text-gray-950"
+              aria-live="polite"
+            >
+              {monthTitle}
             </h1>
-            <p className="mt-2 text-base text-slate-600">
-              See study tasks and assignment deadlines in one place.
+            <p className="text-xs text-gray-500 sm:text-sm">
+              {isLoading
+                  ? "Loading your schedule…"
+                : `${currentMonthItems.length} ${
+                    currentMonthItems.length === 1 ? "item" : "items"
+                  } this month`}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={goToToday}>
-              Today
-            </Button>
-            <div className="flex items-center rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label="Previous month"
-                onClick={() => changeMonth(-1)}
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <p
-                className="min-w-44 px-3 text-center text-base font-semibold text-slate-900"
-                aria-live="polite"
-              >
-                {monthTitle}
-              </p>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label="Next month"
-                onClick={() => changeMonth(1)}
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-        </header>
-
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-slate-950">
-                {monthTitle}
-              </h2>
-              <p className="mt-0.5 text-sm text-slate-500">
-                {isLoading
-                  ? "Loading your schedule…"
-                  : `${currentMonthItems.length} ${
-                      currentMonthItems.length === 1 ? "item" : "items"
-                    } this month`}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-slate-600">
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="hidden items-center gap-x-4 text-xs font-medium text-slate-600 lg:flex">
               <span className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
                 Study task
@@ -304,24 +259,49 @@ export default function CalendarPage() {
                 Completed
               </span>
             </div>
-          </div>
 
-          {error ? (
-            <div
-              className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
-              role="status"
-            >
-              {error}
+            <Button variant="outline" size="sm" onClick={goToToday}>
+              Today
+            </Button>
+            <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Previous month"
+                onClick={() => changeMonth(-1)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Next month"
+                onClick={() => changeMonth(1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-          ) : null}
+          </div>
+        </header>
 
-          <div className="overflow-x-auto">
-            <div className="min-w-[920px]">
-              <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/80">
+        {error ? (
+          <div
+            className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800"
+            role="status"
+          >
+            {error}
+          </div>
+        ) : null}
+
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <div className="flex h-full min-h-0 flex-col">
+              <div className="grid shrink-0 grid-cols-7 border-b border-slate-200 bg-slate-50/80">
                 {WEEK_DAYS.map((day) => (
                   <div
                     key={day}
-                    className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider text-slate-500"
+                    className="px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:px-3 sm:py-2.5 sm:text-xs"
                   >
                     <span className="sm:hidden">{day.slice(0, 1)}</span>
                     <span className="hidden sm:inline">{day.slice(0, 3)}</span>
@@ -329,7 +309,12 @@ export default function CalendarPage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-7">
+              <div
+                className="grid min-h-0 flex-1 grid-cols-7"
+                style={{
+                  gridTemplateRows: `repeat(${Math.ceil(calendarDays.length / 7)}, minmax(0, 1fr))`,
+                }}
+              >
                 {calendarDays.map((calendarDay, index) => {
                   const dateKey = toDateKey(calendarDay.date);
                   const dayItems = itemsByDate[dateKey] ?? [];
@@ -341,17 +326,17 @@ export default function CalendarPage() {
                     <div
                       key={dateKey}
                       className={cn(
-                        "min-h-32 border-b border-r border-slate-200 p-2.5",
+                        "flex min-h-0 flex-col overflow-hidden border-b border-r border-slate-200 p-1 sm:p-2",
                         !calendarDay.isCurrentMonth && "bg-slate-50/70",
                         isLastColumn && "border-r-0",
                         isLastRow && "border-b-0",
                       )}
                     >
-                      <div className="mb-2 flex items-center justify-between">
+                      <div className="mb-1 flex shrink-0 items-center justify-between sm:mb-1.5">
                         <time
                           dateTime={dateKey}
                           className={cn(
-                            "flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-sm font-medium",
+                            "flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-medium sm:h-7 sm:min-w-7 sm:px-1.5 sm:text-sm",
                             isToday
                               ? "bg-blue-600 text-white shadow-sm"
                               : calendarDay.isCurrentMonth
@@ -368,7 +353,7 @@ export default function CalendarPage() {
                         ) : null}
                       </div>
 
-                      <div className="max-h-32 space-y-1.5 overflow-y-auto pr-0.5">
+                      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5 sm:space-y-1.5">
                         {isLoading ? (
                           <>
                             <div className="h-7 animate-pulse rounded-md bg-slate-100" />
@@ -386,10 +371,9 @@ export default function CalendarPage() {
                   );
                 })}
               </div>
-            </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }
