@@ -32,10 +32,13 @@ export default function AiTutor() {
     const [isLoading, setIsLoading] = useState(false);
 
     const abortControllerRef = useRef<AbortController | null>(null);
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
     useEffect(() => {
         return () => {
-            abortControllerRef.current?.abort();
+            const abortController = abortControllerRef.current;
+            abortControllerRef.current = null;
+            abortController?.abort();
         };
     }, []);
 
@@ -163,7 +166,6 @@ export default function AiTutor() {
         } finally {
             if (
                 abortControllerRef.current === abortController
-                && !abortController.signal.aborted
             ) {
                 abortControllerRef.current = null;
                 setIsLoading(false);
@@ -199,6 +201,11 @@ export default function AiTutor() {
         );
     }
 
+    function handleSummarizeNotes() {
+        setInput("Summarize the notes I attach into the main ideas and key takeaways.");
+        requestAnimationFrame(() => textareaRef.current?.focus());
+    }
+
     return (
         <TutorWorkspace
             messages={messages}
@@ -208,6 +215,7 @@ export default function AiTutor() {
                     input={input}
                     setInput={setInput}
                     handleSend={handleSend}
+                    textareaRef={textareaRef}
                     files={files}
                     onFilesSelected={handleFilesSelected}
                     onRemoveFile={handleRemoveFile}
@@ -216,7 +224,7 @@ export default function AiTutor() {
                     disabled={isLoading}
                 />
             )}
-            emptyActions={<PromptButtons />}
+            emptyActions={<PromptButtons onSummarize={handleSummarizeNotes} />}
         />
     );
 }

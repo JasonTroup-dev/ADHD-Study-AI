@@ -146,6 +146,34 @@
   }
 }
 
+html:has(.ai-tutor-scroll-scope)::-webkit-scrollbar {
+  width: 10px;
+}
+
+html:has(.ai-tutor-scroll-scope)::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+html:has(.ai-tutor-scroll-scope)::-webkit-scrollbar-thumb {
+  min-height: 48px;
+  border: 2px solid #f3f4f6;
+  border-radius: 999px;
+  background: #94a3b8;
+  background-clip: padding-box;
+}
+
+html:has(.ai-tutor-scroll-scope)::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+  background-clip: padding-box;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  html:has(.ai-tutor-scroll-scope) {
+    scrollbar-color: #94a3b8 #f3f4f6;
+    scrollbar-width: thin;
+  }
+}
+
 .ai-markdown .katex-display {
   margin: 1rem 0;
   overflow-x: auto;

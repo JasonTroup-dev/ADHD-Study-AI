@@ -41,20 +41,21 @@ export default function TutorWorkspace({
 }: TutorWorkspaceProps) {
   const lastAssistantRef = useRef<HTMLDivElement | null>(null);
   const hasMessages = messages.length > 0;
+  const lastMessage = messages.at(-1);
+  const lastMessageId = lastMessage?.id;
+  const lastMessageRole = lastMessage?.role;
 
   useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-
-    if (lastMessage?.role === "assistant") {
+    if (lastMessageRole === "assistant") {
       lastAssistantRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     }
-  }, [messages]);
+  }, [lastMessageId, lastMessageRole]);
 
   return (
-    <div className="flex min-h-screen w-full justify-center bg-gray-100">
+    <div className="ai-tutor-scroll-scope flex min-h-screen w-full justify-center bg-gray-100">
       <div className="min-h-screen min-w-4xl border-b-blue-500">
         <div className="relative min-h-screen">
           {!hasMessages ? (
@@ -124,7 +125,7 @@ export default function TutorWorkspace({
                 {conversationFooter}
               </div>
 
-              <div className="sticky bottom-0 bg-linear-to-t from-gray-100 via-gray-100 to-transparent pb-6 pt-4">
+              <div className="sticky bottom-0 z-10 bg-linear-to-t from-gray-100 via-gray-100 to-transparent pb-6 pt-4">
                 {composerHeader}
                 {composer}
                 {composerFooter}

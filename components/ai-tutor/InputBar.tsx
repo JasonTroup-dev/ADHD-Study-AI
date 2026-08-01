@@ -5,7 +5,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, type RefObject } from "react";
 
 import { STUDY_FILE_ACCEPT } from "@/lib/files/uploadConstraints";
 
@@ -13,6 +13,7 @@ export default function InputBar({
   input,
   setInput,
   handleSend,
+  textareaRef,
   files,
   onFilesSelected,
   onRemoveFile,
@@ -29,6 +30,7 @@ export default function InputBar({
   input: string;
   setInput: (value: string) => void;
   handleSend: () => void;
+  textareaRef?: RefObject<HTMLTextAreaElement | null>;
   files: File[];
   onFilesSelected: (files: File[]) => void;
   onRemoveFile: (index: number) => void;
@@ -47,7 +49,7 @@ export default function InputBar({
 
   return (
     <div className="mt-12 mb-8 w-full max-w-2xl lg:max-w-xl xl:max-w-4xl">
-      <div className="rounded-3xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+      <div className="rounded-[2rem] border border-gray-200 bg-white px-4 py-3 shadow-sm">
         {files.length > 0 ? (
           <div className="mb-3 flex flex-wrap gap-2 px-1">
             {files.map((file, index) => (
@@ -97,10 +99,16 @@ export default function InputBar({
           </button>
 
           <textarea
+            ref={textareaRef}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
+              if (
+                event.key === "Enter"
+                && !event.shiftKey
+                && !event.nativeEvent.isComposing
+                && !disabled
+              ) {
                 event.preventDefault();
                 handleSend();
               }
@@ -109,6 +117,7 @@ export default function InputBar({
             rows={1}
             className="flex-1 resize-none bg-transparent text-gray-900 outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
             disabled={disabled}
+            aria-label="Message the AI Tutor"
           />
 
           <button

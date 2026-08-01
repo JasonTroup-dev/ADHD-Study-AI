@@ -1,7 +1,13 @@
+"use client";
+
 import { Sparkles, Brain, FileText } from "lucide-react";
 import Link from "next/link";
 
-export default function PromptButtons() {
+export default function PromptButtons({
+  onSummarize,
+}: {
+  onSummarize: () => void;
+}) {
   return (
     <div className="flex">
       <Link
@@ -12,10 +18,14 @@ export default function PromptButtons() {
                   Generate Study Guide
       </Link>
 
-      <div className="flex py-2 px-4 rounded-full border border-gray-300 mx-4 items-center hover:bg-gray-200">
+      <button
+        type="button"
+        onClick={onSummarize}
+        className="flex py-2 px-4 rounded-full border border-gray-300 mx-4 items-center hover:bg-gray-200"
+      >
         <Brain className="h-5 w-5 mr-2 text-gray-500" />
                   Summarize Notes
-      </div>
+      </button>
 
       <Link
         href="/study/flashcards/create?mode=ai" 

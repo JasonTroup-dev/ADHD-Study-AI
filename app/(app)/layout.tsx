@@ -500,7 +500,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main id="main-content" tabIndex={-1} className="min-h-0 flex-1 overflow-x-hidden focus:outline-none">
+        <main id="main-content" tabIndex={-1} className="min-h-0 flex-1 overflow-x-clip focus:outline-none">
           {children}
         </main>
       </div>
