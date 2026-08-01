@@ -1,4 +1,5 @@
 import mammoth from "mammoth";
+import { CanvasFactory } from "pdf-parse/worker";
 import { PDFParse } from "pdf-parse";
 
 import {
@@ -189,6 +190,7 @@ function decodeTextBuffer(buffer: ArrayBuffer) {
 async function extractPdfText(buffer: ArrayBuffer) {
   const parser = new PDFParse({
     data: new Uint8Array(buffer),
+    CanvasFactory,
   });
 
   try {
