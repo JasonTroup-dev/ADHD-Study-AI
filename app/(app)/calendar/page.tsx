@@ -380,7 +380,10 @@ export default function CalendarPage() {
 
 function CalendarItemChip({ item }: { item: CalendarItem }) {
   const color = getClassColor(item.classColor);
-  const href = item.kind === "assignment" ? "/planner/assignments" : "/planner";
+  const href =
+    item.kind === "assignment"
+      ? "/planner/assignments"
+      : `/planner/tasks/${item.id}`;
 
   return (
     <Link
