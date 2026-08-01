@@ -2,9 +2,10 @@
 
 import { UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FileProcessingStatus } from "@/components/ui/file-processing-status";
 import {
   ASSIGNMENT_FILE_ACCEPT,
   formatFileSize,
@@ -12,6 +13,7 @@ import {
   SUPPORTED_ASSIGNMENT_FILE_EXTENSIONS,
   SUPPORTED_ASSIGNMENT_FILE_LABEL,
 } from "@/lib/files/uploadConstraints";
+import { uploadFormData } from "@/lib/files/uploadFormData";
 import { cn } from "@/lib/utils";
 
 type AssignmentFileDropzoneProps = {
@@ -29,8 +31,15 @@ export function AssignmentFileDropzone({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const uploadControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => uploadControllerRef.current?.abort();
+  }, []);
 
   async function uploadFile(file: File | undefined) {
     if (!file || isUploading) return;
@@ -53,8 +62,12 @@ export function AssignmentFileDropzone({
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
+    setPendingFile(file);
     setError(null);
     setNotice(null);
+    const controller = new AbortController();
+    uploadControllerRef.current = controller;
 
     try {
       let targetAssignmentId = assignmentId;
@@ -62,7 +75,7 @@ export function AssignmentFileDropzone({
       if (!targetAssignmentId) {
         const linkResponse = await fetch(
           `/api/study-plan-tasks/${taskId}/assignment`,
-          { method: "POST" },
+          { method: "POST", signal: controller.signal },
         );
         const linkPayload = await readJson(linkResponse);
 
@@ -79,11 +92,15 @@ export function AssignmentFileDropzone({
 
       const formData = new FormData();
       formData.append("file", file);
-      const uploadResponse = await fetch(
+      const uploadResponse = await uploadFormData<Record<string, unknown>>(
         `/api/assignments/${targetAssignmentId}/file`,
-        { method: "POST", body: formData },
+        formData,
+        {
+          signal: controller.signal,
+          onUploadProgress: setUploadProgress,
+        },
       );
-      const uploadPayload = await readJson(uploadResponse);
+      const uploadPayload = uploadResponse.data ?? {};
 
       if (!uploadResponse.ok) {
         throw new Error(
@@ -98,20 +115,33 @@ export function AssignmentFileDropzone({
           ? uploadPayload.warning
           : `${file.name} is ready.`,
       );
+      setPendingFile(null);
       router.refresh();
     } catch (uploadError) {
+      if (uploadError instanceof DOMException && uploadError.name === "AbortError") {
+        setError("Upload stopped. Your file is ready to retry.");
+        return;
+      }
+
       setError(
         uploadError instanceof Error
           ? uploadError.message
           : "The assignment file could not be uploaded.",
       );
     } finally {
+      if (uploadControllerRef.current === controller) {
+        uploadControllerRef.current = null;
+      }
       setIsUploading(false);
     }
   }
 
+  function cancelUpload() {
+    uploadControllerRef.current?.abort();
+  }
+
   return (
-    <div>
+    <div aria-busy={isUploading}>
       <input
         ref={inputRef}
         type="file"
@@ -169,12 +199,37 @@ export function AssignmentFileDropzone({
           variant="outline"
           size="sm"
           className="shrink-0 bg-white"
-          disabled={isUploading}
-          onClick={() => inputRef.current?.click()}
+          onClick={
+            isUploading
+              ? cancelUpload
+              : pendingFile
+                ? () => void uploadFile(pendingFile)
+                : () => inputRef.current?.click()
+          }
         >
-          {currentFileName ? "Replace" : "Choose file"}
+          {isUploading
+            ? "Stop"
+            : pendingFile
+              ? "Retry"
+              : currentFileName
+                ? "Replace"
+                : "Choose file"}
         </Button>
       </div>
+
+      {isUploading ? (
+        <FileProcessingStatus
+          fileName={pendingFile?.name}
+          uploadProgress={uploadProgress}
+          labels={{
+            uploading: "Uploading",
+            reading: "Reading assignment instructions",
+            preparing: "Saving assignment context",
+            generating: "Refreshing task details",
+          }}
+          className="mt-3"
+        />
+      ) : null}
 
       {error ? (
         <p className="mt-3 text-sm font-medium text-red-700" role="alert">

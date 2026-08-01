@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   BookOpen,
@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { FileProcessingStatus } from "@/components/ui/file-processing-status";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ import {
   SUPPORTED_SYLLABUS_FILE_LABEL,
   SYLLABUS_FILE_ACCEPT,
 } from "@/lib/files/uploadConstraints";
+import { uploadFormData } from "@/lib/files/uploadFormData";
 import type {
   DetectedSyllabusCourse,
   StudyPlanImportSummary,
@@ -94,6 +96,7 @@ export default function StudyPlannerModal({
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<ReviewAssignment[]>([]);
@@ -110,8 +113,13 @@ export default function StudyPlannerModal({
   const [isReviewConfirmed, setIsReviewConfirmed] = useState(false);
   const [maxTasksPerDay, setMaxTasksPerDay] = useState(3);
   const [step, setStep] = useState<"upload" | "review">("upload");
+  const analysisControllerRef = useRef<AbortController | null>(null);
 
   const isBusy = isAnalyzing || isImporting;
+
+  useEffect(() => {
+    return () => analysisControllerRef.current?.abort();
+  }, []);
 
   if (!isOpen) return null;
 
@@ -170,16 +178,23 @@ export default function StudyPlannerModal({
 
     setError(null);
     setIsAnalyzing(true);
+    setUploadProgress(0);
+    const controller = new AbortController();
+    analysisControllerRef.current = controller;
 
     try {
       const formData = new FormData();
       formData.append("file", sourceFile);
 
-      const response = await fetch("/api/syllabus/analyze", {
-        method: "POST",
-        body: formData,
-      });
-      const payload = await readAnalyzeResponse(response);
+      const response = await uploadFormData<AnalyzeResponse>(
+        "/api/syllabus/analyze",
+        formData,
+        {
+          signal: controller.signal,
+          onUploadProgress: setUploadProgress,
+        },
+      );
+      const payload = response.data ?? {};
 
       if (!response.ok) {
         setError(payload.error ?? "Could not analyze this syllabus.");
@@ -217,11 +232,28 @@ export default function StudyPlannerModal({
           "The AI did not find any assignments. Try another syllabus or add assignments manually.",
         );
       }
-    } catch {
+    } catch (analysisError) {
+      if (
+        analysisError instanceof DOMException &&
+        analysisError.name === "AbortError"
+      ) {
+        setError(
+          "Analysis stopped. Your syllabus is ready whenever you want to try again.",
+        );
+        return;
+      }
+
       setError("Could not analyze this syllabus. Please try again.");
     } finally {
+      if (analysisControllerRef.current === controller) {
+        analysisControllerRef.current = null;
+      }
       setIsAnalyzing(false);
     }
+  }
+
+  function cancelAnalysis() {
+    analysisControllerRef.current?.abort();
   }
 
   async function createStudyPlan() {
@@ -406,9 +438,11 @@ export default function StudyPlannerModal({
             sourceFile={sourceFile}
             isDragging={isDragging}
             isAnalyzing={isAnalyzing}
+            uploadProgress={uploadProgress}
             error={error}
             onSubmit={analyzeSyllabus}
             onClose={closeModal}
+            onCancelAnalysis={cancelAnalysis}
             onDraggingChange={setIsDragging}
             onFileChange={updateSourceFile}
           />
@@ -510,18 +544,22 @@ function UploadStep({
   sourceFile,
   isDragging,
   isAnalyzing,
+  uploadProgress,
   error,
   onSubmit,
   onClose,
+  onCancelAnalysis,
   onDraggingChange,
   onFileChange,
 }: {
   sourceFile: File | null;
   isDragging: boolean;
   isAnalyzing: boolean;
+  uploadProgress: number;
   error: string | null;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onClose: () => void;
+  onCancelAnalysis: () => void;
   onDraggingChange: (isDragging: boolean) => void;
   onFileChange: (file: File | null) => void;
 }) {
@@ -576,16 +614,20 @@ function UploadStep({
             htmlFor="study-plan-source-file"
             onDragOver={(event) => {
               event.preventDefault();
-              onDraggingChange(true);
+              if (!isAnalyzing) onDraggingChange(true);
             }}
             onDragLeave={() => onDraggingChange(false)}
             onDrop={(event) => {
               event.preventDefault();
               onDraggingChange(false);
-              onFileChange(event.dataTransfer.files?.[0] ?? null);
+              if (!isAnalyzing) {
+                onFileChange(event.dataTransfer.files?.[0] ?? null);
+              }
             }}
             className={`mt-5 flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-5 text-center transition-all md:min-h-56 ${
-              isDragging
+              isAnalyzing
+                ? "cursor-wait border-blue-200 bg-blue-50/50"
+                : isDragging
                 ? "scale-[1.01] border-blue-500 bg-blue-50"
                 : sourceFile
                   ? "border-emerald-300 bg-emerald-50/60 hover:bg-emerald-50"
@@ -610,6 +652,20 @@ function UploadStep({
             )}
           </label>
 
+          {isAnalyzing ? (
+            <FileProcessingStatus
+              fileName={sourceFile?.name}
+              uploadProgress={uploadProgress}
+              labels={{
+                uploading: "Uploading",
+                reading: "Reading your syllabus",
+                preparing: "Finding classes and deadlines",
+                generating: "Preparing assignments for review",
+              }}
+              className="mt-4"
+            />
+          ) : null}
+
           <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-slate-500">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-slate-400" aria-hidden="true" />
             Your file is only used to extract the course details needed for this plan.
@@ -625,11 +681,10 @@ function UploadStep({
           <Button
             type="button"
             variant="outline"
-            onClick={onClose}
-            disabled={isAnalyzing}
+            onClick={isAnalyzing ? onCancelAnalysis : onClose}
             className="sm:min-w-24"
           >
-            Cancel
+            {isAnalyzing ? "Stop analysis" : "Cancel"}
           </Button>
           <Button type="submit" disabled={!sourceFile || isAnalyzing} className="min-w-44 bg-blue-600 text-white hover:bg-blue-700">
             {isAnalyzing ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : <Sparkles className="size-4" aria-hidden="true" />}
@@ -1047,14 +1102,6 @@ function getLocalDateOnly(date = new Date()) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-}
-
-async function readAnalyzeResponse(response: Response) {
-  try {
-    return (await response.json()) as AnalyzeResponse;
-  } catch {
-    return {};
-  }
 }
 
 async function readImportResponse(response: Response) {

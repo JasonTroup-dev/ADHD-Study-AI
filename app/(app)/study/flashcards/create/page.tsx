@@ -2,6 +2,7 @@
 
 import AiMarkdown from "@/components/AiMarkdown";
 import { Button } from "@/components/ui/button";
+import { FileProcessingStatus } from "@/components/ui/file-processing-status";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +12,7 @@ import {
   STUDY_FILE_ACCEPT,
   SUPPORTED_STUDY_FILE_LABEL,
 } from "@/lib/files/uploadConstraints";
+import { uploadFormData } from "@/lib/files/uploadFormData";
 import {
   DEFAULT_GENERATED_FLASHCARD_COUNT,
   MAX_GENERATED_FLASHCARD_COUNT,
@@ -31,7 +33,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 type FlashcardItem = {
   id: string;
@@ -55,6 +57,12 @@ type CreateFlashcardSetResponse = {
   set?: {
     id: string;
   };
+  error?: string;
+};
+
+type GenerateFlashcardsResponse = {
+  title?: string;
+  cards?: Array<{ question: string; answer: string }>;
   error?: string;
 };
 
@@ -158,9 +166,15 @@ function FlashcardsCreateContent() {
 		String(DEFAULT_GENERATED_FLASHCARD_COUNT),
 	);
 	const [isGenerating, setIsGenerating] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const generationControllerRef = useRef<AbortController | null>(null);
   const requestedFlashcardCount = normalizeGeneratedFlashcardCount(
     flashcardCountInput,
   );
+
+  useEffect(() => {
+    return () => generationControllerRef.current?.abort();
+  }, []);
 
   async function generateFlashcards() {
 	setMessage(null);
@@ -182,26 +196,40 @@ function FlashcardsCreateContent() {
 	}
 
 	setIsGenerating(true);
+	setUploadProgress(0);
+	const controller = new AbortController();
+	generationControllerRef.current = controller;
 
 	try {
 		const formData = new FormData();
 		formData.append("file", sourceFile);
 		formData.append("cardCount", String(requestedFlashcardCount));
 
-		const response = await fetch("/api/flashcards/generate", {
-		method: "POST",
-		body: formData,
-		});
+		const response = await uploadFormData<GenerateFlashcardsResponse>(
+			"/api/flashcards/generate",
+			formData,
+			{
+				signal: controller.signal,
+				onUploadProgress: setUploadProgress,
+			},
+		);
 
-		const payload = await response.json();
+		const payload = response.data ?? {};
 
 		if (!response.ok) {
 		setMessage({
 			type: "error",
 			text: payload.error ?? "Could not generate flashcards.",
 		});
-		setIsGenerating(false);
 		return;
+		}
+
+		if (!Array.isArray(payload.cards)) {
+			setMessage({
+				type: "error",
+				text: "The generated flashcard response was incomplete.",
+			});
+			return;
 		}
 
 		setSetTitle(payload.title ?? "AI Generated Flashcards");
@@ -232,14 +260,29 @@ function FlashcardsCreateContent() {
 		setSourceFile(null);
 
 	} catch (error) {
+		if (error instanceof DOMException && error.name === "AbortError") {
+			setMessage({
+				type: "error",
+				text: "Generation stopped. Your file is ready whenever you want to try again.",
+			});
+			return;
+		}
+
 		console.error("Error generating flashcards:", error);
 		setMessage({
-		type: "error",
-		text: "Could not generate flashcards.",
+			type: "error",
+			text: "Could not generate flashcards.",
 		});
+	} finally {
+		if (generationControllerRef.current === controller) {
+			generationControllerRef.current = null;
+		}
+		setIsGenerating(false);
+	}
 	}
 
-	setIsGenerating(false);
+	function cancelGeneration() {
+		generationControllerRef.current?.abort();
 	}
 
   function updateSourceFile(file: File | null) {
@@ -456,6 +499,7 @@ function FlashcardsCreateContent() {
 					<Button
 					type="button"
 					variant="ghost"
+					disabled={isGenerating}
 					onClick={() => {
 						setSourceFile(null);
 						setIsAiModalOpen(false);
@@ -475,6 +519,7 @@ function FlashcardsCreateContent() {
 						id="flashcard-source-file"
 						type="file"
 						accept={STUDY_FILE_ACCEPT}
+						disabled={isGenerating}
 						onChange={(event) => {
 						updateSourceFile(event.target.files?.[0] ?? null);
 						event.target.value = "";
@@ -529,16 +574,30 @@ function FlashcardsCreateContent() {
 				  </div>
 				</div>
 
+				{isGenerating ? (
+					<FileProcessingStatus
+						fileName={sourceFile?.name}
+						uploadProgress={uploadProgress}
+						labels={{
+							uploading: "Uploading",
+							reading: "Reading your document",
+							preparing: "Finding useful questions",
+							generating: "Writing your flashcards",
+						}}
+						className="mt-5"
+					/>
+				) : null}
+
 				<div className="mt-5 flex justify-end gap-3">
 					<Button
 					type="button"
 					variant="outline"
-					onClick={() => {
-						setSourceFile(null);
-						setIsAiModalOpen(false);
-					}}
+					onClick={isGenerating ? cancelGeneration : () => {
+					setSourceFile(null);
+					setIsAiModalOpen(false);
+				}}
 					>
-					Cancel
+					{isGenerating ? "Stop generation" : "Cancel"}
 					</Button>
 
 					<Button

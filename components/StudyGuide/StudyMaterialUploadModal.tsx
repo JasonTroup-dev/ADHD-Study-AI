@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { FileProcessingStatus } from "@/components/ui/file-processing-status";
 import type { GeneratedStudyGuide } from "./types";
 import {
   formatFileSize,
@@ -8,6 +9,7 @@ import {
   STUDY_FILE_ACCEPT,
   SUPPORTED_STUDY_FILE_LABEL,
 } from "@/lib/files/uploadConstraints";
+import { uploadFormData } from "@/lib/files/uploadFormData";
 import {
   CircleAlert,
   FileCheck2,
@@ -40,16 +42,6 @@ type GenerateStudyGuideResponse = Partial<GeneratedStudyGuide> & {
   error?: string;
 };
 
-async function readGenerateResponse(
-  response: Response,
-): Promise<GenerateStudyGuideResponse> {
-  try {
-    return (await response.json()) as GenerateStudyGuideResponse;
-  } catch {
-    return {};
-  }
-}
-
 export default function StudyMaterialUploadModal({
   isOpen,
   isLoading,
@@ -61,8 +53,14 @@ export default function StudyMaterialUploadModal({
 }: StudyMaterialUploadModalProps) {
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const requestControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => requestControllerRef.current?.abort();
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -159,16 +157,23 @@ export default function StudyMaterialUploadModal({
 
     onError(null);
     onLoadingChange(true);
+    setUploadProgress(0);
+    const controller = new AbortController();
+    requestControllerRef.current = controller;
 
     try {
       const formData = new FormData();
       formData.append("file", sourceFile);
 
-      const response = await fetch("/api/study-guides/generate", {
-        method: "POST",
-        body: formData,
-      });
-      const payload = await readGenerateResponse(response);
+      const response = await uploadFormData<GenerateStudyGuideResponse>(
+        "/api/study-guides/generate",
+        formData,
+        {
+          signal: controller.signal,
+          onUploadProgress: setUploadProgress,
+        },
+      );
+      const payload = response.data ?? {};
 
       if (!response.ok) {
         onError(payload.error ?? "Could not generate a study guide.");
@@ -191,11 +196,28 @@ export default function StudyMaterialUploadModal({
       });
       setSourceFile(null);
       onClose();
-    } catch {
+    } catch (generationError) {
+      if (
+        generationError instanceof DOMException &&
+        generationError.name === "AbortError"
+      ) {
+        onError(
+          "Generation stopped. Your file is ready whenever you want to try again.",
+        );
+        return;
+      }
+
       onError("Could not generate a study guide. Please try again.");
     } finally {
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null;
+      }
       onLoadingChange(false);
     }
+  }
+
+  function cancelGeneration() {
+    requestControllerRef.current?.abort();
   }
 
   return (
@@ -327,15 +349,17 @@ export default function StudyMaterialUploadModal({
                 }`}
               >
                 {isLoading ? (
-                  <>
-                    <span className="flex size-14 items-center justify-center rounded-2xl bg-white text-blue-700 shadow-sm">
-                      <LoaderCircle className="size-6 animate-spin" aria-hidden="true" />
-                    </span>
-                    <p className="mt-4 font-semibold text-slate-900">Building your guide…</p>
-                    <p className="mt-1 max-w-xs text-sm leading-5 text-slate-500">
-                      We’re reading the material and organizing the key ideas. This can take a moment.
-                    </p>
-                  </>
+                  <FileProcessingStatus
+                    fileName={sourceFile?.name}
+                    uploadProgress={uploadProgress}
+                    labels={{
+                      uploading: "Uploading",
+                      reading: "Reading your material",
+                      preparing: "Organizing the key ideas",
+                      generating: "Writing your study guide",
+                    }}
+                    className="w-full max-w-md"
+                  />
                 ) : sourceFile ? (
                   <>
                     <span className="flex size-14 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
@@ -386,11 +410,10 @@ export default function StudyMaterialUploadModal({
             <Button
               type="button"
               variant="outline"
-              onClick={closeModal}
-              disabled={isLoading}
+              onClick={isLoading ? cancelGeneration : closeModal}
               className="rounded-xl bg-white"
             >
-              Cancel
+              {isLoading ? "Stop generation" : "Cancel"}
             </Button>
             <Button type="submit" disabled={!sourceFile || isLoading} className="rounded-xl px-5">
               {isLoading ? (
