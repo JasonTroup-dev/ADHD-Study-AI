@@ -341,7 +341,7 @@ export default function PlannerPage() {
 
                         {/* Progress Card */}
                         <div className="mt-8 rounded-2xl border bg-linear-to-r from-blue-100 to-indigo-200 p-8">
-                            <h2 className="text-xl font-semibold">Todays Progress</h2>
+                            <h2 className="text-xl font-semibold">Today’s Progress</h2>
 
                             <div className="flex justify-between mt-8">
                                 <p className="text-lg text-gray-600">
@@ -351,12 +351,22 @@ export default function PlannerPage() {
                                 <p className="text-xl font-semibold">{progressPercent}%</p>
                             </div>
 
-                            <CompletionProgress
-                                value={progressPercent}
-                                label={`${completedTasks} of ${totalTasks} tasks completed`}
-                                className="mt-4 bg-white/70"
-                                indicatorClassName="bg-linear-to-r from-blue-500 to-purple-500"
-                            />
+                            <div className="relative mt-4">
+                                <CompletionProgress
+                                    value={progressPercent}
+                                    label={`${completedTasks} of ${totalTasks} tasks completed`}
+                                    className="h-4 bg-white/75 p-1 shadow-inner ring-1 ring-indigo-300/50"
+                                    indicatorClassName="bg-linear-to-r from-blue-500 via-indigo-500 to-violet-500 shadow-sm after:absolute after:inset-y-0 after:right-0 after:w-1 after:rounded-full after:bg-white/80"
+                                />
+                                <div
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute inset-x-1 inset-y-1"
+                                >
+                                    <span className="absolute inset-y-0 left-1/4 w-px bg-indigo-950/10" />
+                                    <span className="absolute inset-y-0 left-1/2 w-px bg-indigo-950/10" />
+                                    <span className="absolute inset-y-0 left-3/4 w-px bg-indigo-950/10" />
+                                </div>
+                            </div>
                         </div>
 
 
