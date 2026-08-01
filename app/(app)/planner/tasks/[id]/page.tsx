@@ -22,7 +22,14 @@ import { cn } from "@/lib/utils";
 
 type TaskDetailsPageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string | string[] }>;
 };
+
+const taskReturnDestinations = {
+  calendar: { href: "/calendar", label: "calendar" },
+  dashboard: { href: "/dashboard", label: "dashboard" },
+  planner: { href: "/planner", label: "planner" },
+} as const;
 
 type TaskAssignment = {
   id: string;
@@ -37,8 +44,12 @@ type TaskClass = {
   color: string | null;
 };
 
-export default async function TaskDetailsPage({ params }: TaskDetailsPageProps) {
-  const { id } = await params;
+export default async function TaskDetailsPage({
+  params,
+  searchParams,
+}: TaskDetailsPageProps) {
+  const [{ id }, { from }] = await Promise.all([params, searchParams]);
+  const returnDestination = getTaskReturnDestination(from);
   const supabase = await createClient();
   const {
     data: { user },
@@ -86,11 +97,11 @@ export default async function TaskDetailsPage({ params }: TaskDetailsPageProps) 
     <div className="h-[calc(100svh-4rem)] overflow-hidden bg-slate-50 px-5 py-4 sm:px-8 md:h-svh md:py-6 lg:px-10">
       <div className="mx-auto flex h-full w-full max-w-5xl flex-col">
         <Link
-          href="/planner"
+          href={returnDestination.href}
           className="inline-flex shrink-0 self-start items-center gap-2 rounded-md text-sm font-semibold text-slate-600 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
-          Back to planner
+          Back to {returnDestination.label}
         </Link>
 
         <header className="mt-4 shrink-0 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -243,6 +254,18 @@ export default async function TaskDetailsPage({ params }: TaskDetailsPageProps) 
       </div>
     </div>
   );
+}
+
+function getTaskReturnDestination(from: string | string[] | undefined) {
+  const origin = Array.isArray(from) ? from[0] : from;
+
+  if (origin && origin in taskReturnDestinations) {
+    return taskReturnDestinations[
+      origin as keyof typeof taskReturnDestinations
+    ];
+  }
+
+  return taskReturnDestinations.planner;
 }
 
 function getSingleRelation<T>(relation: T | T[] | null): T | null {

@@ -31,6 +31,7 @@ type TaskCardProps = {
   task: StudyTask;
   onToggle?: (task: StudyTask) => void;
   className?: string;
+  detailsOrigin?: "dashboard" | "planner";
 };
 
 const priorityStyles: Record<string, { badge: string; dot: string }> = {
@@ -73,6 +74,7 @@ export function TaskCard({
   task,
   onToggle,
   className,
+  detailsOrigin = "planner",
 }: TaskCardProps) {
   const isCompleted = task.status === "completed";
   const taskClass = getTaskClass(task);
@@ -90,7 +92,7 @@ export function TaskCard({
       )}
     >
       <Link
-        href={`/planner/tasks/${task.id}`}
+        href={`/planner/tasks/${task.id}?from=${detailsOrigin}`}
         aria-label={`View details for ${task.title}`}
         className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500/35 focus-visible:ring-offset-2"
       >

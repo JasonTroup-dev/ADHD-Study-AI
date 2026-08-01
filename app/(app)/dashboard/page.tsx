@@ -399,6 +399,7 @@ export default function DashboardPage() {
                         key={task.id}
                         task={task}
                         onToggle={handleToggleTask}
+                        detailsOrigin="dashboard"
                       />
                     ))
                   ) : (

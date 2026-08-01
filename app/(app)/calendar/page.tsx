@@ -383,7 +383,7 @@ function CalendarItemChip({ item }: { item: CalendarItem }) {
   const href =
     item.kind === "assignment"
       ? "/planner/assignments"
-      : `/planner/tasks/${item.id}`;
+      : `/planner/tasks/${item.id}?from=calendar`;
 
   return (
     <Link
