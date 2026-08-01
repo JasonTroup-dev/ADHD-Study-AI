@@ -1,9 +1,8 @@
 import { cn } from "@/lib/utils";
-import { StartStudySessionButton } from "@/components/study-sessions/StartStudySessionButton";
 import { TaskToggle } from "@/components/ui/taskToggle";
-import { inferTaskSessionType } from "@/lib/studySessions";
 import { getClassColor } from "@/lib/classColors";
-import type { StudySession } from "@/types/database";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 export type StudyTask = {
   id: string;
@@ -30,7 +29,6 @@ export type StudyTask = {
 
 type TaskCardProps = {
   task: StudyTask;
-  activeStudySession?: StudySession | null;
   onToggle?: (task: StudyTask) => void;
   className?: string;
 };
@@ -71,45 +69,14 @@ function getTaskClass(task: StudyTask) {
   return Array.isArray(task.classes) ? task.classes[0] ?? null : task.classes;
 }
 
-function normalizeSessionTitle(title: string | null | undefined) {
-  return title?.trim().toLowerCase() ?? "";
-}
-
-function isActiveStudySessionForTask(
-  task: StudyTask,
-  session: StudySession | null | undefined,
-) {
-  if (!session || session.status !== "active") return false;
-  if (session.session_type !== inferTaskSessionType(task.title)) return false;
-
-  const titlesMatch =
-    normalizeSessionTitle(session.title) === normalizeSessionTitle(task.title);
-
-  if (!titlesMatch) return false;
-
-  if (task.assignment_id) {
-    return session.assignment_id === task.assignment_id;
-  }
-
-  return (
-    !session.assignment_id &&
-    (task.class_id ? session.class_id === task.class_id : true)
-  );
-}
-
 export function TaskCard({
   task,
-  activeStudySession,
   onToggle,
   className,
 }: TaskCardProps) {
   const isCompleted = task.status === "completed";
   const taskClass = getTaskClass(task);
   const classColor = taskClass ? getClassColor(taskClass.color) : null;
-  const hasActiveStudySession = isActiveStudySessionForTask(
-    task,
-    activeStudySession,
-  );
   const priorityStyle =
     priorityStyles[task.priority.toLowerCase()] ?? fallbackPriorityStyle;
 
@@ -122,6 +89,14 @@ export function TaskCard({
         className,
       )}
     >
+      <Link
+        href={`/planner/tasks/${task.id}`}
+        aria-label={`View details for ${task.title}`}
+        className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500/35 focus-visible:ring-offset-2"
+      >
+        <span className="sr-only">View task details</span>
+      </Link>
+
       <div
         aria-hidden="true"
         className={cn(
@@ -135,7 +110,7 @@ export function TaskCard({
         checked={isCompleted}
         onCheckedChange={() => onToggle?.(task)}
         aria-label={`${isCompleted ? "Mark as incomplete" : "Mark as complete"}: ${task.title}`}
-        className="mt-0.5 size-5 cursor-pointer accent-gray-950 disabled:cursor-default"
+        className="relative z-10 mt-0.5 size-5 cursor-pointer accent-gray-950 disabled:cursor-default"
       />
 
       <div className="min-w-0">
@@ -186,29 +161,17 @@ export function TaskCard({
         </div>
       </div>
 
-      <div className="col-start-2 flex items-center sm:col-start-3 sm:row-start-1">
-        {!isCompleted && (
-          <StartStudySessionButton
-            plannerTaskId={task.id}
-            assignmentId={task.assignment_id}
-            classId={task.class_id}
-            title={task.title}
-            sessionType={inferTaskSessionType(task.title)}
-            label={hasActiveStudySession ? "Resume" : undefined}
-            loadingLabel={hasActiveStudySession ? "Resuming..." : undefined}
-            variant={hasActiveStudySession ? "default" : "outline"}
-            className={cn(
-              "rounded-full px-3.5 shadow-none",
-              hasActiveStudySession && "bg-gray-950 hover:bg-gray-800",
-            )}
-          />
-        )}
-
-        {isCompleted && (
+      <div className="col-start-2 flex items-center justify-end gap-2 text-gray-400 sm:col-start-3 sm:row-start-1">
+        {isCompleted ? (
           <span className="rounded-full bg-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">
             Done
           </span>
+        ) : (
+          <span className="text-xs font-semibold text-gray-500 opacity-0 transition-opacity group-hover:opacity-100">
+            Details
+          </span>
         )}
+        <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
       </div>
     </div>
   );

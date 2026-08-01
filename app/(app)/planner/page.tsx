@@ -14,8 +14,6 @@ import StudyPlannerModal from "@/components/StudyPlanner/StudyPlannerModal";
 import type { StudyPlanImportSummary } from "@/types/syllabus";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CompletionProgress } from "@/components/ui/completionProgress";
-import { getActiveStudySession } from "@/lib/studySessions";
-import type { StudySession } from "@/types/database";
 
 type ClassItem = {
     id: string,
@@ -119,8 +117,6 @@ export default function PlannerPage() {
     const [userId, setUserId] = useState<string | null>(null);
     const [classes, setClasses] = useState<ClassItem[]>([]);
     const [tasks, setTasks] = useState<StudyTask[]>([]);
-    const [activeStudySession, setActiveStudySession] =
-        useState<StudySession | null>(null);
     const [taskRefreshToken, setTaskRefreshToken] = useState(0);
 
     const selectedDateString = toLocalDateString(selectedDate);
@@ -205,8 +201,7 @@ export default function PlannerPage() {
         async function loadTasks() {
             if (!userId) return;
 
-            const [tasksResult, activeSession] = await Promise.all([
-                supabase
+            const tasksResult = await supabase
                     .from("study_plan_tasks")
                     .select(`
                         id,
@@ -226,12 +221,7 @@ export default function PlannerPage() {
                     `)
                     .eq("user_id", userId)
                     .eq("scheduled_date", selectedDateString)
-                    .order("created_at", { ascending: true }),
-                getActiveStudySession().catch((error: unknown) => {
-                    console.error("Error loading active study session:", error);
-                    return null;
-                }),
-            ]);
+                    .order("created_at", { ascending: true });
 
             if (tasksResult.error) {
             console.error("Error loading tasks:", tasksResult.error);
@@ -239,7 +229,6 @@ export default function PlannerPage() {
             }
 
             setTasks(tasksResult.data ?? []);
-            setActiveStudySession(activeSession);
         }
 
         loadTasks();
@@ -449,7 +438,6 @@ export default function PlannerPage() {
                                 <TaskCard
                                     key={task.id}
                                     task={task}
-                                    activeStudySession={activeStudySession}
                                     onToggle={handleToggleTask}
                                 />
                             ))}

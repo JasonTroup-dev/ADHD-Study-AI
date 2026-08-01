@@ -398,7 +398,6 @@ export default function DashboardPage() {
                       <TaskCard
                         key={task.id}
                         task={task}
-                        activeStudySession={activeStudySession}
                         onToggle={handleToggleTask}
                       />
                     ))
