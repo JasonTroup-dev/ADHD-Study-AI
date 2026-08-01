@@ -309,7 +309,7 @@ export default function PlannerPage() {
                             variant="default"
                             size="lg"
                             onClick={() => setIsGenerateModalOpen(true)}>
-                            Generate AI Study Plan
+                            Generate Study Plan
                         </Button>
                     </div>
                 </div>
