@@ -35,11 +35,28 @@ type TaskCardProps = {
   className?: string;
 };
 
-const priorityStyles: Record<string, string> = {
-  low: "bg-emerald-100 text-emerald-700",
-  medium: "bg-amber-100 text-amber-700",
-  high: "bg-orange-100 text-orange-700",
-  critical: "bg-red-100 text-red-700",
+const priorityStyles: Record<string, { badge: string; dot: string }> = {
+  low: {
+    badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    dot: "bg-emerald-500",
+  },
+  medium: {
+    badge: "border-amber-200 bg-amber-50 text-amber-700",
+    dot: "bg-amber-500",
+  },
+  high: {
+    badge: "border-orange-200 bg-orange-50 text-orange-700",
+    dot: "bg-orange-500",
+  },
+  critical: {
+    badge: "border-red-200 bg-red-50 text-red-700",
+    dot: "bg-red-500",
+  },
+};
+
+const fallbackPriorityStyle = {
+  badge: "border-gray-200 bg-gray-50 text-gray-600",
+  dot: "bg-gray-400",
 };
 
 export function getTaskClassName(task: StudyTask) {
@@ -93,43 +110,83 @@ export function TaskCard({
     task,
     activeStudySession,
   );
-  const priorityClass =
-    priorityStyles[task.priority.toLowerCase()] ?? "bg-gray-100 text-gray-700";
+  const priorityStyle =
+    priorityStyles[task.priority.toLowerCase()] ?? fallbackPriorityStyle;
 
   return (
     <div
       className={cn(
-        "flex w-full flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between",
-        classColor
-          ? [classColor.bg, classColor.border]
-          : "border-gray-200 bg-white",
-        isCompleted && "opacity-60",
-        className
+        "group relative grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-xs transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-gray-300 hover:shadow-sm sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center",
+        isCompleted &&
+          "bg-gray-50/80 shadow-none hover:translate-y-0 hover:border-gray-200 hover:shadow-none",
+        className,
       )}
     >
-      <div className="flex items-start gap-4">
-        <TaskToggle
-          checked={isCompleted}
-          onCheckedChange={() => onToggle?.(task)}
-        />
+      <div
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-y-0 left-0 w-1.5",
+          classColor?.accent ?? "bg-gray-300",
+          isCompleted && "opacity-50",
+        )}
+      />
 
-        <div>
-          <h3
+      <TaskToggle
+        checked={isCompleted}
+        onCheckedChange={() => onToggle?.(task)}
+        aria-label={`${isCompleted ? "Mark as incomplete" : "Mark as complete"}: ${task.title}`}
+        className="mt-0.5 size-5 cursor-pointer accent-gray-950 disabled:cursor-default"
+      />
+
+      <div className="min-w-0">
+        <h3
+          className={cn(
+            "truncate text-sm font-semibold leading-5 text-gray-950 sm:text-base",
+            isCompleted && "text-gray-500 line-through decoration-gray-400",
+          )}
+          title={task.title}
+        >
+          {task.title}
+        </h3>
+
+        <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2 text-xs">
+          <span
             className={cn(
-              "font-semibold",
-              isCompleted ? "text-gray-500 line-through" : "text-gray-900"
+              "inline-flex min-w-0 items-center rounded-md border px-2 py-1 font-semibold",
+              classColor
+                ? [classColor.bg, classColor.border, classColor.text]
+                : "border-gray-200 bg-gray-100 text-gray-700",
+              isCompleted && "opacity-60",
             )}
           >
-            {task.title}
-          </h3>
+            <span className="truncate">{getTaskClassName(task)}</span>
+          </span>
 
-          <p className="mt-2 text-sm text-gray-600">
-            {getTaskClassName(task)}
-          </p>
+          <span aria-hidden="true" className="text-gray-300">
+            ·
+          </span>
+
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-medium capitalize",
+              priorityStyle.badge,
+              isCompleted && "border-gray-200 bg-white text-gray-500",
+            )}
+          >
+            <span
+              aria-hidden="true"
+              className={cn(
+                "size-1.5 rounded-full",
+                priorityStyle.dot,
+                isCompleted && "bg-gray-400",
+              )}
+            />
+            {task.priority}
+          </span>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-end gap-3">
+      <div className="col-start-2 flex items-center sm:col-start-3 sm:row-start-1">
         {!isCompleted && (
           <StartStudySessionButton
             plannerTaskId={task.id}
@@ -139,19 +196,19 @@ export function TaskCard({
             sessionType={inferTaskSessionType(task.title)}
             label={hasActiveStudySession ? "Resume" : undefined}
             loadingLabel={hasActiveStudySession ? "Resuming..." : undefined}
+            variant={hasActiveStudySession ? "default" : "outline"}
+            className={cn(
+              "rounded-full px-3.5 shadow-none",
+              hasActiveStudySession && "bg-gray-950 hover:bg-gray-800",
+            )}
           />
         )}
 
-        <span
-          className={cn(
-            "rounded-md px-2 py-1 text-xs font-medium capitalize",
-            priorityClass
-          )}
-        >
-          {task.priority}
-        </span>
-
-        <div className="h-5 w-5 rounded-full border border-gray-300" />
+        {isCompleted && (
+          <span className="rounded-full bg-gray-200 px-2.5 py-1 text-xs font-semibold text-gray-600">
+            Done
+          </span>
+        )}
       </div>
     </div>
   );
