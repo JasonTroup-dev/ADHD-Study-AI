@@ -227,6 +227,42 @@ export async function cancelStudySession(
   return data;
 }
 
+export async function resetStudySessionTask(
+  plannerTaskId: string,
+): Promise<{ clearedSessionIds: string[] }> {
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("study_plan_tasks")
+    .update({ status: "todo" })
+    .eq("id", plannerTaskId)
+    .eq("user_id", userId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Study session task not found.");
+
+  const now = new Date().toISOString();
+  const { data: clearedSessions, error: activeSessionError } =
+    await studySessionsClient
+      .from("study_sessions")
+      .update({
+        actual_minutes: null,
+        ended_at: now,
+        messages: [],
+        status: "cancelled",
+        updated_at: now,
+      })
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .select("id");
+
+  if (activeSessionError) throw new Error(activeSessionError.message);
+  return {
+    clearedSessionIds: clearedSessions.map((session) => session.id),
+  };
+}
+
 export async function getTodayCompletedStudySessions(): Promise<
   StudySession[]
 > {

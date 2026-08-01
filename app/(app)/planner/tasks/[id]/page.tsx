@@ -12,6 +12,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { AssignmentFileDropzone } from "@/components/tasks/AssignmentFileDropzone";
+import { ResetStudySessionButton } from "@/components/study-sessions/ResetStudySessionButton";
 import { StartStudySessionButton } from "@/components/study-sessions/StartStudySessionButton";
 import { estimateTaskMinutes } from "@/lib/assignments/estimateTaskTime";
 import { getClassColor } from "@/lib/classColors";
@@ -138,17 +139,23 @@ export default async function TaskDetailsPage({ params }: TaskDetailsPageProps) 
                 </div>
               </div>
 
-              {!isCompleted ? (
-                <StartStudySessionButton
+              <div className="flex shrink-0 flex-wrap items-start justify-end gap-2">
+                <ResetStudySessionButton
                   plannerTaskId={task.id}
-                  assignmentId={task.assignment_id}
-                  classId={task.class_id}
-                  title={task.title}
-                  sessionType={inferTaskSessionType(task.title)}
-                  label="Start task"
                   className="shrink-0"
                 />
-              ) : null}
+                {!isCompleted ? (
+                  <StartStudySessionButton
+                    plannerTaskId={task.id}
+                    assignmentId={task.assignment_id}
+                    classId={task.class_id}
+                    title={task.title}
+                    sessionType={inferTaskSessionType(task.title)}
+                    label="Start task"
+                    className="shrink-0"
+                  />
+                ) : null}
+              </div>
             </div>
           </div>
         </header>
