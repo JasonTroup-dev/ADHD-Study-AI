@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CircleAlert, Home, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { reportClientError } from "@/lib/monitoring/client";
 
 export default function AppError({
   error,
@@ -14,7 +15,7 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("App route error:", error);
+    reportClientError("error-boundary", error);
   }, [error]);
 
   return (

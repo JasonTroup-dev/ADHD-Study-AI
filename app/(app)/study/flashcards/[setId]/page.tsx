@@ -28,9 +28,6 @@ export default async function FlashcardSetPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log("SERVER USER ID:", user?.id);
-  console.log("SET ID FROM URL:", setId);
-
   if (!user) {
     return (
       <div className="min-h-full w-full bg-gray-100 p-8">
@@ -44,9 +41,6 @@ export default async function FlashcardSetPage({
     .select("id, title, user_id")
     .eq("id", setId)
     .maybeSingle();
-
-  console.log("FLASHCARD SET:", flashcardSet);
-  console.log("SET ERROR:", setError);
 
   if (setError) {
     return (
@@ -69,9 +63,6 @@ export default async function FlashcardSetPage({
     .select("id, question, answer")
     .eq("set_id", setId)
     .order("card_order", { ascending: true });
-
-  console.log("FLASHCARDS:", flashcards);
-  console.log("CARDS ERROR:", cardsError);
 
   if (cardsError) {
     return (
