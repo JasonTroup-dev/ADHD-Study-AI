@@ -32,8 +32,19 @@ export async function enforceAIQuota(
       requested_quota: quota,
     });
 
-    if (error || !isQuotaResult(data)) {
-      return quotaUnavailableResponse(error ?? data);
+    if (error) {
+      if (canBypassMissingQuotaInDevelopment(error)) {
+        console.warn(
+          "AI quota RPC is not deployed. Allowing this request in development only. Apply Supabase migrations before deploying.",
+        );
+        return null;
+      }
+
+      return quotaUnavailableResponse(error);
+    }
+
+    if (!isQuotaResult(data)) {
+      return quotaUnavailableResponse(data);
     }
 
     if (data.allowed) return null;
@@ -68,6 +79,14 @@ function quotaUnavailableResponse(error: unknown) {
   return Response.json(
     { error: "Usage limits could not be checked. Try again shortly." },
     { status: 503 },
+  );
+}
+
+function canBypassMissingQuotaInDevelopment(error: unknown) {
+  return (
+    process.env.NODE_ENV === "development"
+    && isRecord(error)
+    && error.code === "PGRST202"
   );
 }
 
