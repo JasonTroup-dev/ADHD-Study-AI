@@ -151,6 +151,13 @@ export default function HomePage() {
                 unauthenticatedLabel="Make my study plan"
                 className="inline-flex items-center gap-2 rounded-full bg-[#19241f] px-6 py-3.5 text-[15px] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(25,36,31,0.8)] transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-[#2d4037]"
               />
+              <Link
+                href="/demo"
+                className="inline-flex items-center gap-2 rounded-full border border-[#b9c4bc] bg-white/70 px-5 py-3.5 text-[15px] font-semibold text-[#32443a] transition-[background-color,transform] hover:-translate-y-0.5 hover:bg-white"
+              >
+                <Play className="size-4" aria-hidden="true" />
+                Explore sample workspace
+              </Link>
               <a
                 href="#how-it-works"
                 className="inline-flex items-center gap-2 rounded-full px-5 py-3.5 text-[15px] font-semibold text-[#32443a] transition-colors hover:bg-[#19241f]/5"

@@ -28,6 +28,13 @@ describe("application proxy", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
+  it("keeps the sample workspace public for anonymous visitors", async () => {
+    const response = await proxy(new NextRequest("http://localhost/demo"));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
   it.each(["/calendar", "/study-session/session-1"])(
     "redirects unauthenticated visits to protected route %s",
     async (pathname) => {
