@@ -24,6 +24,8 @@ export type DemoTutorPrompt = {
   id: string;
   label: string;
   response: string;
+  source: string;
+  nextStep: string;
 };
 
 export const demoClasses: DemoClass[] = [
@@ -88,22 +90,28 @@ export const demoTasks: DemoTask[] = [
 
 export const demoTutorPrompts: DemoTutorPrompt[] = [
   {
-    id: "next-step",
-    label: "What should I do first?",
+    id: "defensible-claim",
+    label: "What claim can I defend with my osmosis results?",
     response:
-      "Start with one small target: write a two-sentence claim explaining why water moved into the cell. Then check it against the concentration diagram in your lab notes. You do not need to draft the whole discussion yet.",
+      "Your data supports this claim: as sucrose concentration increased, the potato cores shifted from gaining mass to losing mass, which is consistent with water moving toward the higher solute concentration. Lead with that pattern, then cite the +8.4% change at 0.0 M and the -11.2% change at 0.6 M as your clearest contrast.",
+    source: "Used: osmosis-results.csv · all 7 concentrations",
+    nextStep: "Next: explain why the percent change crosses zero near the isotonic point.",
   },
   {
-    id: "explain-osmosis",
-    label: "Explain osmosis simply",
+    id: "isotonic-point",
+    label: "Where is the isotonic point, and how confident should I be?",
     response:
-      "Osmosis is water moving across a membrane toward the side with more dissolved particles. Think of water as trying to balance the concentration on both sides. In your lab, that predicts which cells gain or lose mass.",
+      "The sign changes between 0.2 M (+2.1%) and 0.3 M (-1.4%). A simple linear interpolation puts the isotonic point at about 0.26 M. Report that as an estimate—not an exact measurement—because the experiment has only one concentration step on either side and the variation across trials still matters.",
+    source: "Calculated from: 0.2 M and 0.3 M result rows",
+    nextStep: "Suggested wording: “The isotonic concentration was approximately 0.26 M.”",
   },
   {
-    id: "check-claim",
-    label: "Help me check my claim",
+    id: "challenge-conclusion",
+    label: "What is the weakest part of my conclusion?",
     response:
-      "Use this three-part check: does the claim name the direction water moved, connect that movement to solute concentration, and match the mass change in your results? If all three are present, your claim is ready for evidence.",
+      "The sentence “active transport moved water out of the cells” goes beyond your evidence. The mass changes support osmosis, which is passive, but this experiment did not measure energy use or specific membrane proteins. Replace that sentence with a claim about net water movement and name unequal core size as a limitation.",
+    source: "Compared: draft-conclusion.md · discussion rubric",
+    nextStep: "Revision focus: separate what the data shows from the mechanism it cannot prove.",
   },
 ];
 

@@ -91,7 +91,7 @@ export function DemoWorkspace() {
   }
 
   return (
-    <div className="min-h-svh bg-[#f3f5f2] text-slate-950">
+    <div className="flex h-svh flex-col overflow-hidden bg-[#f3f5f2] text-slate-950">
       <a
         href="#demo-content"
         className="sr-only z-[100] rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
@@ -99,7 +99,7 @@ export function DemoWorkspace() {
         Skip to sample workspace
       </a>
 
-      <header className="sticky top-0 z-50 border-b border-[#d9dfd8] bg-white/95 backdrop-blur">
+      <header className="z-50 shrink-0 border-b border-[#d9dfd8] bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 sm:px-6">
           <button
             type="button"
@@ -145,8 +145,8 @@ export function DemoWorkspace() {
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-[1600px]">
-        <aside className="sticky top-16 hidden h-[calc(100svh-4rem)] w-64 shrink-0 border-r border-[#d9dfd8] bg-[#edf0eb] p-5 md:flex md:flex-col">
+      <div className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1">
+        <aside className="hidden h-full w-64 shrink-0 border-r border-[#d9dfd8] bg-[#edf0eb] p-5 md:flex md:flex-col">
           <WorkspaceNavigation
             activeSection={activeSection}
             onSelect={selectSection}
@@ -154,8 +154,12 @@ export function DemoWorkspace() {
           <DemoSafetyCard />
         </aside>
 
-        <main id="demo-content" tabIndex={-1} className="min-w-0 flex-1 focus:outline-none">
-          <section className="border-b border-[#d9dfd8] bg-[#fffdf8] px-4 py-4 sm:px-6 lg:px-8">
+        <main
+          id="demo-content"
+          tabIndex={-1}
+          className="flex min-h-0 min-w-0 flex-1 flex-col focus:outline-none"
+        >
+          <section className="shrink-0 border-b border-[#d9dfd8] bg-[#fffdf8] px-4 py-4 sm:px-6 lg:px-8">
             <div className="mx-auto flex max-w-6xl flex-col gap-4 lg:flex-row lg:items-center">
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-800">
@@ -199,7 +203,7 @@ export function DemoWorkspace() {
             </div>
           </section>
 
-          <div className="px-4 py-7 sm:px-6 lg:px-8 lg:py-10">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-7 [-ms-overflow-style:none] [scrollbar-width:none] sm:px-6 lg:px-8 lg:py-10 [&::-webkit-scrollbar]:hidden">
             <div className="mx-auto max-w-6xl">
               {activeSection === "today" ? <TodayDemo /> : null}
               {activeSection === "classes" ? <ClassesDemo /> : null}
@@ -532,7 +536,22 @@ function TutorDemo() {
             </div>
             <div>
               <p className="text-sm text-slate-500">Connected material</p>
-              <p className="mt-1 font-semibold">Lab notes · Osmosis results table</p>
+              <p className="mt-1 font-semibold">Lab notes · Results table · Discussion rubric</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-800">
+                Evidence loaded
+              </p>
+              <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-slate-500">0.0 M sucrose</p>
+                  <p className="mt-0.5 font-semibold text-emerald-800">+8.4% mass</p>
+                </div>
+                <div>
+                  <p className="text-slate-500">0.6 M sucrose</p>
+                  <p className="mt-0.5 font-semibold text-rose-700">-11.2% mass</p>
+                </div>
+              </div>
             </div>
           </div>
           <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
@@ -552,15 +571,26 @@ function TutorDemo() {
           </div>
 
           <div className="min-h-[22rem] bg-slate-50/70 p-5 sm:p-7">
-            <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[#19241f] px-4 py-3 text-sm leading-6 text-white">
-              {selectedPrompt.label}
+            <div className="ml-auto flex max-w-[85%] flex-col items-end gap-1.5">
+              <span className="pr-1 text-xs font-medium text-slate-500">You</span>
+              <div className="rounded-2xl rounded-br-md bg-[#19241f] px-4 py-3 text-right text-sm leading-6 text-white">
+                {selectedPrompt.label}
+              </div>
             </div>
             <div className="mt-4 flex max-w-[92%] items-start gap-3">
               <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
                 <Bot className="size-4" aria-hidden="true" />
               </span>
               <div className="rounded-2xl rounded-tl-md border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 shadow-sm">
-                {selectedPrompt.response}
+                <p>{selectedPrompt.response}</p>
+                <div className="mt-4 border-t border-slate-100 pt-3">
+                  <p className="text-xs font-semibold text-emerald-800">
+                    {selectedPrompt.source}
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-slate-900">
+                    {selectedPrompt.nextStep}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
