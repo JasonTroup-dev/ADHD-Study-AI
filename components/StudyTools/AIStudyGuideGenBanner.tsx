@@ -43,7 +43,7 @@ export default function AIStudyGuideGenBanner() {
           size="lg"
           className="mt-4 bg-linear-to-br from-purple-500 to-blue-500"
         >
-          <Link href="/study/study-guide">
+          <Link href="/study/study-guide/create">
             Generate Study Guide
             <ArrowRight aria-hidden="true" />
           </Link>

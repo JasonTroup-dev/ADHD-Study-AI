@@ -119,7 +119,11 @@ describe("AI API protection", () => {
       originalName: "notes.txt",
     });
     getTutorResponseStream.mockResolvedValue(emptyTutorStream());
-    generateFlashcardsFromText.mockResolvedValue({ title: "Notes", cards: [] });
+    generateFlashcardsFromText.mockResolvedValue({
+      title: "Notes",
+      description: "Key ideas from the uploaded notes.",
+      cards: [],
+    });
     generateStudyGuideFromText.mockResolvedValue("# Notes\n\nA study guide.");
 
     const chatResponse = await chat(jsonChatRequest());
@@ -146,6 +150,20 @@ function authClient(
   authenticatedUser: typeof user | null,
   quotaData: ReturnType<typeof allowedQuota> | null = null,
 ) {
+  const studyGuideSaveQuery = {
+    insert: vi.fn(),
+    select: vi.fn(),
+    single: vi.fn().mockResolvedValue({
+      data: {
+        id: "00000000-0000-4000-8000-000000000010",
+        created_at: "2026-08-07T20:00:00.000Z",
+      },
+      error: null,
+    }),
+  };
+  studyGuideSaveQuery.insert.mockReturnValue(studyGuideSaveQuery);
+  studyGuideSaveQuery.select.mockReturnValue(studyGuideSaveQuery);
+
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({
@@ -154,6 +172,7 @@ function authClient(
       }),
     },
     rpc: vi.fn().mockResolvedValue({ data: quotaData, error: null }),
+    from: vi.fn().mockReturnValue(studyGuideSaveQuery),
   };
 }
 

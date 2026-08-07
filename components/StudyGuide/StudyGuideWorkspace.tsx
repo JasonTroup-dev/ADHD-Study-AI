@@ -14,7 +14,7 @@ import {
   subscribeToStudyGuides,
 } from "./studyGuideStorage";
 import type { GeneratedStudyGuide, SavedStudyGuide } from "./types";
-import { BookOpenText, CircleAlert, Plus } from "lucide-react";
+import { CircleAlert, Plus } from "lucide-react";
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 
 export default function StudyGuideWorkspace() {
@@ -29,7 +29,6 @@ export default function StudyGuideWorkspace() {
   const [query, setQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFocusMode, setIsFocusMode] = useState(false);
   const [copiedGuideId, setCopiedGuideId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,7 +89,6 @@ export default function StudyGuideWorkspace() {
     }
 
     setActiveGuideId(null);
-    setIsFocusMode(false);
   }, [activeGuide, storedGuides, unsavedGuide]);
 
   const handleCopyGuide = useCallback(async () => {
@@ -119,36 +117,6 @@ export default function StudyGuideWorkspace() {
     downloadLink.click();
     URL.revokeObjectURL(objectUrl);
   }, [activeGuide]);
-
-  if (isFocusMode && activeGuide) {
-    return (
-      <main className="h-[calc(100svh-4rem)] overflow-hidden bg-slate-100 px-4 py-5 text-slate-950 sm:px-6 md:h-svh lg:px-8">
-        <div className="mx-auto flex h-full min-h-0 max-w-5xl flex-col">
-          <div className="mb-4 flex shrink-0 items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-700">
-              <BookOpenText className="size-4 text-blue-700" aria-hidden="true" />
-              <span className="truncate">Focus reading</span>
-            </div>
-            <Button type="button" variant="outline" size="sm" onClick={() => setIsFocusMode(false)} className="rounded-lg bg-white">
-              Exit focus
-            </Button>
-          </div>
-          <div className="min-h-0 flex-1">
-          <StudyGuideReader
-            key={activeGuide.id}
-              copied={copiedGuideId === activeGuide.id}
-              guide={activeGuide}
-              onCopy={handleCopyGuide}
-              onDelete={handleDeleteGuide}
-              onDownload={handleDownloadGuide}
-              onFocus={() => setIsFocusMode(false)}
-              focusMode
-            />
-          </div>
-        </div>
-      </main>
-    );
-  }
 
   return (
     <main className="h-[calc(100svh-4rem)] overflow-hidden bg-slate-100 text-slate-950 md:h-svh">
@@ -200,7 +168,6 @@ export default function StudyGuideWorkspace() {
               onCopy={handleCopyGuide}
               onDelete={handleDeleteGuide}
               onDownload={handleDownloadGuide}
-              onFocus={() => setIsFocusMode(true)}
             />
           </div>
         ) : (

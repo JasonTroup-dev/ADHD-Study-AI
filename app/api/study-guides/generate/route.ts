@@ -82,10 +82,32 @@ export async function POST(req: Request) {
       createSafetyIdentifier(auth.user.id),
     );
 
+    const title = getStudyGuideTitle(content, extracted.originalName);
+    const { data: studyGuide, error: saveError } = await auth.supabase
+      .from("study_guides")
+      .insert({
+        user_id: auth.user.id,
+        title,
+        content,
+        original_file_name: extracted.originalName,
+      })
+      .select("id, created_at")
+      .single();
+
+    if (saveError || !studyGuide) {
+      console.error("Could not save generated study guide:", saveError);
+      return Response.json(
+        { error: "Your guide was generated, but it could not be saved." },
+        { status: 500 },
+      );
+    }
+
     return Response.json({
-      title: getStudyGuideTitle(content, extracted.originalName),
+      id: studyGuide.id,
+      title,
       content,
       originalFileName: extracted.originalName,
+      createdAt: studyGuide.created_at,
     });
   } catch (error) {
     if (error instanceof FileTextExtractionError) {

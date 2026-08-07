@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { FileProcessingStatus } from "@/components/ui/file-processing-status";
-import type { GeneratedStudyGuide } from "./types";
+import type { SavedStudyGuide } from "./types";
 import {
   formatFileSize,
   MAX_STUDY_FILE_BYTES,
@@ -32,13 +32,14 @@ type StudyMaterialUploadModalProps = {
   isOpen: boolean;
   isLoading: boolean;
   error: string | null;
+  displayMode?: "modal" | "page";
   onClose: () => void;
-  onCreateStudyGuide: (studyGuide: GeneratedStudyGuide) => void;
+  onCreateStudyGuide: (studyGuide: SavedStudyGuide) => void;
   onLoadingChange: (isLoading: boolean) => void;
   onError: (error: string | null) => void;
 };
 
-type GenerateStudyGuideResponse = Partial<GeneratedStudyGuide> & {
+type GenerateStudyGuideResponse = Partial<SavedStudyGuide> & {
   error?: string;
 };
 
@@ -46,6 +47,7 @@ export default function StudyMaterialUploadModal({
   isOpen,
   isLoading,
   error,
+  displayMode = "modal",
   onClose,
   onCreateStudyGuide,
   onLoadingChange,
@@ -63,7 +65,7 @@ export default function StudyMaterialUploadModal({
   }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || displayMode !== "modal") return;
 
     const previousOverflow = document.body.style.overflow;
     const previouslyFocusedElement = document.activeElement as HTMLElement | null;
@@ -75,10 +77,10 @@ export default function StudyMaterialUploadModal({
       document.body.style.overflow = previousOverflow;
       previouslyFocusedElement?.focus();
     };
-  }, [isOpen]);
+  }, [displayMode, isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || displayMode !== "modal") return;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape" && !isLoading) {
@@ -112,7 +114,7 @@ export default function StudyMaterialUploadModal({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isLoading, isOpen, onClose, onError]);
+  }, [displayMode, isLoading, isOpen, onClose, onError]);
 
   if (!isOpen) {
     return null;
@@ -183,19 +185,25 @@ export default function StudyMaterialUploadModal({
       if (
         typeof payload.title !== "string" ||
         typeof payload.content !== "string" ||
-        typeof payload.originalFileName !== "string"
+        typeof payload.originalFileName !== "string" ||
+        typeof payload.id !== "string" ||
+        typeof payload.createdAt !== "string"
       ) {
         onError("The generated study guide response was incomplete.");
         return;
       }
 
       onCreateStudyGuide({
+        id: payload.id,
         title: payload.title,
         content: payload.content,
         originalFileName: payload.originalFileName,
+        createdAt: payload.createdAt,
       });
       setSourceFile(null);
-      onClose();
+      if (displayMode === "modal") {
+        onClose();
+      }
     } catch (generationError) {
       if (
         generationError instanceof DOMException &&
@@ -222,21 +230,29 @@ export default function StudyMaterialUploadModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center overflow-hidden bg-slate-950/65 px-4 py-3 backdrop-blur-sm"
+      className={
+        displayMode === "modal"
+          ? "fixed inset-0 z-50 flex items-center overflow-hidden bg-slate-950/65 px-4 py-3 backdrop-blur-sm"
+          : "flex min-h-[calc(100svh-4rem)] items-center bg-slate-100 px-4 py-8 sm:px-6 md:min-h-svh lg:px-8"
+      }
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
+        if (displayMode === "modal" && event.target === event.currentTarget) {
           closeModal();
         }
       }}
     >
       <div
         ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
+        role={displayMode === "modal" ? "dialog" : undefined}
+        aria-modal={displayMode === "modal" ? "true" : undefined}
         aria-labelledby="study-guide-upload-title"
         aria-describedby="study-guide-upload-description"
         aria-busy={isLoading}
-        className="mx-auto flex max-h-[calc(100svh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/20 bg-white shadow-2xl"
+        className={`mx-auto flex w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white ${
+          displayMode === "modal"
+            ? "max-h-[calc(100svh-1.5rem)] border border-white/20 shadow-2xl"
+            : "border border-slate-200 shadow-sm"
+        }`}
       >
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-6 py-4 sm:px-7">
           <div className="flex items-start gap-3">
@@ -267,7 +283,7 @@ export default function StudyMaterialUploadModal({
             onClick={closeModal}
             disabled={isLoading}
             aria-label="Close upload dialog"
-            className="shrink-0 rounded-xl text-slate-500"
+            className={`shrink-0 rounded-xl text-slate-500 ${displayMode === "page" ? "hidden" : ""}`}
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </Button>

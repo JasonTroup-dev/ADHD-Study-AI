@@ -480,6 +480,7 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          original_file_name: string
           source_file_id: string | null
           title: string
           updated_at: string
@@ -491,6 +492,7 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          original_file_name: string
           source_file_id?: string | null
           title: string
           updated_at?: string
@@ -502,6 +504,7 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          original_file_name?: string
           source_file_id?: string | null
           title?: string
           updated_at?: string
