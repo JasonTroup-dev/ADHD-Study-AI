@@ -6,7 +6,10 @@ ADHD Study AI is a full-stack web app built to help students reduce overwhelm, u
 
 > Built by a software engineering student with ADHD to help students turn overwhelming coursework into clear, manageable study steps.
 
-**Live Demo:** [ADHDStudyAI.com](https://adhdstudyai.com)  
+**Live Site:** [ADHDStudyAI.com](https://adhdstudyai.com) · **Recruiter Demo:** [Explore the read-only sample workspace](https://adhdstudyai.com/demo)
+
+**60-second Walkthrough:** [Watch the recruiter demo](docs/demo-walkthrough.gif)
+
 **Deployment:** Deployed on Vercel
 
 ---
@@ -387,6 +390,14 @@ Material becomes available to tutor and study sessions
 
 The screenshots below are stored in `docs/screenshots/` so they render directly on GitHub.
 
+### Recruiter Demo
+
+The public sample workspace lets visitors inspect a complete product state without creating an account, uploading a syllabus, or making paid AI requests. It includes seeded classes and tasks, explicit read-only guardrails, and locally scripted tutor interactions.
+
+[![Read-only recruiter demo workspace](docs/screenshots/demo-workspace.png)](docs/demo-walkthrough.gif)
+
+Click the image to watch the 60-second walkthrough.
+
 ### Landing Page
 
 The landing page explains the core value proposition clearly: ADHD Study AI turns class material into study guides, flashcards, quizzes, and next steps so students spend less energy figuring out where to start.
@@ -483,10 +494,14 @@ Open the local app in your browser and sign up or log in to begin testing the fu
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL used by the client and server |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public Supabase anon key for authenticated client access |
+| `NEXT_PUBLIC_SITE_URL` | Optional canonical origin; defaults to `https://adhdstudyai.com` |
+| `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | Server-only Supabase admin credential required for permanent account deletion |
 | `OPENAI_API_KEY` | OpenAI API key used by AI routes |
 | `OPENAI_FLASHCARDS_MODEL`, `OPENAI_STUDY_GUIDE_MODEL` | Optional model overrides for generated study content |
 | `OPENAI_SYLLABUS_MODEL`, `OPENAI_CLASS_MATERIAL_MODEL` | Optional model overrides for extraction and classification |
 | `OPENAI_ASSIGNMENT_GUIDE_MODEL`, `OPENAI_STUDY_TUTOR_MODEL`, `OPENAI_TUTOR_MODEL` | Optional model overrides for tutoring workflows |
+| `ERROR_MONITORING_ENDPOINT` | Optional server-side webhook for redacted application error events; Vercel Runtime Logs remain the default sink |
+| `ERROR_MONITORING_TOKEN` | Optional bearer token for the error-monitoring webhook |
 | Additional Supabase/server variables | Used as needed for server-side storage, auth, or deployment configuration |
 
 ---
@@ -521,6 +536,12 @@ the API route suite, and the AI runtime/schema suites:
 npm test
 ```
 
+Generate the HTML/LCOV coverage report and enforce the domain/API thresholds:
+
+```bash
+npm run test:coverage
+```
+
 The database and browser suites use a local Supabase stack and require Docker:
 
 ```bash
@@ -541,7 +562,8 @@ npm run build
 ```
 
 GitHub Actions also starts an isolated Supabase stack for the two-user RLS tests
-and the Playwright signup-to-study-session journey.
+and the Playwright browser journeys. Each CI run publishes a coverage summary
+and retains the full report as an artifact.
 
 ---
 

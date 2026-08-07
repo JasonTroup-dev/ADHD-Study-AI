@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -21,6 +22,10 @@ import {
 } from "lucide-react";
 
 import { AuthAwareLink } from "@/components/AuthAwareLink";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const studyTools = [
   { label: "Study guide", icon: BookOpenText },
@@ -708,6 +713,9 @@ export default function HomePage() {
             </a>
             <Link href="/login" className="transition-colors hover:text-white">
               Sign in
+            </Link>
+            <Link href="/privacy" className="transition-colors hover:text-white">
+              Privacy & data
             </Link>
           </div>
           <p className="text-sm">Less overwhelm. More clarity.</p>
