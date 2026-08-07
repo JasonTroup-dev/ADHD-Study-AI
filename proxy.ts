@@ -1,12 +1,13 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import type { Database } from "@/types/database";
+import { updateSession } from "@/lib/supabase/proxy";
 
 const protectedRoutes = [
+  "/calendar",
   "/dashboard",
   "/classes",
   "/study",
+  "/study-session",
   "/planner",
   "/report-bug",
   "/settings",
@@ -21,48 +22,9 @@ export async function proxy(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) =>
     matchesRoute(pathname, route)
   );
+  const { isAuthenticated, response } = await updateSession(request);
 
-  if (!isProtectedRoute) {
-    return NextResponse.next({
-      request,
-    });
-  }
-
-  let response = NextResponse.next({
-    request,
-  });
-
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => {
-            request.cookies.set(name, value);
-          });
-
-          response = NextResponse.next({
-            request,
-          });
-
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
-        },
-      },
-    }
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (isProtectedRoute && !isAuthenticated) {
     const redirectResponse = NextResponse.redirect(
       new URL("/login", request.url)
     );
@@ -70,6 +32,14 @@ export async function proxy(request: NextRequest) {
     response.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie);
     });
+
+    for (const headerName of ["cache-control", "expires", "pragma"]) {
+      const headerValue = response.headers.get(headerName);
+
+      if (headerValue) {
+        redirectResponse.headers.set(headerName, headerValue);
+      }
+    }
 
     return redirectResponse;
   }
