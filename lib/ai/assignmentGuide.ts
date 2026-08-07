@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { runAIRequest } from "@/lib/ai/runtime";
 
 export type AssignmentGuideInput = {
   title: string;
@@ -10,12 +10,6 @@ export type AssignmentGuideInput = {
   originalFileName?: string | null;
   assignmentInstructions?: string | null;
 };
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  maxRetries: 0,
-  timeout: 60_000,
-});
 
 const assignmentGuideInstructions = `
 You are an ADHD-friendly assignment guide.
@@ -43,20 +37,23 @@ Rules:
 export async function generateAssignmentGuide(
   input: AssignmentGuideInput,
 ): Promise<string> {
-  const response = await client.responses.create({
-    model: "gpt-5.4-mini",
-    max_output_tokens: 900,
-    input: [
-      {
-        role: "system",
-        content: assignmentGuideInstructions,
-      },
-      {
-        role: "user",
-        content: JSON.stringify(input),
-      },
-    ],
-  });
+  const response = await runAIRequest(
+    "assignment_guide",
+    ({ client, model, requestOptions }) => client.responses.create({
+      model,
+      max_output_tokens: 900,
+      input: [
+        {
+          role: "system",
+          content: assignmentGuideInstructions,
+        },
+        {
+          role: "user",
+          content: JSON.stringify(input),
+        },
+      ],
+    }, requestOptions),
+  );
 
   const guide = response.output_text.trim();
 

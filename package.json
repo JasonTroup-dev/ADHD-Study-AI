@@ -7,11 +7,20 @@
     "build": "node scripts/build.mjs",
     "start": "next start",
     "lint": "eslint",
-    "test:scheduling": "node --experimental-strip-types --test lib/syllabus/scheduling.test.mjs"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run && npm run test:ai",
+    "test:watch": "vitest",
+    "test:scheduling": "vitest run lib/syllabus/scheduling.test.mjs",
+    "test:ai": "tsx --test lib/ai/runtime.test.ts lib/ai/schemas.test.ts",
+    "eval:ai": "tsx evals/ai/run.ts",
+    "eval:ai:validate": "tsx evals/ai/run.ts --validate-only",
+    "test:db": "supabase test db",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.100.0",
+    "@vercel/analytics": "^2.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "katex": "^0.17.0",
@@ -26,9 +35,11 @@
     "react-markdown": "^10.1.0",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
-    "tailwind-merge": "^3.5.0"
+    "tailwind-merge": "^3.5.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -36,8 +47,11 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "shadcn": "^3.8.5",
+    "supabase": "^2.111.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.9",
     "tw-animate-css": "^1.4.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

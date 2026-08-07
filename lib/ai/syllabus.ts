@@ -1,5 +1,7 @@
-import OpenAI from "openai";
+import { zodTextFormat } from "openai/helpers/zod";
 
+import { runAIRequest } from "@/lib/ai/runtime";
+import { syllabusAnalysisSchema } from "@/lib/ai/schemas";
 import { prepareStudyGuideSourceText } from "@/lib/files/extractTextFromFile";
 import {
   getSyllabusDateEvidence,
@@ -12,10 +14,6 @@ import type {
   SyllabusDueDateStatus,
   SyllabusItemKind,
 } from "@/types/syllabus";
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 const difficultyValues = new Set<SyllabusAssignmentDifficulty>([
   "easy",
@@ -32,103 +30,6 @@ const dueDateStatusValues = new Set<SyllabusDueDateStatus>([
   "inferred",
   "missing",
 ]);
-
-const syllabusAnalysisSchema = {
-  type: "object",
-  additionalProperties: false,
-  required: ["course", "matchedClassId", "assignments"],
-  properties: {
-    course: {
-      type: "object",
-      additionalProperties: false,
-      required: ["name", "classCode", "instructor", "confidence"],
-      properties: {
-        name: {
-          type: ["string", "null"],
-          description: "Official course name from the syllabus, or null.",
-        },
-        classCode: {
-          type: ["string", "null"],
-          description: "Course code such as CHEM 3331, or null.",
-        },
-        instructor: {
-          type: ["string", "null"],
-          description: "Primary instructor name, or null.",
-        },
-        confidence: {
-          type: "number",
-          minimum: 0,
-          maximum: 1,
-        },
-      },
-    },
-    matchedClassId: {
-      type: ["string", "null"],
-      description:
-        "ID of a clearly matching existing class from the supplied list, otherwise null.",
-    },
-    assignments: {
-      type: "array",
-      maxItems: 80,
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: [
-          "title",
-          "kind",
-          "dueDate",
-          "dueDateStatus",
-          "points",
-          "difficulty",
-          "confidence",
-          "notes",
-        ],
-        properties: {
-          title: {
-            type: "string",
-            description: "Clear assignment title from the syllabus.",
-          },
-          kind: {
-            type: "string",
-            enum: ["assignment", "exam", "quiz"],
-            description:
-              "Use exam for midterms and finals, quiz for quizzes, and assignment for all other graded deliverables.",
-          },
-          dueDate: {
-            type: ["string", "null"],
-            description:
-              "Due date as YYYY-MM-DD when known. Use null when the date is missing or too ambiguous.",
-          },
-          dueDateStatus: {
-            type: "string",
-            enum: ["explicit", "inferred", "missing"],
-            description:
-              "Whether the exact date is printed, only the year is inferred, or no exact calendar date is supported.",
-          },
-          points: {
-            type: ["number", "null"],
-            description:
-              "Point value or percentage weight if explicitly listed. Use null if missing.",
-          },
-          difficulty: {
-            type: "string",
-            enum: ["easy", "medium", "hard"],
-          },
-          confidence: {
-            type: "number",
-            minimum: 0,
-            maximum: 1,
-          },
-          notes: {
-            type: "string",
-            description:
-              "Short evidence or uncertainty note. Empty string is allowed.",
-          },
-        },
-      },
-    },
-  },
-} as const;
 
 const syllabusExtractionInstructions = `
 You identify the course and extract assignment data from course syllabi for a student planner.
@@ -180,54 +81,50 @@ export async function analyzeSyllabusText({
   }
 
   const preparedText = prepareStudyGuideSourceText(text);
-  const response = await client.responses.create({
-    model: process.env.OPENAI_SYLLABUS_MODEL ?? "gpt-5-mini",
-    input: [
-      {
-        role: "system",
-        content: syllabusExtractionInstructions,
+  const response = await runAIRequest(
+    "syllabus_analysis",
+    ({ client, model, requestOptions }) => client.responses.parse({
+      model,
+      input: [
+        {
+          role: "system",
+          content: syllabusExtractionInstructions,
+        },
+        {
+          role: "user",
+          content: [
+            `Current date: ${new Date().toISOString().slice(0, 10)}`,
+            `File name: ${originalFileName}`,
+            "Existing classes (match only when clearly the same course):",
+            formatExistingClasses(existingClasses),
+            "",
+            "Syllabus text:",
+            preparedText,
+          ].join("\n"),
+        },
+      ],
+      text: {
+        format: zodTextFormat(syllabusAnalysisSchema, "syllabus_analysis"),
       },
-      {
-        role: "user",
-        content: [
-          `Current date: ${new Date().toISOString().slice(0, 10)}`,
-          `File name: ${originalFileName}`,
-          "Existing classes (match only when clearly the same course):",
-          formatExistingClasses(existingClasses),
-          "",
-          "Syllabus text:",
-          preparedText,
-        ].join("\n"),
-      },
-    ],
-    text: {
-      format: {
-        type: "json_schema",
-        name: "syllabus_analysis",
-        strict: true,
-        schema: syllabusAnalysisSchema,
-      },
-    },
-  });
+    }, requestOptions),
+  );
 
-  if (!response.output_text) {
+  if (!response.output_parsed) {
     throw new Error("The model returned an empty syllabus analysis.");
   }
 
   return parseSyllabusAnalysis(
-    response.output_text,
+    response.output_parsed,
     existingClasses,
     preparedText,
   );
 }
 
 function parseSyllabusAnalysis(
-  rawJson: string,
+  parsed: unknown,
   existingClasses: ExistingClassForAnalysis[],
   sourceText: string,
 ): SyllabusAnalysis {
-  const parsed: unknown = JSON.parse(rawJson);
-
   if (
     !isRecord(parsed) ||
     !isRecord(parsed.course) ||

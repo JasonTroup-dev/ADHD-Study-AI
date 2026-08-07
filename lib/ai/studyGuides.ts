@@ -1,10 +1,4 @@
-import OpenAI from "openai";
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  maxRetries: 0,
-  timeout: 4 * 60 * 1000,
-});
+import { runAIRequest } from "@/lib/ai/runtime";
 
 const studyGuideInstructions = `
 You create ADHD-friendly study guides from uploaded course material.
@@ -33,20 +27,23 @@ Rules:
 export async function generateStudyGuideFromText(
   text: string,
 ): Promise<string> {
-  const response = await client.responses.create({
-    model: "gpt-5-mini",
-    max_output_tokens: 8_000,
-    input: [
-      {
-        role: "system",
-        content: studyGuideInstructions,
-      },
-      {
-        role: "user",
-        content: text,
-      },
-    ],
-  });
+  const response = await runAIRequest(
+    "study_guide",
+    ({ client, model, requestOptions }) => client.responses.create({
+      model,
+      max_output_tokens: 8_000,
+      input: [
+        {
+          role: "system",
+          content: studyGuideInstructions,
+        },
+        {
+          role: "user",
+          content: text,
+        },
+      ],
+    }, requestOptions),
+  );
 
   const content = normalizeMarkdownResponse(response.output_text);
 

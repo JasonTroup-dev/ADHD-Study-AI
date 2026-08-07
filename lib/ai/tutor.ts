@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { runAIStream } from "@/lib/ai/runtime";
 
 export type TutorAttachment = {
     id: string;
@@ -12,10 +12,6 @@ export type TutorMessage = {
     content: string;
     attachments?: TutorAttachment[];
 }
-
-const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 const tutorInstructions = `
 You are an ADHD-friendly AI tutor for college students.
@@ -41,25 +37,27 @@ export async function getTutorResponseStream(
 ) {
     const attachmentBudgets = getAttachmentBudgets(messages);
 
-    return client.responses.create({
-        model: "gpt-5.4-mini",
-        stream: true,
-        input: [
-            {
-                role: "system",
-                content: tutorInstructions,
-            },
-            ...messages.map((message, index) => ({
-                role: message.role,
-                content: formatTutorMessage(
-                    message,
-                    attachmentBudgets[index],
-                ),
-            })),
-        ],
-    }, {
+    return runAIStream(
+        "tutor",
+        ({ client, model, requestOptions }) => client.responses.create({
+            model,
+            stream: true,
+            input: [
+                {
+                    role: "system",
+                    content: tutorInstructions,
+                },
+                ...messages.map((message, index) => ({
+                    role: message.role,
+                    content: formatTutorMessage(
+                        message,
+                        attachmentBudgets[index],
+                    ),
+                })),
+            ],
+        }, requestOptions),
         signal,
-    });
+    );
 }
 
 function getAttachmentBudgets(messages: TutorMessage[]) {

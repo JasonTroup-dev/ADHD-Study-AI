@@ -484,21 +484,64 @@ Open the local app in your browser and sign up or log in to begin testing the fu
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL used by the client and server |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public Supabase anon key for authenticated client access |
 | `OPENAI_API_KEY` | OpenAI API key used by AI routes |
+| `OPENAI_FLASHCARDS_MODEL`, `OPENAI_STUDY_GUIDE_MODEL` | Optional model overrides for generated study content |
+| `OPENAI_SYLLABUS_MODEL`, `OPENAI_CLASS_MATERIAL_MODEL` | Optional model overrides for extraction and classification |
+| `OPENAI_ASSIGNMENT_GUIDE_MODEL`, `OPENAI_STUDY_TUTOR_MODEL`, `OPENAI_TUTOR_MODEL` | Optional model overrides for tutoring workflows |
 | Additional Supabase/server variables | Used as needed for server-side storage, auth, or deployment configuration |
+
+---
+
+## AI Measurement and Evaluations
+
+Model defaults, request timeouts, retries, and pricing are centralized in `lib/ai/runtime.ts`. Every AI request writes a structured `ai.request` JSON log containing the workflow, model, response ID, status, latency, token counts, cached and reasoning tokens, and estimated standard-API cost. Cost is `null` for an unknown model override so dashboards do not report a made-up rate.
+
+Validate the representative BIO, PSY, and HIST evaluation fixtures without making API calls:
+
+```bash
+npm run eval:ai:validate
+```
+
+Run the live schema and quality evaluation suite with `OPENAI_API_KEY` configured:
+
+```bash
+npm run eval:ai
+npm run eval:ai -- --case bio210-syllabus
+```
+
+The live runner emits one `ai.eval_case` record per case and an `ai.eval_summary` record, and exits nonzero when any case scores below 0.85.
 
 ---
 
 ## Build and Checks
 
-Before sharing or deploying changes, run:
+The default test command runs the existing scheduling and markdown suites,
+the API route suite, and the AI runtime/schema suites:
+
+```bash
+npm test
+```
+
+The database and browser suites use a local Supabase stack and require Docker:
+
+```bash
+npx supabase start
+npm run test:db
+npm run test:e2e
+npx supabase stop --no-backup
+```
+
+Before sharing or deploying changes, run the same core checks used by CI:
 
 ```bash
 npm run lint
-npm run test:scheduling
+npm run typecheck
+npm test
+npm run eval:ai:validate
 npm run build
 ```
 
-These commands check formatting/lint rules, verify the syllabus scheduling logic, and confirm the production Next.js build.
+GitHub Actions also starts an isolated Supabase stack for the two-user RLS tests
+and the Playwright signup-to-study-session journey.
 
 ---
 

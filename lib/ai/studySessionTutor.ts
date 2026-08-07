@@ -1,4 +1,7 @@
-import OpenAI from "openai";
+import { zodTextFormat } from "openai/helpers/zod";
+
+import { runAIRequest } from "@/lib/ai/runtime";
+import { studyTutorResponseSchema } from "@/lib/ai/schemas";
 
 export type StudyTutorMessage = {
   role: "user" | "assistant";
@@ -31,12 +34,6 @@ export type StudyTutorResult = {
   completionStatus: "in_progress" | "ready";
   completionReason: string;
 };
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  maxRetries: 0,
-  timeout: 60_000,
-});
 
 const studyTutorInstructions = `
 You are an ADHD-friendly AI Tutor running a guided assignment study session.
@@ -134,20 +131,6 @@ Completion rules are strict:
   string while the session is still in progress.
 `;
 
-const responseSchema = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    message: { type: "string" },
-    completionStatus: {
-      type: "string",
-      enum: ["in_progress", "ready"],
-    },
-    completionReason: { type: "string" },
-  },
-  required: ["message", "completionStatus", "completionReason"],
-} as const;
-
 export async function getStudyTutorResponse(
   context: StudyTutorContext,
   messages: StudyTutorMessage[],
@@ -168,18 +151,17 @@ export async function getStudyTutorResponse(
           : "The student has not provided assignment instructions or described a specific problem yet. Do not invent assignment details.",
       }];
 
-  const response = await client.responses.create(
-    {
-      model: "gpt-5.4-mini",
+  const response = await runAIRequest(
+    "study_session_tutor",
+    ({ client, model, requestOptions }) => client.responses.parse({
+      model,
       max_output_tokens: 1_200,
       text: {
         verbosity: "low",
-        format: {
-          type: "json_schema",
-          name: "study_tutor_response",
-          strict: true,
-          schema: responseSchema,
-        },
+        format: zodTextFormat(
+          studyTutorResponseSchema,
+          "study_tutor_response",
+        ),
       },
       input: [
         {
@@ -198,11 +180,14 @@ export async function getStudyTutorResponse(
         },
         ...conversation,
       ],
-    },
-    { signal },
+    }, requestOptions),
+    signal,
   );
 
-  const parsed = parseStudyTutorResult(response.output_text);
+  const parsed = response.output_parsed;
+  if (!parsed) {
+    throw new Error("The study tutor returned an unreadable response.");
+  }
   const latestUserMessage = [...messages]
     .reverse()
     .find((message) => message.role === "user")?.content;
@@ -237,36 +222,6 @@ export async function getStudyTutorResponse(
   }
 
   return parsed;
-}
-
-function parseStudyTutorResult(value: string): StudyTutorResult {
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(value);
-  } catch {
-    throw new Error("The study tutor returned an unreadable response.");
-  }
-
-  if (
-    typeof parsed !== "object"
-    || parsed === null
-    || !("message" in parsed)
-    || typeof parsed.message !== "string"
-    || !("completionStatus" in parsed)
-    || (parsed.completionStatus !== "in_progress"
-      && parsed.completionStatus !== "ready")
-    || !("completionReason" in parsed)
-    || typeof parsed.completionReason !== "string"
-  ) {
-    throw new Error("The study tutor response was incomplete.");
-  }
-
-  return {
-    message: parsed.message,
-    completionStatus: parsed.completionStatus,
-    completionReason: parsed.completionReason,
-  };
 }
 
 function explicitlyReportsFinalQuestionComplete(message: string) {

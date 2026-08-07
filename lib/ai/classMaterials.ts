@@ -1,74 +1,9 @@
-import OpenAI from "openai";
+import { zodTextFormat } from "openai/helpers/zod";
 
+import { runAIRequest } from "@/lib/ai/runtime";
+import { materialAnalysisSchema } from "@/lib/ai/schemas";
 import { prepareTutorSourceText } from "@/lib/files/extractTextFromFile";
 import type { SupportedStudyFileExtension } from "@/lib/files/uploadConstraints";
-
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  maxRetries: 0,
-  timeout: 2 * 60 * 1000,
-});
-
-const materialAnalysisSchema = {
-  type: "object",
-  additionalProperties: false,
-  required: ["files"],
-  properties: {
-    files: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: [
-          "fileIndex",
-          "kind",
-          "target",
-          "assignmentId",
-          "newAssignmentTitle",
-          "dueDate",
-          "description",
-          "confidence",
-          "reason",
-        ],
-        properties: {
-          fileIndex: {
-            type: "integer",
-            minimum: 0,
-          },
-          kind: {
-            type: "string",
-            enum: ["assignment_file", "study_material"],
-          },
-          target: {
-            type: "string",
-            enum: ["existing_assignment", "new_assignment"],
-          },
-          assignmentId: {
-            type: ["string", "null"],
-          },
-          newAssignmentTitle: {
-            type: ["string", "null"],
-          },
-          dueDate: {
-            type: ["string", "null"],
-            description: "YYYY-MM-DD when explicitly present, otherwise null.",
-          },
-          description: {
-            type: "string",
-          },
-          confidence: {
-            type: "number",
-            minimum: 0,
-            maximum: 1,
-          },
-          reason: {
-            type: "string",
-          },
-        },
-      },
-    },
-  },
-} as const;
 
 const materialAnalysisInstructions = `
 You classify uploaded class files for a student study app.
@@ -124,55 +59,55 @@ export async function analyzeClassMaterialFiles(input: {
     throw new Error("OPENAI_API_KEY is not configured.");
   }
 
-  const response = await client.responses.create({
-    model: process.env.OPENAI_CLASS_MATERIAL_MODEL ?? "gpt-5-mini",
-    input: [
-      {
-        role: "system",
-        content: materialAnalysisInstructions,
+  const response = await runAIRequest(
+    "class_material_analysis",
+    ({ client, model, requestOptions }) => client.responses.parse({
+      model,
+      input: [
+        {
+          role: "system",
+          content: materialAnalysisInstructions,
+        },
+        {
+          role: "user",
+          content: [
+            `Current date: ${new Date().toISOString().slice(0, 10)}`,
+            `Class: ${input.className}`,
+            `Class code: ${input.classCode ?? "unknown"}`,
+            "",
+            "Existing assignments:",
+            formatAssignments(input.assignments),
+            "",
+            "Uploaded files:",
+            formatFiles(input.files),
+          ].join("\n"),
+        },
+      ],
+      text: {
+        format: zodTextFormat(
+          materialAnalysisSchema,
+          "class_material_analysis",
+        ),
       },
-      {
-        role: "user",
-        content: [
-          `Current date: ${new Date().toISOString().slice(0, 10)}`,
-          `Class: ${input.className}`,
-          `Class code: ${input.classCode ?? "unknown"}`,
-          "",
-          "Existing assignments:",
-          formatAssignments(input.assignments),
-          "",
-          "Uploaded files:",
-          formatFiles(input.files),
-        ].join("\n"),
-      },
-    ],
-    text: {
-      format: {
-        type: "json_schema",
-        name: "class_material_analysis",
-        strict: true,
-        schema: materialAnalysisSchema,
-      },
-    },
-  });
+    }, requestOptions),
+  );
 
-  if (!response.output_text) {
+  if (!response.output_parsed) {
     throw new Error("The model returned an empty material analysis.");
   }
 
   return normalizeSuggestions(
-    response.output_text,
+    response.output_parsed,
     input.files,
     input.assignments,
   );
 }
 
 function normalizeSuggestions(
-  rawJson: string,
+  parsed: unknown,
   files: FileForMaterialAnalysis[],
   assignments: ExistingAssignmentForMaterialAnalysis[],
 ) {
-  const parsed = JSON.parse(rawJson) as unknown;
   const rawFiles =
     isRecord(parsed) && Array.isArray(parsed.files) ? parsed.files : [];
   const assignmentIds = new Set(assignments.map((assignment) => assignment.id));

@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "sourceArtifacts": [
+    "output/pdf/BIO210_Cellular_Biology_Fall_2026_Syllabus.pdf",
+    "output/pdf/PSY240_Cognitive_Psychology_Fall_2026_Syllabus.pdf",
+    "output/pdf/HIST115_Modern_World_History_Fall_2026_Syllabus.pdf",
+    "output/pdf/assignments/BIO210/03_Laboratory_Report_1_Microscopy_and_Measurement.pdf",
+    "output/pdf/assignments/PSY240/07_Applied_Cognition_Note_4_Retrieval_Practice.pdf",
+    "output/pdf/assignments/HIST115/04_Digital_Exhibit_Proposal.pdf"
+  ],
+  "cases": [
+    {
+      "id": "bio210-syllabus",
+      "workflow": "syllabus_analysis",
+      "input": {
+        "originalFileName": "BIO210_Cellular_Biology_Fall_2026_Syllabus.pdf",
+        "existingClasses": [
+          { "id": "class-bio210", "name": "Cellular Biology", "classCode": "BIO 210" },
+          { "id": "class-chem120", "name": "General Chemistry", "classCode": "CHEM 120" }
+        ],
+        "text": "BIO 210\nCellular Biology\nFALL 2026 | AUGUST 24 - DECEMBER 18\nInstructor Mei Chen, PhD\nAssignment calendar\nProblem Set 1: Scale, Units, and Microscopy - Sun, Aug 30 - 25 points\nLaboratory Report 1: Microscopy and Measurement - Wed, Sep 23 - 100 points\nUnit Examination 1 - Wed, Oct 7 - 125 points\nCumulative Final Examination - Wed, Dec 16 - 150 points"
+      },
+      "expected": {
+        "classCode": "BIO 210",
+        "instructorIncludes": "Mei Chen",
+        "matchedClassId": "class-bio210",
+        "assignments": [
+          { "titleIncludes": "Problem Set 1", "dueDate": "2026-08-30", "kind": "assignment" },
+          { "titleIncludes": "Laboratory Report 1", "dueDate": "2026-09-23", "kind": "assignment" },
+          { "titleIncludes": "Cumulative Final Examination", "dueDate": "2026-12-16", "kind": "exam" }
+        ]
+      }
+    },
+    {
+      "id": "psy240-syllabus",
+      "workflow": "syllabus_analysis",
+      "input": {
+        "originalFileName": "PSY240_Cognitive_Psychology_Fall_2026_Syllabus.pdf",
+        "existingClasses": [
+          { "id": "class-psy240", "name": "Cognitive Psychology", "classCode": "PSY 240" },
+          { "id": "class-psy101", "name": "Introduction to Psychology", "classCode": "PSY 101" }
+        ],
+        "text": "PSY 240\nCognitive Psychology\nFALL 2026 | AUGUST 24 - DECEMBER 18\nInstructor Elena Rivera, PhD\nAssignment calendar\nApplied Cognition Note 4: Retrieval Practice - Tue, Oct 20 - 15 points\nMidterm Examination - Thu, Oct 15 - 180 points\nProposal Milestone 2: Evidence Table - Thu, Nov 12 - 50 points\nFinal Replication Proposal - Thu, Dec 10 - 150 points"
+      },
+      "expected": {
+        "classCode": "PSY 240",
+        "instructorIncludes": "Elena Rivera",
+        "matchedClassId": "class-psy240",
+        "assignments": [
+          { "titleIncludes": "Applied Cognition Note 4", "dueDate": "2026-10-20", "kind": "assignment" },
+          { "titleIncludes": "Midterm Examination", "dueDate": "2026-10-15", "kind": "exam" },
+          { "titleIncludes": "Final Replication Proposal", "dueDate": "2026-12-10", "kind": "assignment" }
+        ]
+      }
+    },
+    {
+      "id": "hist115-syllabus",
+      "workflow": "syllabus_analysis",
+      "input": {
+        "originalFileName": "HIST115_Modern_World_History_Fall_2026_Syllabus.pdf",
+        "existingClasses": [
+          { "id": "class-hist115", "name": "Modern World History", "classCode": "HIST 115" },
+          { "id": "class-hist101", "name": "World History Survey", "classCode": "HIST 101" }
+        ],
+        "text": "HIST 115\nModern World History\nFALL 2026 | AUGUST 24 - DECEMBER 18\nInstructor Jordan Taylor, MA\nAssignment calendar\nDigital Exhibit Proposal - Mon, Sep 28 - 50 points\nComparative Essay 1: Industry and Social Change - Fri, Oct 16 - 175 points\nSpatial History Map 3: Migration after 1945 - Mon, Nov 16 - 40 points\nFinal Digital Exhibit - Fri, Dec 11 - 150 points"
+      },
+      "expected": {
+        "classCode": "HIST 115",
+        "instructorIncludes": "Jordan Taylor",
+        "matchedClassId": "class-hist115",
+        "assignments": [
+          { "titleIncludes": "Digital Exhibit Proposal", "dueDate": "2026-09-28", "kind": "assignment" },
+          { "titleIncludes": "Comparative Essay 1", "dueDate": "2026-10-16", "kind": "assignment" },
+          { "titleIncludes": "Final Digital Exhibit", "dueDate": "2026-12-11", "kind": "assignment" }
+        ]
+      }
+    },
+    {
+      "id": "bio210-assignment-flashcards",
+      "workflow": "flashcards",
+      "input": {
+        "cardCount": 5,
+        "text": "Laboratory Report 1: Microscopy and Measurement. Convert ocular divisions to micrometers using 10 ocular divisions = 25 micrometers. Calculate cell length for 12 cells and report mean, range, and sample size for each tissue. Create a plot showing every measurement. Evaluate whether field selection or cell orientation could bias the observed difference. Focus on estimation, variation, and measurement limitations."
+      },
+      "expected": {
+        "conceptGroups": [
+          ["ocular divisions", "calibration"],
+          ["mean", "range"],
+          ["field selection", "cell orientation", "bias"]
+        ]
+      }
+    },
+    {
+      "id": "psy240-assignment-flashcards",
+      "workflow": "flashcards",
+      "input": {
+        "cardCount": 5,
+        "text": "Applied Cognition Note 4: Retrieval Practice. Compare rereading with retrieval practice using two equally difficult sets of course terms. Study one set by rereading and one by closed-book retrieval plus feedback. After a 24-hour delay, define the terms without notes. Explain the result using retrieval strength, feedback, and metacognitive fluency, while acknowledging that one participant cannot establish general effectiveness."
+      },
+      "expected": {
+        "conceptGroups": [
+          ["retrieval practice"],
+          ["24-hour", "24 hour", "delay"],
+          ["metacognitive fluency", "fluency"]
+        ]
+      }
+    },
+    {
+      "id": "hist115-assignment-flashcards",
+      "workflow": "flashcards",
+      "input": {
+        "cardCount": 5,
+        "text": "Digital Exhibit Proposal. Define a narrow, researchable historical question for a six-item public-facing exhibit. Specify the date range, geography, intended audience, and why the question matters. Identify plausible item types and preliminary citations. Explain a provisional argument and how evidence could complicate it. Identify an ethical, rights, representation, or accessibility issue and a plan for addressing it."
+      },
+      "expected": {
+        "conceptGroups": [
+          ["historical question", "researchable question"],
+          ["audience"],
+          ["ethical", "rights", "accessibility", "representation"]
+        ]
+      }
+    }
+  ]
+}
