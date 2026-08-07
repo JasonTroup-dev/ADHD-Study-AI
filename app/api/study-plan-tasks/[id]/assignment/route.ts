@@ -43,9 +43,9 @@ export async function POST(
   }
 
   const importance = ["low", "medium", "high", "critical"].includes(
-    task.priority,
+    task.priority ?? "",
   )
-    ? task.priority
+    ? (task.priority ?? "medium")
     : "medium";
   const { data: assignment, error: assignmentError } = await supabase
     .from("assignments")

@@ -14,7 +14,6 @@ export type FlashcardItem = {
   id: string;
   question: string;
   answer: string;
-  card_order: number;
 };
 
 export default async function FlashcardSetPage({
@@ -67,7 +66,7 @@ export default async function FlashcardSetPage({
 
   const { data: flashcards, error: cardsError } = await supabase
     .from("flashcards")
-    .select("id, question, answer, card_order")
+    .select("id, question, answer")
     .eq("set_id", setId)
     .order("card_order", { ascending: true });
 

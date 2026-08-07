@@ -9,7 +9,6 @@ import { TaskCard, type StudyTask } from "@/components/ui/taskCard";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import PlannerCalendar from "@/components/StudyPlanner/StudyPlannerCalendar";
-import type { ClassColor } from "@/lib/classColors";
 import StudyPlannerModal from "@/components/StudyPlanner/StudyPlannerModal";
 import type { StudyPlanImportSummary } from "@/types/syllabus";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -18,7 +17,7 @@ import { CompletionProgress } from "@/components/ui/completionProgress";
 type ClassItem = {
     id: string,
     name: string;
-    color: ClassColor | null;
+    color: string | null;
 };
 
 const STUDY_PLAN_NOTICE_DURATION_MS = 5_000;

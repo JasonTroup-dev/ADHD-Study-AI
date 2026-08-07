@@ -9,6 +9,7 @@ import {
   SUPPORTED_STUDY_FILE_EXTENSIONS,
   type SupportedStudyFileExtension,
 } from "@/lib/files/uploadConstraints";
+import type { Database } from "@/types/database";
 
 const ASSIGNMENT_FILES_BUCKET = "assignment-files";
 
@@ -52,7 +53,7 @@ export function getStudyFileDetails(file: File): StudyFileDetails | null {
 }
 
 export async function saveAssignmentMaterial(
-  supabase: SupabaseClient,
+  supabase: SupabaseClient<Database>,
   input: {
     userId: string;
     assignmentId: string;
@@ -111,8 +112,8 @@ export async function saveAssignmentMaterial(
 
   return {
     material: {
-      id: data.id as string,
-      originalFileName: data.original_file_name as string,
+      id: data.id,
+      originalFileName: data.original_file_name,
       hasExtractedText: Boolean(data.extracted_text),
     },
     warning,

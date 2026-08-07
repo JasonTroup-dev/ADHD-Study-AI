@@ -34,7 +34,13 @@ export default function Flashcards() {
             return;
         }
 
-        const classIds = [...new Set((sets ?? []).map((set) => set.class_id).filter(Boolean))];
+        const classIds = [
+            ...new Set(
+                (sets ?? [])
+                    .map((set) => set.class_id)
+                    .filter((classId): classId is string => classId !== null),
+            ),
+        ];
 
         const { data: classes, error: classesError } = await supabase
             .from("classes")

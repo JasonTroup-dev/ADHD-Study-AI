@@ -34,7 +34,7 @@ import { cn } from "@/lib/utils";
 
 type SidebarClass = {
   id: string;
-  class_code: string;
+  class_code: string | null;
   color: string | null;
 };
 
@@ -310,7 +310,9 @@ function Navigation({
                 )}
               >
                 <span className={cn("size-2 shrink-0 rounded-full", color.accent)} aria-hidden="true" />
-                <span className="truncate">{classItem.class_code}</span>
+                <span className="truncate">
+                  {classItem.class_code ?? "Untitled class"}
+                </span>
               </Link>
             );
           })

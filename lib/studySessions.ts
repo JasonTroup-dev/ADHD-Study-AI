@@ -1,16 +1,11 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-
 import { supabase } from "@/lib/supabase/client";
 import type {
   StudySession,
   StudySessionInsert,
   StudySessionMessage,
   StudySessionType,
-  StudySessionsDatabase,
 } from "@/types/database";
 
-const studySessionsClient =
-  supabase as unknown as SupabaseClient<StudySessionsDatabase>;
 const MAX_STORED_SESSION_MESSAGES = 40;
 const MAX_STORED_SESSION_MESSAGE_CHARS = 12_000;
 
@@ -37,7 +32,7 @@ async function getCurrentUserId() {
   const {
     data: { user },
     error,
-  } = await studySessionsClient.auth.getUser();
+  } = await supabase.auth.getUser();
 
   if (error) throw new Error(error.message);
   if (!user) throw new Error("You must be signed in to use study sessions.");
@@ -68,7 +63,7 @@ export async function createStudySession(
     ended_at: null,
   };
 
-  const { data, error } = await studySessionsClient
+  const { data, error } = await supabase
     .from("study_sessions")
     .insert(newSession)
     .select("*")
@@ -80,7 +75,7 @@ export async function createStudySession(
 
 export async function getActiveStudySession(): Promise<StudySession | null> {
   const userId = await getCurrentUserId();
-  const { data, error } = await studySessionsClient
+  const { data, error } = await supabase
     .from("study_sessions")
     .select("*")
     .eq("user_id", userId)
@@ -97,7 +92,7 @@ export async function getStudySessionById(
   sessionId: string,
 ): Promise<StudySession | null> {
   const userId = await getCurrentUserId();
-  const { data, error } = await studySessionsClient
+  const { data, error } = await supabase
     .from("study_sessions")
     .select("*")
     .eq("id", sessionId)
@@ -114,7 +109,7 @@ export async function saveStudySessionMessages(
 ): Promise<void> {
   const userId = await getCurrentUserId();
   const normalizedMessages = normalizeStudySessionMessages(messages);
-  const { data, error } = await studySessionsClient
+  const { data, error } = await supabase
     .from("study_sessions")
     .update({
       messages: normalizedMessages,
@@ -159,7 +154,7 @@ export async function completeStudySession(
     Math.ceil((endedAt.getTime() - startedAt.getTime()) / 60_000),
   );
 
-  const { data, error } = await studySessionsClient
+  const { data, error } = await supabase
     .from("study_sessions")
     .update({
       actual_minutes: actualMinutes,
@@ -210,7 +205,7 @@ export async function cancelStudySession(
 ): Promise<StudySession> {
   const userId = await getCurrentUserId();
   const now = new Date().toISOString();
-  const { data, error } = await studySessionsClient
+  const { data, error } = await supabase
     .from("study_sessions")
     .update({
       status: "cancelled",
@@ -244,7 +239,7 @@ export async function resetStudySessionTask(
 
   const now = new Date().toISOString();
   const { data: clearedSessions, error: activeSessionError } =
-    await studySessionsClient
+    await supabase
       .from("study_sessions")
       .update({
         actual_minutes: null,
@@ -268,7 +263,7 @@ export async function getTodayCompletedStudySessions(): Promise<
 > {
   const userId = await getCurrentUserId();
   const { start, end } = getLocalDayRange();
-  const { data, error } = await studySessionsClient
+  const { data, error } = await supabase
     .from("study_sessions")
     .select("*")
     .eq("user_id", userId)

@@ -9,10 +9,10 @@ export type StudyTask = {
   class_id: string | null;
   assignment_id: string | null;
   title: string;
-  priority: string;
+  priority: string | null;
   status: string;
   scheduled_date: string;
-  source?: "manual" | "generic_generated" | "context_generated";
+  source?: string;
   context_version?: number;
   user_edited?: boolean;
   classes:
@@ -80,7 +80,7 @@ export function TaskCard({
   const taskClass = getTaskClass(task);
   const classColor = taskClass ? getClassColor(taskClass.color) : null;
   const priorityStyle =
-    priorityStyles[task.priority.toLowerCase()] ?? fallbackPriorityStyle;
+    priorityStyles[task.priority?.toLowerCase() ?? ""] ?? fallbackPriorityStyle;
 
   return (
     <div
@@ -158,7 +158,7 @@ export function TaskCard({
                 isCompleted && "bg-gray-400",
               )}
             />
-            {task.priority}
+            {task.priority ?? "No priority"}
           </span>
         </div>
       </div>

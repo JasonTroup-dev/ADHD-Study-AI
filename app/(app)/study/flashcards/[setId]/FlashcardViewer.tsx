@@ -10,7 +10,6 @@ type FlashcardItem = {
   id: string;
   question: string;
   answer: string;
-  card_order: number;
 };
 
 type FlashcardViewerProps = {
