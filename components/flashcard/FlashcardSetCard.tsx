@@ -91,14 +91,14 @@ export default function FlashcardSetCard({
 
           {menuOpen ? (
             <div className="absolute right-0 top-8 z-30 w-36 rounded-xl border border-gray-200 bg-white p-1 shadow-lg">
-              <button
-                type="button"
+              <Link
+                href={`/study/flashcards/${id}/edit`}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 onClick={() => setMenuOpen(false)}
               >
                 <Pencil className="h-4 w-4" />
                 Edit set
-              </button>
+              </Link>
 
               <button
                 type="button"

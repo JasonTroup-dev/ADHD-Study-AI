@@ -8,6 +8,13 @@ const generatedFlashcardSchema = z.strictObject({
 export function getGeneratedFlashcardsSchema(cardCount: number) {
   return z.strictObject({
     title: z.string().min(1).max(120),
+    description: z
+      .string()
+      .min(1)
+      .max(240)
+      .describe(
+        "A content-focused summary of the main subjects and concepts covered. Do not mention the number of cards or describe the flashcard set itself.",
+      ),
     cards: z.array(generatedFlashcardSchema).length(cardCount),
   });
 }

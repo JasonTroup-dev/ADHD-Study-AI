@@ -5,6 +5,7 @@ import AiMarkdown from "@/components/AiMarkdown";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FlashcardStudySessionBar } from "@/components/study-sessions/FlashcardStudySessionBar";
+import { Pencil } from "lucide-react";
 
 type FlashcardItem = {
   id: string;
@@ -13,12 +14,14 @@ type FlashcardItem = {
 };
 
 type FlashcardViewerProps = {
+  setId: string;
   title: string;
   flashcards: FlashcardItem[];
   studySessionId?: string;
 };
 
 export default function FlashcardViewer({
+  setId,
   title,
   flashcards,
   studySessionId,
@@ -53,6 +56,13 @@ export default function FlashcardViewer({
             </Button>
           </Link>
 
+          <Button asChild variant="outline" className="mt-4">
+            <Link href={`/study/flashcards/${setId}/edit`}>
+              <Pencil aria-hidden="true" />
+              Edit set
+            </Link>
+          </Button>
+
           <h1 className="text-4xl font-semibold mt-6">{title}</h1>
           <p className="mt-4 text-gray-600">No flashcards found in this set.</p>
         </div>
@@ -72,6 +82,15 @@ export default function FlashcardViewer({
               {"← Back to Sets"}
             </Button>
           </Link>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <Button asChild variant="outline">
+            <Link href={`/study/flashcards/${setId}/edit`}>
+              <Pencil aria-hidden="true" />
+              Edit set
+            </Link>
+          </Button>
         </div>
 
         <div>

@@ -95,6 +95,11 @@ export function normalizeMathDelimiters(content: string) {
         .replace(
           /\\\(([\s\S]*?)\\\)/g,
           (_match, expression: string) => `$${expression.trim()}$`,
+        )
+        .replace(
+          /(^|\n)[ \t]*\$\$[ \t]*(?:\n)?([\s\S]*?)[ \t]*\$\$(?=[ \t]*(?:\n|$))/g,
+          (_match, prefix: string, expression: string) =>
+            `${prefix}$$\n${expression.trim()}\n$$`,
         );
 
       return wrapBareLatexCommands(
@@ -102,6 +107,14 @@ export function normalizeMathDelimiters(content: string) {
       );
     })
     .join("");
+}
+
+function restoreJsonEscapedLatexCommands(content: string) {
+  return content
+    .replace(/\r(?=[A-Za-z])/g, "\\r")
+    .replace(/\t(?=[A-Za-z])/g, "\\t")
+    .replace(/\f(?=[A-Za-z])/g, "\\f")
+    .replace(/\u0008(?=[A-Za-z])/g, "\\b");
 }
 
 function restoreDelimitedLatexCommands(content: string) {
@@ -132,7 +145,9 @@ function restoreDelimitedLatexCommands(content: string) {
 
     result += delimiter;
     result += restoreMissingLatexBackslashes(
-      content.slice(expressionStart, expressionEnd),
+      restoreJsonEscapedLatexCommands(
+        content.slice(expressionStart, expressionEnd),
+      ),
     );
     result += delimiter;
     index = expressionEnd + delimiter.length;
@@ -143,6 +158,7 @@ function restoreDelimitedLatexCommands(content: string) {
 
 function restoreMissingLatexBackslashes(expression: string) {
   return expression
+    .replace(/\\ightarrow\b/g, "\\rightarrow")
     .replace(/(^|[^\\A-Za-z])(mathrm)(?=\s*(?:\{|[A-Z]))/g, "$1\\$2")
     .replace(missingMathCommandPattern, "$1\\$2")
     .replace(

@@ -13,6 +13,7 @@ describe("AI structured output schemas", () => {
     const schema = getGeneratedFlashcardsSchema(2);
     const validDeck = {
       title: "Cell basics",
+      description: "Core cell structures, ATP, and their roles in living systems.",
       cards: [
         { question: "What is a cell?", answer: "The basic unit of life." },
         { question: "What is ATP?", answer: "A cellular energy carrier." },
@@ -22,6 +23,11 @@ describe("AI structured output schemas", () => {
     assert.equal(schema.safeParse(validDeck).success, true);
     assert.equal(
       schema.safeParse({ ...validDeck, cards: validDeck.cards.slice(0, 1) })
+        .success,
+      false,
+    );
+    assert.equal(
+      schema.safeParse({ title: validDeck.title, cards: validDeck.cards })
         .success,
       false,
     );

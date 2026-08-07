@@ -166,12 +166,19 @@ async function runCase(testCase: EvalCase) {
   const searchableOutput = normalize(
     [
       output.title,
+      output.description,
       ...output.cards.flatMap((card) => [card.question, card.answer]),
     ].join(" "),
   );
   const checks: Record<string, boolean> = {
     exactCardCount: output.cards.length === testCase.input.cardCount,
     nonEmptyTitle: output.title.trim().length > 0,
+    usefulDescription:
+      output.description.trim().length > 0
+      && output.description.length <= 240,
+    contentFocusedDescription: !hasFlashcardDescriptionMetaLanguage(
+      output.description,
+    ),
     conciseAnswers: output.cards.every((card) => card.answer.length <= 1_500),
   };
 
@@ -207,6 +214,18 @@ function getArgumentValue(name: string) {
 
 function normalize(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function hasFlashcardDescriptionMetaLanguage(value: string) {
+  return (
+    /\b\d+\s+(?:flash)?cards?\b/i.test(value)
+    || /\b(?:this|the|these)\s+(?:flashcard\s+)?(?:set|deck|cards?)\b/i.test(
+      value,
+    )
+    || /\b(?:flashcards?|deck)\s+(?:covers?|includes?|focuses?)\b/i.test(
+      value,
+    )
+  );
 }
 
 function average(values: number[]) {

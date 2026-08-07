@@ -74,6 +74,7 @@ export default async function FlashcardSetPage({
 
   return (
     <FlashcardViewer
+      setId={flashcardSet.id}
       title={flashcardSet.title}
       flashcards={flashcards ?? []}
       studySessionId={studySessionId}

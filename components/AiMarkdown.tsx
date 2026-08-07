@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { normalizeMathDelimiters } from "@/components/aiMarkdownText";
+import { normalizeMathDelimiters } from "@/lib/ai/markdownText";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
