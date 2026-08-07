@@ -21,6 +21,7 @@ type Message = {
     role: "user" | "assistant";
     content: string;
     attachments?: TutorAttachment[];
+    deliveryState?: "cancelled" | "error";
 };
 
 export default function AiTutor() {
@@ -42,33 +43,48 @@ export default function AiTutor() {
         };
     }, []);
 
-    async function handleSend() {
-        if ((!input.trim() && files.length === 0) || isLoading) return;
+    async function runTutorTurn({
+        messageContent,
+        sourceFiles = [],
+        existingAttachments = [],
+        baseMessages = messages,
+        clearComposer = false,
+    }: {
+        messageContent: string;
+        sourceFiles?: File[];
+        existingAttachments?: TutorAttachment[];
+        baseMessages?: Message[];
+        clearComposer?: boolean;
+    }) {
+        if ((!messageContent.trim() && sourceFiles.length === 0) || isLoading) return;
 
         const abortController = new AbortController();
         const assistantMessageId = `${crypto.randomUUID()}-assistant`;
 
         abortControllerRef.current = abortController;
         setComposerError(null);
-        setLoadingStatus(files.length > 0 ? "Reading attached files..." : "Waiting for AI...");
+        setLoadingStatus(sourceFiles.length > 0 ? "Reading attached files..." : "Waiting for AI...");
         setIsLoading(true);
 
         try {
-            const attachments = files.length > 0
-                ? await uploadTutorFiles(files, abortController.signal)
+            const uploadedAttachments = sourceFiles.length > 0
+                ? await uploadTutorFiles(sourceFiles, abortController.signal)
                 : [];
-            const messageContent = input.trim()
+            const attachments = sourceFiles.length > 0
+                ? uploadedAttachments.map((attachment) => ({
+                    ...attachment,
+                    id: crypto.randomUUID(),
+                }))
+                : existingAttachments;
+            const normalizedContent = messageContent.trim()
                 || "Please help me understand the attached study materials.";
             const newUserMessage: Message = {
                 id: crypto.randomUUID(),
                 role: "user",
-                content: messageContent,
-                attachments: attachments.map((attachment) => ({
-                    ...attachment,
-                    id: crypto.randomUUID(),
-                })),
+                content: normalizedContent,
+                attachments,
             };
-            const updatedMessages = [...messages, newUserMessage];
+            const updatedMessages = [...baseMessages, newUserMessage];
             const conversationForApi = updatedMessages.slice(-8);
             const newAssistantMessage: Message = {
                 id: assistantMessageId,
@@ -77,8 +93,10 @@ export default function AiTutor() {
             };
 
             setMessages([...updatedMessages, newAssistantMessage]);
-            setInput("");
-            setFiles([]);
+            if (clearComposer) {
+                setInput("");
+                setFiles([]);
+            }
             setLoadingStatus("Waiting for AI...");
 
             const response = await fetch("/api/chat", {
@@ -139,6 +157,19 @@ export default function AiTutor() {
             }
         } catch (error) {
             if (abortController.signal.aborted) {
+                setMessages((currentMessages) =>
+                    currentMessages.map((message) =>
+                        message.id === assistantMessageId
+                            ? {
+                                ...message,
+                                content: message.content
+                                    ? `${message.content}\n\n*Response stopped. You can retry.*`
+                                    : "Response stopped. You can retry.",
+                                deliveryState: "cancelled",
+                            }
+                            : message,
+                    ),
+                );
                 return;
             }
 
@@ -160,6 +191,7 @@ export default function AiTutor() {
                     return {
                         ...message,
                         content: message.content + errorText,
+                        deliveryState: "error",
                     };
                 })
             );
@@ -171,6 +203,30 @@ export default function AiTutor() {
                 setIsLoading(false);
             }
         }
+    }
+
+    function handleSend() {
+        void runTutorTurn({
+            messageContent: input,
+            sourceFiles: files,
+            clearComposer: true,
+        });
+    }
+
+    function handleCancelResponse() {
+        abortControllerRef.current?.abort();
+    }
+
+    function handleRetryResponse(index: number) {
+        const userMessage = messages[index - 1];
+
+        if (!userMessage || userMessage.role !== "user") return;
+
+        void runTutorTurn({
+            messageContent: userMessage.content,
+            existingAttachments: userMessage.attachments ?? [],
+            baseMessages: messages.slice(0, index - 1),
+        });
     }
 
     function handleFilesSelected(selectedFiles: File[]) {
@@ -210,6 +266,28 @@ export default function AiTutor() {
         <TutorWorkspace
             messages={messages}
             isLoading={isLoading}
+            messageActions={(message, index) =>
+                message.role === "assistant" && message.deliveryState ? (
+                    <button
+                        type="button"
+                        onClick={() => handleRetryResponse(index)}
+                        className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                    >
+                        Retry response
+                    </button>
+                ) : null
+            }
+            composerHeader={isLoading ? (
+                <div className="mx-auto flex w-full max-w-2xl justify-end px-3 lg:max-w-xl xl:max-w-4xl">
+                    <button
+                        type="button"
+                        onClick={handleCancelResponse}
+                        className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                    >
+                        Stop response
+                    </button>
+                </div>
+            ) : null}
             composer={(
                 <InputBar
                     input={input}

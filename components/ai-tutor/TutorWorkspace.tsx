@@ -8,6 +8,7 @@ export type TutorWorkspaceMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  deliveryState?: "cancelled" | "error";
   attachments?: Array<{
     id: string;
     name: string;
