@@ -32,6 +32,7 @@ export async function generateStudyGuideFromText(
     "study_guide",
     ({ client, model, requestOptions }) => client.responses.create({
       model,
+      store: false,
       max_output_tokens: 8_000,
       safety_identifier: safetyIdentifier,
       input: [

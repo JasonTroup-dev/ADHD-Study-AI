@@ -23,6 +23,7 @@ export async function generateFlashcardsFromText(
     "flashcards",
     ({ client, model, requestOptions }) => client.responses.parse({
       model,
+      store: false,
       safety_identifier: safetyIdentifier,
       input: [
         {

@@ -85,6 +85,7 @@ export async function analyzeSyllabusText({
     "syllabus_analysis",
     ({ client, model, requestOptions }) => client.responses.parse({
       model,
+      store: false,
       input: [
         {
           role: "system",

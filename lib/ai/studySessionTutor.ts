@@ -155,6 +155,7 @@ export async function getStudyTutorResponse(
     "study_session_tutor",
     ({ client, model, requestOptions }) => client.responses.parse({
       model,
+      store: false,
       max_output_tokens: 1_200,
       text: {
         verbosity: "low",

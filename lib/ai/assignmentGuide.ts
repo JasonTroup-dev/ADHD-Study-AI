@@ -41,6 +41,7 @@ export async function generateAssignmentGuide(
     "assignment_guide",
     ({ client, model, requestOptions }) => client.responses.create({
       model,
+      store: false,
       max_output_tokens: 900,
       input: [
         {

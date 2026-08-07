@@ -42,6 +42,7 @@ export async function getTutorResponseStream(
         "tutor",
         ({ client, model, requestOptions }) => client.responses.create({
             model,
+            store: false,
             stream: true,
             safety_identifier: safetyIdentifier,
             input: [

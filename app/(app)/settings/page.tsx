@@ -7,8 +7,11 @@ import {
   Clock3,
   LoaderCircle,
   RotateCcw,
+  ShieldAlert,
+  Trash2,
   UserRound,
 } from "lucide-react";
+import Link from "next/link";
 
 import SignOutButton from "@/components/SignOutButton";
 import { Button } from "@/components/ui/button";
@@ -45,6 +48,8 @@ export default function SettingsPage() {
     useState<SettingsSnapshot>(EMPTY_SNAPSHOT);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
   const [notice, setNotice] = useState<{
     kind: "success" | "error";
     message: string;
@@ -149,6 +154,40 @@ export default function SettingsPage() {
     setIsSaving(false);
   }
 
+  async function deleteAccount() {
+    if (deleteConfirmation !== "DELETE") return;
+
+    setIsDeleting(true);
+    setNotice(null);
+
+    try {
+      const response = await fetch("/api/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: deleteConfirmation }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(payload?.error || "Account deletion failed.");
+      }
+
+      await supabase.auth.signOut({ scope: "local" });
+      window.location.replace("/");
+    } catch (error) {
+      setNotice({
+        kind: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Your account could not be deleted. Please try again.",
+      });
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <div className="min-h-full bg-gray-100">
       <div className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 lg:py-10">
@@ -167,7 +206,7 @@ export default function SettingsPage() {
             <Button
               type="button"
               variant="outline"
-              disabled={isLoading || isSaving || !hasChanges}
+              disabled={isLoading || isSaving || isDeleting || !hasChanges}
               onClick={resetChanges}
             >
               <RotateCcw aria-hidden="true" />
@@ -175,7 +214,7 @@ export default function SettingsPage() {
             </Button>
             <Button
               type="button"
-              disabled={isLoading || isSaving || !hasChanges}
+              disabled={isLoading || isSaving || isDeleting || !hasChanges}
               onClick={() => void saveSettings()}
             >
               {isSaving ? (
@@ -244,7 +283,7 @@ export default function SettingsPage() {
                     value={displayName}
                     maxLength={80}
                     placeholder={isLoading ? "Loading..." : "How should we greet you?"}
-                    disabled={isLoading || isSaving}
+                    disabled={isLoading || isSaving || isDeleting}
                     onChange={(event) => {
                       setDisplayName(event.target.value);
                       setNotice(null);
@@ -307,7 +346,7 @@ export default function SettingsPage() {
                 </div>
 
                 <fieldset
-                  disabled={isLoading || isSaving}
+                  disabled={isLoading || isSaving || isDeleting}
                   className="grid grid-cols-4 gap-2"
                 >
                   <legend className="sr-only">Default focus length</legend>
@@ -356,7 +395,7 @@ export default function SettingsPage() {
                   role="switch"
                   aria-label="Break reminders"
                   aria-checked={preferences.breakReminders}
-                  disabled={isLoading || isSaving}
+                  disabled={isLoading || isSaving || isDeleting}
                   onClick={() => {
                     setPreferences((current) => ({
                       ...current,
@@ -400,6 +439,94 @@ export default function SettingsPage() {
                 </p>
               </div>
               <SignOutButton />
+            </div>
+          </section>
+
+          <section
+            aria-labelledby="privacy-heading"
+            className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+          >
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2
+                  id="privacy-heading"
+                  className="text-lg font-semibold text-gray-950"
+                >
+                  Privacy and your data
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+                  See what is stored, what is sent to OpenAI, and how long
+                  providers may retain it.
+                </p>
+              </div>
+              <Button asChild variant="outline">
+                <Link href="/privacy">Read the data policy</Link>
+              </Button>
+            </div>
+          </section>
+
+          <section
+            aria-labelledby="delete-heading"
+            className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm"
+          >
+            <div className="border-b border-red-100 bg-red-50 px-6 py-5">
+              <div className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-xl bg-red-100 text-red-700">
+                  <ShieldAlert className="size-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2
+                    id="delete-heading"
+                    className="text-lg font-semibold text-red-950"
+                  >
+                    Delete account and data
+                  </h2>
+                  <p className="text-sm text-red-800">
+                    This permanently removes your private files and account data.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-5 p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+              <div className="max-w-2xl space-y-2">
+                <Label htmlFor="delete-confirmation">
+                  Type <span className="font-mono">DELETE</span> to confirm
+                </Label>
+                <Input
+                  id="delete-confirmation"
+                  value={deleteConfirmation}
+                  autoComplete="off"
+                  spellCheck={false}
+                  disabled={isLoading || isDeleting}
+                  onChange={(event) => {
+                    setDeleteConfirmation(event.target.value);
+                    setNotice(null);
+                  }}
+                />
+                <p className="text-xs leading-5 text-gray-500">
+                  Deletion cannot be undone. You will be signed out when it is
+                  complete.
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                variant="destructive"
+                className="lg:mb-7"
+                disabled={deleteConfirmation !== "DELETE" || isDeleting}
+                onClick={() => void deleteAccount()}
+              >
+                {isDeleting ? (
+                  <LoaderCircle
+                    className="animate-spin motion-reduce:animate-none"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Trash2 aria-hidden="true" />
+                )}
+                {isDeleting ? "Deleting account..." : "Delete my account"}
+              </Button>
             </div>
           </section>
         </div>

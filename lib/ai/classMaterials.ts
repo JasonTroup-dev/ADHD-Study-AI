@@ -63,6 +63,7 @@ export async function analyzeClassMaterialFiles(input: {
     "class_material_analysis",
     ({ client, model, requestOptions }) => client.responses.parse({
       model,
+      store: false,
       input: [
         {
           role: "system",
