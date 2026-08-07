@@ -8,12 +8,20 @@ import {
   formatFileSize,
   MAX_STUDY_FILE_BYTES,
 } from "@/lib/files/uploadConstraints";
+import { requireUser } from "@/lib/api/requireUser";
+import {
+  createSafetyIdentifier,
+  enforceAIQuota,
+} from "@/lib/ai/requestProtection";
 
 export const runtime = "nodejs";
 
 const MAX_MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 
 export async function POST(req: Request) {
+  const auth = await requireUser();
+  if (auth instanceof Response) return auth;
+
   try {
     const contentType = req.headers.get("content-type")?.toLowerCase() ?? "";
 
@@ -32,6 +40,9 @@ export async function POST(req: Request) {
     ) {
       return fileTooLargeResponse();
     }
+
+    const quotaResponse = await enforceAIQuota(auth.supabase, "study_guides");
+    if (quotaResponse) return quotaResponse;
 
     let formData: FormData;
 
@@ -66,7 +77,10 @@ export async function POST(req: Request) {
 
     const extracted = await extractTextFromFile(file);
     const modelSourceText = prepareStudyGuideSourceText(extracted.text);
-    const content = await generateStudyGuideFromText(modelSourceText);
+    const content = await generateStudyGuideFromText(
+      modelSourceText,
+      createSafetyIdentifier(auth.user.id),
+    );
 
     return Response.json({
       title: getStudyGuideTitle(content, extracted.originalName),

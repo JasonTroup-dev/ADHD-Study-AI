@@ -7,8 +7,28 @@ import {
     MAX_TUTOR_ATTACHMENT_CHARS,
     MAX_TUTOR_FILES,
 } from "@/lib/files/uploadConstraints";
+import { requireUser } from "@/lib/api/requireUser";
+import {
+    createSafetyIdentifier,
+    enforceAIQuota,
+} from "@/lib/ai/requestProtection";
+
+const MAX_TUTOR_MESSAGES = 24;
+const MAX_TUTOR_CONVERSATION_CHARS = 160_000;
+const MAX_TUTOR_REQUEST_BYTES = 768 * 1024;
 
 export async function POST(req: Request) {
+    const auth = await requireUser();
+    if (auth instanceof Response) return auth;
+
+    const contentLength = Number(req.headers.get("content-length") ?? 0);
+    if (
+        Number.isFinite(contentLength)
+        && contentLength > MAX_TUTOR_REQUEST_BYTES
+    ) {
+        return conversationTooLargeResponse();
+    }
+
     let body: unknown;
 
     try {
@@ -24,6 +44,7 @@ export async function POST(req: Request) {
         !isRecord(body)
         || !Array.isArray(body.messages)
         || body.messages.length === 0
+        || body.messages.length > MAX_TUTOR_MESSAGES
         || !body.messages.every(isTutorMessage)
     ) {
         return Response.json(
@@ -32,10 +53,18 @@ export async function POST(req: Request) {
         );
     }
 
+    if (getConversationSize(body.messages) > MAX_TUTOR_CONVERSATION_CHARS) {
+        return conversationTooLargeResponse();
+    }
+
+    const quotaResponse = await enforceAIQuota(auth.supabase, "chat");
+    if (quotaResponse) return quotaResponse;
+
     try {
         const openAIStream = await getTutorResponseStream(
             body.messages,
             req.signal,
+            createSafetyIdentifier(auth.user.id),
         );
         const encoder = new TextEncoder();
 
@@ -117,5 +146,31 @@ function isTutorAttachment(value: unknown): value is TutorAttachment {
         && typeof value.content === "string"
         && value.content.length > 0
         && value.content.length <= MAX_TUTOR_ATTACHMENT_CHARS
+    );
+}
+
+function getConversationSize(messages: TutorMessage[]) {
+    return messages.reduce((total, message) => {
+        const attachmentCharacters = (message.attachments ?? []).reduce(
+            (attachmentTotal, attachment) => (
+                attachmentTotal
+                + attachment.id.length
+                + attachment.name.length
+                + attachment.content.length
+            ),
+            0,
+        );
+
+        return total + message.id.length + message.content.length + attachmentCharacters;
+    }, 0);
+}
+
+function conversationTooLargeResponse() {
+    return Response.json(
+        {
+            error:
+                "The conversation is too large. Start a new chat or remove older messages and attachments.",
+        },
+        { status: 413 },
     );
 }

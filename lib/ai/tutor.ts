@@ -34,6 +34,7 @@ const MAX_TUTOR_ATTACHMENT_CONTEXT_CHARS = 120_000;
 export async function getTutorResponseStream(
     messages: TutorMessage[],
     signal?: AbortSignal,
+    safetyIdentifier?: string,
 ) {
     const attachmentBudgets = getAttachmentBudgets(messages);
 
@@ -42,6 +43,7 @@ export async function getTutorResponseStream(
         ({ client, model, requestOptions }) => client.responses.create({
             model,
             stream: true,
+            safety_identifier: safetyIdentifier,
             input: [
                 {
                     role: "system",

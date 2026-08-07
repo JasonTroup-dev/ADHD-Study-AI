@@ -14,12 +14,20 @@ import {
   MIN_GENERATED_FLASHCARD_COUNT,
   normalizeGeneratedFlashcardCount,
 } from "@/lib/flashcards/generationSettings";
+import { requireUser } from "@/lib/api/requireUser";
+import {
+  createSafetyIdentifier,
+  enforceAIQuota,
+} from "@/lib/ai/requestProtection";
 
 export const runtime = "nodejs";
 
 const MAX_MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 
 export async function POST(req: Request) {
+  const auth = await requireUser();
+  if (auth instanceof Response) return auth;
+
   try {
     const contentType = req.headers.get("content-type")?.toLowerCase() ?? "";
 
@@ -38,6 +46,9 @@ export async function POST(req: Request) {
     ) {
       return fileTooLargeResponse();
     }
+
+    const quotaResponse = await enforceAIQuota(auth.supabase, "flashcards");
+    if (quotaResponse) return quotaResponse;
 
     let formData: FormData;
 
@@ -87,7 +98,11 @@ export async function POST(req: Request) {
 
     const extracted = await extractTextFromFile(file);
     const modelSourceText = prepareFlashcardSourceText(extracted.text);
-    const result = await generateFlashcardsFromText(modelSourceText, cardCount);
+    const result = await generateFlashcardsFromText(
+      modelSourceText,
+      cardCount,
+      createSafetyIdentifier(auth.user.id),
+    );
 
     return Response.json(result);
   } catch (error) {

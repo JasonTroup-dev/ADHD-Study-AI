@@ -16,12 +16,14 @@ export type GenerateFlashcardsResult = {
 export async function generateFlashcardsFromText(
   text: string,
   cardCount: number,
+  safetyIdentifier?: string,
 ): Promise<GenerateFlashcardsResult> {
   const schema = getGeneratedFlashcardsSchema(cardCount);
   const response = await runAIRequest(
     "flashcards",
     ({ client, model, requestOptions }) => client.responses.parse({
       model,
+      safety_identifier: safetyIdentifier,
       input: [
         {
           role: "system",

@@ -9,12 +9,17 @@ import {
   MAX_TUTOR_ATTACHMENT_CHARS,
   MAX_TUTOR_FILES,
 } from "@/lib/files/uploadConstraints";
+import { requireUser } from "@/lib/api/requireUser";
+import { enforceAIQuota } from "@/lib/ai/requestProtection";
 
 export const runtime = "nodejs";
 
 const MAX_MULTIPART_OVERHEAD_BYTES = 128 * 1024;
 
 export async function POST(req: Request) {
+  const auth = await requireUser();
+  if (auth instanceof Response) return auth;
+
   try {
     const contentType = req.headers.get("content-type")?.toLowerCase() ?? "";
 
@@ -33,6 +38,9 @@ export async function POST(req: Request) {
     ) {
       return filesTooLargeResponse();
     }
+
+    const quotaResponse = await enforceAIQuota(auth.supabase, "chat_files");
+    if (quotaResponse) return quotaResponse;
 
     let formData: FormData;
 

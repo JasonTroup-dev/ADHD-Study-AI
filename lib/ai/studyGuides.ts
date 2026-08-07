@@ -26,12 +26,14 @@ Rules:
 
 export async function generateStudyGuideFromText(
   text: string,
+  safetyIdentifier?: string,
 ): Promise<string> {
   const response = await runAIRequest(
     "study_guide",
     ({ client, model, requestOptions }) => client.responses.create({
       model,
       max_output_tokens: 8_000,
+      safety_identifier: safetyIdentifier,
       input: [
         {
           role: "system",
