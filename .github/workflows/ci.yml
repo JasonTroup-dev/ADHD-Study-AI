@@ -39,7 +39,7 @@ jobs:
       - run: npm run typecheck
 
   test:
-    name: Unit and API tests
+    name: Unit, API, and coverage tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -48,7 +48,18 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
-      - run: npm test
+      - run: npm run test:coverage
+      - name: Publish coverage summary
+        if: ${{ always() }}
+        shell: bash
+        run: node scripts/coverage-summary.mjs >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v5
+        if: ${{ always() }}
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: warn
+          retention-days: 14
 
   database:
     name: Database and RLS tests

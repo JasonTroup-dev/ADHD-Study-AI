@@ -148,7 +148,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     <p className="mt-2 text-xl font-semibold tracking-[-0.03em]">
                       Review chapter notes
                     </p>
-                    <p className="mt-1 text-sm text-[#66736c]">
+                    <p className="mt-1 text-sm text-[#59665f]">
                       Biology / Cell respiration
                     </p>
                   </div>
@@ -195,7 +195,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               <span className="truncate">ADHD Study AI</span>
             </Link>
 
-            <div className="ml-auto flex items-center gap-3 text-sm text-[#66736c]">
+            <div className="ml-auto flex items-center gap-3 text-sm text-[#59665f]">
               <span className="hidden sm:inline">
                 {isSignUp ? "Already have an account?" : "New here?"}
               </span>
@@ -225,7 +225,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 ? "Make studying feel lighter."
                 : "Pick up where you left off."}
             </h1>
-            <p className="mt-4 text-[15px] leading-7 text-[#66736c]">
+            <p className="mt-4 text-[15px] leading-7 text-[#59665f]">
               {isSignUp
                 ? "Create an account and turn your class material into a clear, manageable plan."
                 : "Sign in and we'll bring you straight back to your next doable step."}
@@ -241,7 +241,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="h-12 rounded-xl border-[#19241f]/15 bg-[#fffdf8] px-4 text-[#19241f] shadow-none placeholder:text-[#87928c] focus-visible:border-[#4d765f] focus-visible:ring-[#4d765f]/15"
+                  className="h-12 rounded-xl border-[#19241f]/15 bg-[#fffdf8] px-4 text-[#19241f] shadow-none placeholder:text-[#59665f] focus-visible:border-[#4d765f] focus-visible:ring-[#4d765f]/15"
                   placeholder="name@example.com"
                   autoComplete="email"
                   required
@@ -258,7 +258,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    className="h-12 rounded-xl border-[#19241f]/15 bg-[#fffdf8] px-4 pr-12 text-[#19241f] shadow-none placeholder:text-[#87928c] focus-visible:border-[#4d765f] focus-visible:ring-[#4d765f]/15"
+                    className="h-12 rounded-xl border-[#19241f]/15 bg-[#fffdf8] px-4 pr-12 text-[#19241f] shadow-none placeholder:text-[#59665f] focus-visible:border-[#4d765f] focus-visible:ring-[#4d765f]/15"
                     placeholder={
                       isSignUp
                         ? "Choose a secure password"
@@ -271,7 +271,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                   <button
                     type="button"
                     onClick={() => setShowPassword((visible) => !visible)}
-                    className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-[#78847d] transition-colors hover:text-[#19241f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4d765f]"
+                    className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-[#59665f] transition-colors hover:text-[#19241f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4d765f]"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     aria-pressed={showPassword}
                   >
@@ -283,7 +283,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                   </button>
                 </div>
                 {isSignUp && (
-                  <p className="mt-2 text-xs leading-5 text-[#78847d]">
+                  <p className="mt-2 text-xs leading-5 text-[#59665f]">
                     Use at least 6 characters.
                   </p>
                 )}
@@ -326,14 +326,22 @@ export function AuthForm({ mode }: AuthFormProps) {
               </Button>
             </form>
 
-            <p className="mt-7 flex items-center justify-center gap-2 text-center text-xs leading-5 text-[#78847d]">
+            <p className="mt-7 flex items-center justify-center gap-2 text-center text-xs leading-5 text-[#59665f]">
               <ShieldCheck className="size-3.5 shrink-0" />
               Secure sign in. No streak pressure, ever.
             </p>
           </div>
 
-          <p className="max-w-full text-center text-xs leading-5 text-[#87928c]">
-            By continuing, you agree to use ADHD Study AI responsibly.
+          <p className="max-w-full text-center text-xs leading-5 text-[#59665f]">
+            By continuing, you agree to use ADHD Study AI responsibly and
+            acknowledge the{" "}
+            <Link
+              href="/privacy"
+              className="font-semibold text-[#51645a] underline underline-offset-3 hover:text-[#19241f]"
+            >
+              privacy and data policy
+            </Link>
+            .
           </p>
         </section>
       </div>

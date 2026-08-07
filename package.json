@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run && npm run test:ai",
+    "test:coverage": "vitest run --coverage && npm run test:ai",
     "test:watch": "vitest",
     "test:scheduling": "vitest run lib/syllabus/scheduling.test.mjs",
     "test:ai": "tsx --test lib/ai/runtime.test.ts lib/ai/schemas.test.ts",
@@ -39,11 +40,13 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "shadcn": "^3.8.5",
