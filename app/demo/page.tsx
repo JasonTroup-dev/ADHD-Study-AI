@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { redirect } from "next/navigation";
+import DashboardClient from "@/app/(app)/dashboard/DashboardClient";
+import { demoDashboardData } from "@/lib/demo/readOnlyWorkspace";
 
 export const metadata: Metadata = {
   title: "Sample Workspace | ADHD Study AI",
@@ -9,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function DemoPage() {
-  redirect("/dashboard?demo=1");
+  return <DashboardClient initialData={demoDashboardData} readOnly />;
 }

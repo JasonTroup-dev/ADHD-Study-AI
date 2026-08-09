@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import CalendarPage from "@/app/(app)/calendar/page";
 
 export default function DemoCalendarPage() {
-  redirect("/calendar?demo=1");
+  return <CalendarPage />;
 }

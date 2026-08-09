@@ -19,17 +19,12 @@ function matchesRoute(pathname: string, route: string) {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isReadOnlyDemo =
-    request.nextUrl.searchParams.get("demo") === "1" &&
-    ["/dashboard", "/classes", "/study", "/planner", "/calendar"].includes(
-      pathname,
-    );
   const isProtectedRoute = protectedRoutes.some((route) =>
     matchesRoute(pathname, route)
   );
   const { isAuthenticated, response } = await updateSession(request);
 
-  if (isProtectedRoute && !isAuthenticated && !isReadOnlyDemo) {
+  if (isProtectedRoute && !isAuthenticated) {
     const redirectResponse = NextResponse.redirect(
       new URL("/login", request.url)
     );

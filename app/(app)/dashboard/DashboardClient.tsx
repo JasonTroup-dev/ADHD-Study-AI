@@ -36,6 +36,7 @@ import {
 import StudyPlannerModal from "@/components/StudyPlanner/StudyPlannerModal";
 import type { StudyPlanImportSummary } from "@/types/syllabus";
 import { CompletionProgress } from "@/components/ui/completionProgress";
+import { useDemoWorkspace } from "@/components/demo/DemoWorkspaceProvider";
 
 const STUDY_PLAN_NOTICE_DURATION_MS = 5_000;
 
@@ -48,6 +49,8 @@ export default function DashboardClient({
   initialData,
   readOnly = false,
 }: DashboardClientProps) {
+  const demoWorkspace = useDemoWorkspace();
+  const plannerHref = demoWorkspace ? "/demo/planner" : "/planner";
   const [classes, setClasses] = useState<ClassOption[]>(initialData.classes);
   const [tasks, setTasks] = useState<StudyTask[]>(initialData.tasks);
   const [activeStudySession, setActiveStudySession] =
@@ -303,7 +306,9 @@ export default function DashboardClient({
                   <header className="text-xl font-semibold">{formattedDate}</header>
                   <p className="text-gray-600">{totalTasks} tasks scheduled</p>
                 </div>
-                <Button variant="ghost" size="sm">View All</Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href={plannerHref}>View All</Link>
+                </Button>
               </div>
               
 
@@ -472,13 +477,9 @@ export default function DashboardClient({
                       label="Start this"
                       variant="default"
                     />}
-                    {readOnly ? (
-                      <Button variant="outline" size="sm" disabled>View plan</Button>
-                    ) : (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href="/planner">View plan</Link>
-                      </Button>
-                    )}
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={plannerHref}>View plan</Link>
+                    </Button>
                   </div>
                 </div>
               ) : nextDeadline ? (

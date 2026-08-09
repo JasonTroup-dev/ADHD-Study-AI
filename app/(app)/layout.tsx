@@ -15,11 +15,12 @@ import {
   Settings,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import type { ReactNode } from "react";
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useDemoWorkspace } from "@/components/demo/DemoWorkspaceProvider";
 import {
   Sheet,
   SheetContent,
@@ -87,14 +88,32 @@ function getPageLabel(pathname: string) {
   return match?.label ?? "Study space";
 }
 
-function withDemoMode(href: string, demo: boolean) {
-  return demo ? `${href}${href.includes("?") ? "&" : "?"}demo=1` : href;
+function getWorkspaceHref(href: string, demo: boolean) {
+  if (!demo) return href;
+  if (href === "/dashboard") return "/demo";
+  if (href === "/calendar") return "/demo/calendar";
+  if (href.startsWith("/classes/")) return `/demo${href}`;
+  if (href.startsWith("/classes")) return "/demo/classes";
+  if (href.startsWith("/study")) return "/demo/study";
+  if (href.startsWith("/planner")) return "/demo/planner";
+  return "/demo";
+}
+
+function getWorkspacePathname(pathname: string, demo: boolean) {
+  if (!demo) return pathname;
+  if (pathname === "/demo") return "/dashboard";
+  if (pathname.startsWith("/demo/classes/")) return pathname.slice(5);
+  if (pathname.startsWith("/demo/classes")) return "/classes";
+  if (pathname.startsWith("/demo/study")) return "/study";
+  if (pathname.startsWith("/demo/planner")) return "/planner";
+  if (pathname.startsWith("/demo/calendar")) return "/calendar";
+  return "/dashboard";
 }
 
 function Brand({ compact = false, demo = false }: { compact?: boolean; demo?: boolean }) {
   return (
     <Link
-      href={withDemoMode("/dashboard", demo)}
+      href={getWorkspaceHref("/dashboard", demo)}
       aria-label="ADHD Study AI dashboard"
       className={cn(
         "flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500/30",
@@ -132,7 +151,7 @@ function NavLink({
 }) {
   return (
     <Link
-      href={withDemoMode(href, demo)}
+      href={getWorkspaceHref(href, demo)}
       title={compact ? label : undefined}
       aria-label={compact ? label : undefined}
       aria-current={pathname === href ? "page" : undefined}
@@ -196,7 +215,7 @@ function NavGroup({
     <div>
       <div className="flex items-center justify-between">
         <Link
-          href={withDemoMode(href, demo)}
+          href={getWorkspaceHref(href, demo)}
           aria-current={pathname === href ? "page" : undefined}
           onClick={onNavigate}
           className="text-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
@@ -256,7 +275,7 @@ function ChildLink({
 }: NavChild & { pathname: string; onNavigate?: () => void; demo?: boolean }) {
   return (
     <Link
-      href={withDemoMode(href, demo)}
+      href={getWorkspaceHref(href, demo)}
       aria-current={pathname === href ? "page" : undefined}
       onClick={onNavigate}
       className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
@@ -314,7 +333,7 @@ function Navigation({
             return (
               <Link
                 key={classItem.id}
-                href={withDemoMode(href, demo)}
+                href={getWorkspaceHref(href, demo)}
                 aria-current={active ? "page" : undefined}
                 onClick={onNavigate}
                 className={cn(
@@ -332,7 +351,7 @@ function Navigation({
           })
         ) : (
           <Link
-            href={withDemoMode("/classes", demo)}
+            href={getWorkspaceHref("/classes", demo)}
             onClick={onNavigate}
             className="block rounded-lg px-2.5 py-2 text-xs leading-5 text-slate-500 hover:bg-slate-100"
           >
@@ -373,22 +392,29 @@ function Navigation({
 }
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const readOnlyDemo = useSyncExternalStore(
-    subscribeToLocationChanges,
-    getReadOnlyDemoMode,
-    () => false,
-  );
+  const routePathname = usePathname();
+  const demoWorkspace = useDemoWorkspace();
+  const readOnlyDemo = demoWorkspace !== null;
+  const pathname = getWorkspacePathname(routePathname, readOnlyDemo);
   const desktopExpanded = useSyncExternalStore(
     subscribeToSidebarPreference,
     getSidebarPreference,
     () => true,
   );
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [classes, setClasses] = useState<SidebarClass[] | null>(null);
+  const [classes, setClasses] = useState<SidebarClass[] | null>(() =>
+    demoWorkspace
+      ? demoWorkspace.classes.map((classItem) => ({
+          id: classItem.id,
+          class_code: classItem.classCode,
+          color: classItem.color,
+        }))
+      : null,
+  );
 
   useEffect(() => {
+    if (demoWorkspace) return;
+
     let isActive = true;
 
     async function loadClasses() {
@@ -423,7 +449,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       isActive = false;
       window.removeEventListener(CLASSES_CHANGED_EVENT, loadClasses);
     };
-  }, []);
+  }, [demoWorkspace]);
 
   function toggleDesktopSidebar() {
     localStorage.setItem("study-sidebar-collapsed", String(desktopExpanded));
@@ -432,26 +458,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const pageLabel = getPageLabel(pathname);
 
-  function preserveDemoMode(event: ReactMouseEvent<HTMLElement>) {
-    if (!readOnlyDemo || event.defaultPrevented) return;
-
-    const target = event.target as HTMLElement | null;
-    const anchor = target?.closest<HTMLAnchorElement>("a[href]");
-    if (!anchor || anchor.target || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-
-    const url = new URL(anchor.href);
-    if (url.origin !== window.location.origin || url.searchParams.get("demo") === "1") return;
-
-    const protectedPath = protectedDemoPath(url.pathname);
-    if (!protectedPath) return;
-
-    event.preventDefault();
-    url.searchParams.set("demo", "1");
-    router.push(`${url.pathname}${url.search}`);
-  }
-
   return (
-    <div className="flex min-h-svh bg-slate-50 text-slate-950" onClickCapture={preserveDemoMode}>
+    <div className="flex min-h-svh bg-slate-50 text-slate-950">
       <a
         href="#main-content"
         className="sr-only z-[100] rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
@@ -593,12 +601,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   );
 }
 
-function protectedDemoPath(pathname: string) {
-  return ["/calendar", "/dashboard", "/classes", "/study", "/planner", "/settings", "/report-bug"].some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
-}
-
 function subscribeToSidebarPreference(callback: () => void) {
   window.addEventListener("storage", callback);
   window.addEventListener(SIDEBAR_PREFERENCE_EVENT, callback);
@@ -607,16 +609,6 @@ function subscribeToSidebarPreference(callback: () => void) {
     window.removeEventListener("storage", callback);
     window.removeEventListener(SIDEBAR_PREFERENCE_EVENT, callback);
   };
-}
-
-function subscribeToLocationChanges(callback: () => void) {
-  window.addEventListener("popstate", callback);
-
-  return () => window.removeEventListener("popstate", callback);
-}
-
-function getReadOnlyDemoMode() {
-  return new URLSearchParams(window.location.search).get("demo") === "1";
 }
 
 function getSidebarPreference() {

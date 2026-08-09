@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
   Check,
   ChevronLeft,
@@ -11,11 +10,11 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useDemoWorkspace } from "@/components/demo/DemoWorkspaceProvider";
 import { getCalendarDays } from "@/lib/calendar/getCalendarDays";
 import { getClassColor, type ClassColor } from "@/lib/classColors";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase/client";
-import { demoCalendarItems, demoDate } from "@/lib/demo/readOnlyWorkspace";
 
 const WEEK_DAYS = [
   "Sunday",
@@ -76,13 +75,13 @@ function getRelatedClass(
   return Array.isArray(relation) ? relation[0] ?? null : relation;
 }
 
-function CalendarPageContent() {
-  const searchParams = useSearchParams();
-  const readOnly = searchParams.get("demo") === "1";
+export default function CalendarPage() {
+  const demoWorkspace = useDemoWorkspace();
+  const readOnly = demoWorkspace !== null;
   const initialItems: CalendarItem[] | undefined = readOnly
-    ? demoCalendarItems
+    ? demoWorkspace.calendarItems
     : undefined;
-  const initialDate = readOnly ? demoDate : undefined;
+  const initialDate = demoWorkspace?.date;
   const [currentMonth, setCurrentMonth] = useState(
     () => {
       const date = initialDate ?? new Date();
@@ -444,8 +443,4 @@ function CalendarItemChip({
       {content}
     </Link>
   );
-}
-
-export default function CalendarPage() {
-  return <Suspense fallback={null}><CalendarPageContent /></Suspense>;
 }

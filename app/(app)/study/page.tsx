@@ -7,12 +7,10 @@ import PracticeQuizGenCard from "@/components/StudyTools/PracticeQuizGenCard";
 import GuidedStudySessionCard from "@/components/StudyTools/GuidedStudySessionCard";
 import AssignmentBreakdownCard from "@/components/StudyTools/AssignmentBreakdownCard";
 import ComingSoonOverlay from "@/components/StudyTools/ComingSoonOverlay";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useDemoWorkspace } from "@/components/demo/DemoWorkspaceProvider";
 
-function StudyToolsContent() {
-    const searchParams = useSearchParams();
-    const readOnly = searchParams.get("demo") === "1";
+export default function StudyTools() {
+    const readOnly = useDemoWorkspace() !== null;
     return (
         <div className={readOnly ? "pointer-events-none min-h-screen w-full select-none bg-gray-100" : "min-h-screen w-full bg-gray-100"} aria-disabled={readOnly || undefined}>
             <div className="mx-auto w-full max-w-screen-xl px-6 py-8 lg:px-8">
@@ -118,8 +116,4 @@ function StudyToolsContent() {
 
         </div>
     );
-}
-
-export default function StudyTools() {
-    return <Suspense fallback={null}><StudyToolsContent /></Suspense>;
 }

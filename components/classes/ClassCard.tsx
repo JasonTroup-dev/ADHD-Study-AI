@@ -18,6 +18,7 @@ type ClassCardProps = {
   noteCount: number;
   sessionCount: number;
   readOnly?: boolean;
+  href?: string;
 };
 
 
@@ -33,6 +34,7 @@ export default function ClassCard({
     noteCount,
     sessionCount,
     readOnly = false,
+    href,
 }: ClassCardProps) {
     const colorOption = getClassColor(color);
 
@@ -126,16 +128,14 @@ export default function ClassCard({
 
     const className = "relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 lg:col-span-4";
 
-    return readOnly ? (
-      <article className={className}>{content}</article>
-    ) : (
-        <Link
-          href={`/classes/${id}`}
-          aria-label={`Open ${name} class workspace`}
-          className={className}
-        >
-            {content}
-        </Link>
+    return (
+      <Link
+        href={href ?? `/classes/${id}`}
+        aria-label={`Open ${name} class workspace${readOnly ? " in the read-only demo" : ""}`}
+        className={className}
+      >
+        {content}
+      </Link>
     );
 }
 

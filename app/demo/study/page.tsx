@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import StudyTools from "@/app/(app)/study/page";
 
 export default function DemoStudyToolsPage() {
-  redirect("/study?demo=1");
+  return <StudyTools />;
 }

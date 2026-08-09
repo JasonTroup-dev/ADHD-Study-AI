@@ -1,20 +1,19 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useDemoWorkspace } from "@/components/demo/DemoWorkspaceProvider";
 import { notifyClassesChanged } from "@/lib/classEvents";
 import ClassCard from "@/components/classes/ClassCard";
 import AddClassModal from "@/components/classes/AddClassModal";
 import StudyPlannerModal from "@/components/StudyPlanner/StudyPlannerModal";
 import type { ClassSummary, CreateClassInput } from "@/types/classes";
 import type { StudyPlanImportSummary } from "@/types/syllabus";
-import { demoClasses } from "@/lib/demo/readOnlyWorkspace";
 
-function ClassesPageContent() {
-  const searchParams = useSearchParams();
-  const readOnly = searchParams.get("demo") === "1";
-  const initialClasses = readOnly ? demoClasses : undefined;
+export default function ClassesPage() {
+  const demoWorkspace = useDemoWorkspace();
+  const readOnly = demoWorkspace !== null;
+  const initialClasses = demoWorkspace?.classes;
   const [classes, setClasses] = useState<ClassSummary[]>(initialClasses ?? []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSyllabusModalOpen, setIsSyllabusModalOpen] = useState(false);
@@ -167,6 +166,7 @@ function ClassesPageContent() {
               noteCount={classItem.noteCount}
               sessionCount={classItem.sessionCount}
               readOnly={readOnly}
+              href={readOnly ? `/demo/classes/${classItem.id}` : undefined}
             />
           ))}
         </div>
@@ -192,10 +192,6 @@ function ClassesPageContent() {
                 
     </div>
   );
-}
-
-export default function ClassesPage() {
-  return <Suspense fallback={null}><ClassesPageContent /></Suspense>;
 }
 
 async function readJson(response: Response): Promise<unknown> {

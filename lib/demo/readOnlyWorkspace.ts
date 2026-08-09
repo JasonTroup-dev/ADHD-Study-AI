@@ -1,6 +1,7 @@
 import type { DashboardInitialData } from "@/app/(app)/dashboard/dashboardData";
 import type { StudyTask } from "@/components/ui/taskCard";
 import type { ClassColor } from "@/lib/classColors";
+import type { ClassWorkspaceData } from "@/lib/classes/classWorkspace";
 import type { ClassSummary } from "@/types/classes";
 
 export const demoDate = new Date(2026, 9, 13);
@@ -155,3 +156,127 @@ export const demoCalendarItems = [
   className: string;
   classColor: ClassColor | null;
 }>;
+
+export function getDemoClassWorkspaceData(
+  classId: string,
+): ClassWorkspaceData | null {
+  const classItem = demoClasses.find((item) => item.id === classId);
+  if (!classItem) return null;
+
+  const relatedTasks = demoTasks.filter((task) => task.class_id === classId);
+  const nextAssignment = classItem.nextAssignment;
+  const assignmentId = nextAssignment?.id ?? `${classId}-assignment`;
+  const assignmentTitle = nextAssignment?.title ?? "Course review";
+  const dueDate = nextAssignment?.dueDate ?? "2026-10-20";
+
+  return {
+    course: {
+      name: classItem.name,
+      code: classItem.classCode,
+      instructor: classItem.professorName,
+      color: classItem.color,
+    },
+    flashcardSets: [
+      {
+        id: `${classId}-flashcards-1`,
+        title: `${classItem.classCode} Core Concepts`,
+        lastStudied: "Yesterday",
+        mastery: 72,
+        cardCount: 24,
+        href: "#flashcards",
+      },
+      {
+        id: `${classId}-flashcards-2`,
+        title: "Upcoming Exam Review",
+        lastStudied: "3 days ago",
+        mastery: 58,
+        cardCount: 18,
+        href: "#flashcards",
+      },
+    ],
+    materials: [
+      {
+        id: `${classId}-material-1`,
+        title: `${assignmentTitle} instructions.pdf`,
+        meta: `${assignmentTitle} - Instructions - Updated Oct 10`,
+        kind: "assignment_file",
+      },
+      {
+        id: `${classId}-material-2`,
+        title: "Week 7 lecture notes.pdf",
+        meta: "PDF - Uploaded Oct 9",
+        kind: "note",
+      },
+      {
+        id: `${classId}-material-3`,
+        title: "Review rubric.pdf",
+        meta: `${assignmentTitle} - Uploaded Oct 11`,
+        kind: "study_material",
+      },
+    ],
+    materialCount: 3,
+    assignments: [
+      {
+        id: assignmentId,
+        title: assignmentTitle,
+        dueDate,
+        hasAssignmentFile: true,
+      },
+    ],
+    assignmentSummaries: [
+      {
+        id: assignmentId,
+        title: assignmentTitle,
+        dueDate,
+        status: "in_progress",
+        importance: "high",
+        hasAssignmentFile: true,
+        materialCount: 2,
+        contextStatus: "ready",
+      },
+      {
+        id: `${classId}-assignment-complete`,
+        title: "Chapter 6 concept check",
+        dueDate: "2026-10-09",
+        status: "completed",
+        importance: "medium",
+        hasAssignmentFile: true,
+        materialCount: 1,
+        contextStatus: "ready",
+      },
+    ],
+    plannerTasks: relatedTasks.map((task) => ({
+      id: task.id,
+      assignment_id: task.assignment_id,
+      title: task.title,
+      priority: task.priority,
+      status: task.status,
+      scheduled_date: task.scheduled_date,
+    })),
+    activeSession: null,
+    courseProgress: {
+      overallPercent: classItem.progressPercent,
+      completedAssignments: 1,
+      totalAssignments: 2,
+      flashcardMasteryPercent: 65,
+      flashcardCount: 42,
+      studyStreakDays: 4,
+    },
+    weekItems: [
+      ...relatedTasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        date: task.scheduled_date,
+        kind: "task" as const,
+        status: task.status,
+      })),
+      {
+        id: assignmentId,
+        title: assignmentTitle,
+        date: dueDate,
+        kind: "assignment",
+        status: "in_progress",
+      },
+    ],
+  };
+}

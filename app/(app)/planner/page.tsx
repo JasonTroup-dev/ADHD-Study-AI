@@ -6,15 +6,14 @@ import {
 } from "@/lib/calendar/getCalendarDays";
 import { Button } from "@/components/ui/button";
 import { TaskCard, type StudyTask } from "@/components/ui/taskCard";
-import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useDemoWorkspace } from "@/components/demo/DemoWorkspaceProvider";
 import { supabase } from "@/lib/supabase/client";
 import PlannerCalendar from "@/components/StudyPlanner/StudyPlannerCalendar";
 import StudyPlannerModal from "@/components/StudyPlanner/StudyPlannerModal";
 import type { StudyPlanImportSummary } from "@/types/syllabus";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CompletionProgress } from "@/components/ui/completionProgress";
-import { demoClasses, demoDate, demoTasks } from "@/lib/demo/readOnlyWorkspace";
 
 type ClassItem = {
     id: string,
@@ -24,14 +23,14 @@ type ClassItem = {
 
 const STUDY_PLAN_NOTICE_DURATION_MS = 5_000;
 
-function PlannerPageContent() {
-    const searchParams = useSearchParams();
-    const readOnly = searchParams.get("demo") === "1";
-    const initialClasses = readOnly
-        ? demoClasses.map(({ id, name, color }) => ({ id, name, color }))
+export default function PlannerPage() {
+    const demoWorkspace = useDemoWorkspace();
+    const readOnly = demoWorkspace !== null;
+    const initialClasses = demoWorkspace
+        ? demoWorkspace.classes.map(({ id, name, color }) => ({ id, name, color }))
         : undefined;
-    const initialTasks = readOnly ? demoTasks : undefined;
-    const initialDate = readOnly ? demoDate : undefined;
+    const initialTasks = demoWorkspace?.tasks;
+    const initialDate = demoWorkspace?.date;
 
     { /* Calendar Variables */}
     const weekDays= ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
@@ -248,8 +247,13 @@ function PlannerPageContent() {
 
 
     // Prograss Bar Variables
-    const completedTasks = tasks.filter((task) => task.status === "completed").length;
-    const totalTasks = tasks.length;
+    const visibleTasks = demoWorkspace
+        ? demoWorkspace.tasks.filter(
+            (task) => task.scheduled_date === selectedDateString,
+        )
+        : tasks;
+    const completedTasks = visibleTasks.filter((task) => task.status === "completed").length;
+    const totalTasks = visibleTasks.length;
 
     const progressPercent =
         totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -411,7 +415,7 @@ function PlannerPageContent() {
                         <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
                                 <h2 className="text-xl font-semibold" aria-live="polite">{ formattedDate }</h2>
-                                <p className="text-gray-600">{tasks.length} tasks scheduled</p>
+                                <p className="text-gray-600">{visibleTasks.length} tasks scheduled</p>
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2">
@@ -459,7 +463,7 @@ function PlannerPageContent() {
 
                         {/* ToDo List Item Card */}
                         <div className="mt-8 flex-1 space-y-4 overflow-y-auto pr-2">
-                            {tasks.map((task) => (
+                            {visibleTasks.map((task) => (
                                 <TaskCard
                                     key={task.id}
                                     task={task}
@@ -614,8 +618,4 @@ function PlannerPageContent() {
 
         </div>
     );
-}
-
-export default function PlannerPage() {
-    return <Suspense fallback={null}><PlannerPageContent /></Suspense>;
 }

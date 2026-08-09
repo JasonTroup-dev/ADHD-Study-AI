@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import ClassesPage from "@/app/(app)/classes/page";
 
 export default function DemoClassesPage() {
-  redirect("/classes?demo=1");
+  return <ClassesPage />;
 }
