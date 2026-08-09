@@ -15,8 +15,8 @@ import {
   Settings,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { useEffect, useId, useState, useSyncExternalStore } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -358,6 +358,12 @@ function Navigation({
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const readOnlyDemo = useSyncExternalStore(
+    subscribeToLocationChanges,
+    getReadOnlyDemoMode,
+    () => false,
+  );
   const desktopExpanded = useSyncExternalStore(
     subscribeToSidebarPreference,
     getSidebarPreference,
@@ -410,8 +416,26 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const pageLabel = getPageLabel(pathname);
 
+  function preserveDemoMode(event: ReactMouseEvent<HTMLElement>) {
+    if (!readOnlyDemo || event.defaultPrevented) return;
+
+    const target = event.target as HTMLElement | null;
+    const anchor = target?.closest<HTMLAnchorElement>("a[href]");
+    if (!anchor || anchor.target || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+    const url = new URL(anchor.href);
+    if (url.origin !== window.location.origin || url.searchParams.get("demo") === "1") return;
+
+    const protectedPath = protectedDemoPath(url.pathname);
+    if (!protectedPath) return;
+
+    event.preventDefault();
+    url.searchParams.set("demo", "1");
+    router.push(`${url.pathname}${url.search}`);
+  }
+
   return (
-    <div className="flex min-h-svh bg-slate-50 text-slate-950">
+    <div className="flex min-h-svh bg-slate-50 text-slate-950" onClickCapture={preserveDemoMode}>
       <a
         href="#main-content"
         className="sr-only z-[100] rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
@@ -503,6 +527,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </header>
 
         <main id="main-content" tabIndex={-1} className="min-h-0 flex-1 overflow-x-clip focus:outline-none">
+          {readOnlyDemo ? (
+            <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs font-medium text-amber-900">
+              Sample workspace · read only. Changes, uploads, and AI requests are disabled.
+            </div>
+          ) : null}
           {children}
         </main>
       </div>
@@ -548,6 +577,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   );
 }
 
+function protectedDemoPath(pathname: string) {
+  return ["/calendar", "/dashboard", "/classes", "/study", "/planner", "/settings", "/report-bug"].some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+}
+
 function subscribeToSidebarPreference(callback: () => void) {
   window.addEventListener("storage", callback);
   window.addEventListener(SIDEBAR_PREFERENCE_EVENT, callback);
@@ -556,6 +591,16 @@ function subscribeToSidebarPreference(callback: () => void) {
     window.removeEventListener("storage", callback);
     window.removeEventListener(SIDEBAR_PREFERENCE_EVENT, callback);
   };
+}
+
+function subscribeToLocationChanges(callback: () => void) {
+  window.addEventListener("popstate", callback);
+
+  return () => window.removeEventListener("popstate", callback);
+}
+
+function getReadOnlyDemoMode() {
+  return new URLSearchParams(window.location.search).get("demo") === "1";
 }
 
 function getSidebarPreference() {

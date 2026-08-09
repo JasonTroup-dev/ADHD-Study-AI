@@ -41,9 +41,13 @@ const STUDY_PLAN_NOTICE_DURATION_MS = 5_000;
 
 type DashboardClientProps = {
   initialData: DashboardInitialData;
+  readOnly?: boolean;
 };
 
-export default function DashboardClient({ initialData }: DashboardClientProps) {
+export default function DashboardClient({
+  initialData,
+  readOnly = false,
+}: DashboardClientProps) {
   const [classes, setClasses] = useState<ClassOption[]>(initialData.classes);
   const [tasks, setTasks] = useState<StudyTask[]>(initialData.tasks);
   const [activeStudySession, setActiveStudySession] =
@@ -208,6 +212,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   }, [userId, dateString, studyPlanRefreshToken]);
 
   async function handleToggleTask(task: StudyTask) {
+    if (readOnly) return;
     const newStatus = task.status === "completed" ? "todo" : "completed";
 
     setTasks((currentTasks) =>
@@ -263,12 +268,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           <p className="text-xl text-gray-600 py-2">Stay on track with your study plan</p>
         </div>
 
-        <StudyPlannerModal
+        {readOnly ? null : <StudyPlannerModal
           isOpen={isGenerateModalOpen}
           classes={classes}
           onClose={() => setIsGenerateModalOpen(false)}
           onStudyPlanCreated={handleCreateStudyPlan}
-        />
+        />}
 
         {studyPlanNotice ? (
           <div
@@ -331,6 +336,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                         task={task}
                         onToggle={handleToggleTask}
                         detailsOrigin="dashboard"
+                        readOnly={readOnly}
                       />
                     ))
                   ) : (
@@ -358,7 +364,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 <button
                   type="button"
                   onClick={() => setIsGenerateModalOpen(true)}
-                  className="flex h-20 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold transition hover:bg-gray-50"
+                  disabled={readOnly}
+                  className="flex h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold transition hover:bg-gray-50"
                 >
                   <Sparkles className="h-4 w-4 text-gray-700" />
                   Generate Study Plan
@@ -366,20 +373,27 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
 
                 <button
                   type="button"
-                  className="flex h-20 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold transition hover:bg-gray-50"
+                  className="flex h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold transition hover:bg-gray-50"
                 >
                   <Brain className="h-4 w-4 text-gray-700" />
                   Summarize Notes
                 </button>
 
 
-                <Link
-                  href="/study/flashcards/create?mode=ai"
-                  className="flex h-20 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold transition hover:bg-gray-50"
-                >
-                  <FileText className="h-4 w-4 text-gray-700" />
-                  Create Flashcards
-                </Link>
+                {readOnly ? (
+                  <button type="button" disabled className="flex h-20 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-400">
+                    <FileText className="h-4 w-4" />
+                    Create Flashcards
+                  </button>
+                ) : (
+                  <Link
+                    href="/study/flashcards/create?mode=ai"
+                    className="flex h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold transition hover:bg-gray-50"
+                  >
+                    <FileText className="h-4 w-4 text-gray-700" />
+                    Create Flashcards
+                  </Link>
+                )}
 
               </div>
             </div>
@@ -447,7 +461,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                   </div>
 
                   <div className="flex items-center justify-between gap-3">
-                    <StartStudySessionButton
+                    {readOnly ? (
+                      <Button disabled>Start this</Button>
+                    ) : <StartStudySessionButton
                       plannerTaskId={recommendedTask.id}
                       assignmentId={recommendedTask.assignment_id}
                       classId={recommendedTask.class_id}
@@ -455,10 +471,14 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                       sessionType={inferTaskSessionType(recommendedTask.title)}
                       label="Start this"
                       variant="default"
-                    />
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href="/planner">View plan</Link>
-                    </Button>
+                    />}
+                    {readOnly ? (
+                      <Button variant="outline" size="sm" disabled>View plan</Button>
+                    ) : (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/planner">View plan</Link>
+                      </Button>
+                    )}
                   </div>
                 </div>
               ) : nextDeadline ? (
@@ -502,6 +522,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                     type="button"
                     className="w-full justify-between"
                     onClick={() => setIsGenerateModalOpen(true)}
+                    disabled={readOnly}
                   >
                     Generate study plan
                     <Sparkles className="h-4 w-4" aria-hidden="true" />

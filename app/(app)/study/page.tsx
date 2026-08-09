@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
 import AIStudyGuideGenBanner from "@/components/StudyTools/AIStudyGuideGenBanner";
@@ -5,10 +7,14 @@ import PracticeQuizGenCard from "@/components/StudyTools/PracticeQuizGenCard";
 import GuidedStudySessionCard from "@/components/StudyTools/GuidedStudySessionCard";
 import AssignmentBreakdownCard from "@/components/StudyTools/AssignmentBreakdownCard";
 import ComingSoonOverlay from "@/components/StudyTools/ComingSoonOverlay";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function StudyTools() {
+function StudyToolsContent() {
+    const searchParams = useSearchParams();
+    const readOnly = searchParams.get("demo") === "1";
     return (
-        <div className="min-h-screen w-full bg-gray-100">
+        <div className={readOnly ? "pointer-events-none min-h-screen w-full select-none bg-gray-100" : "min-h-screen w-full bg-gray-100"} aria-disabled={readOnly || undefined}>
             <div className="mx-auto w-full max-w-screen-xl px-6 py-8 lg:px-8">
                 <div className="flex items-start justify-between">
                     <div>
@@ -112,4 +118,8 @@ export default function StudyTools() {
 
         </div>
     );
+}
+
+export default function StudyTools() {
+    return <Suspense fallback={null}><StudyToolsContent /></Suspense>;
 }

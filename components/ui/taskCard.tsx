@@ -32,6 +32,7 @@ type TaskCardProps = {
   onToggle?: (task: StudyTask) => void;
   className?: string;
   detailsOrigin?: "dashboard" | "planner";
+  readOnly?: boolean;
 };
 
 const priorityStyles: Record<string, { badge: string; dot: string }> = {
@@ -75,6 +76,7 @@ export function TaskCard({
   onToggle,
   className,
   detailsOrigin = "planner",
+  readOnly = false,
 }: TaskCardProps) {
   const isCompleted = task.status === "completed";
   const taskClass = getTaskClass(task);
@@ -85,19 +87,21 @@ export function TaskCard({
   return (
     <div
       className={cn(
-        "group relative grid w-full grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-xs transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-gray-300 hover:shadow-sm sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center",
+        "group relative grid w-full cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-xs transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-gray-300 hover:shadow-sm sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center",
         isCompleted &&
           "bg-gray-50/80 shadow-none hover:translate-y-0 hover:border-gray-200 hover:shadow-none",
         className,
       )}
     >
-      <Link
-        href={`/planner/tasks/${task.id}?from=${detailsOrigin}`}
-        aria-label={`View details for ${task.title}`}
-        className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500/35 focus-visible:ring-offset-2"
-      >
-        <span className="sr-only">View task details</span>
-      </Link>
+      {readOnly ? null : (
+        <Link
+          href={`/planner/tasks/${task.id}?from=${detailsOrigin}`}
+          aria-label={`View details for ${task.title}`}
+          className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500/35 focus-visible:ring-offset-2"
+        >
+          <span className="sr-only">View task details</span>
+        </Link>
+      )}
 
       <div
         aria-hidden="true"
@@ -112,6 +116,7 @@ export function TaskCard({
         checked={isCompleted}
         onCheckedChange={() => onToggle?.(task)}
         aria-label={`${isCompleted ? "Mark as incomplete" : "Mark as complete"}: ${task.title}`}
+        disabled={readOnly}
         className="relative z-10 mt-0.5 size-5 cursor-pointer accent-gray-950 disabled:cursor-default"
       />
 

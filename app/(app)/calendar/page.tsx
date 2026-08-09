@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Check,
   ChevronLeft,
@@ -14,6 +15,7 @@ import { getCalendarDays } from "@/lib/calendar/getCalendarDays";
 import { getClassColor, type ClassColor } from "@/lib/classColors";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase/client";
+import { demoCalendarItems, demoDate } from "@/lib/demo/readOnlyWorkspace";
 
 const WEEK_DAYS = [
   "Sunday",
@@ -74,15 +76,24 @@ function getRelatedClass(
   return Array.isArray(relation) ? relation[0] ?? null : relation;
 }
 
-export default function CalendarPage() {
+function CalendarPageContent() {
+  const searchParams = useSearchParams();
+  const readOnly = searchParams.get("demo") === "1";
+  const initialItems: CalendarItem[] | undefined = readOnly
+    ? demoCalendarItems
+    : undefined;
+  const initialDate = readOnly ? demoDate : undefined;
   const [currentMonth, setCurrentMonth] = useState(
-    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    () => {
+      const date = initialDate ?? new Date();
+      return new Date(date.getFullYear(), date.getMonth(), 1);
+    },
   );
-  const [items, setItems] = useState<CalendarItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [items, setItems] = useState<CalendarItem[]>(initialItems ?? []);
+  const [isLoading, setIsLoading] = useState(initialItems === undefined);
   const [error, setError] = useState<string | null>(null);
 
-  const today = useMemo(() => new Date(), []);
+  const today = useMemo(() => initialDate ?? new Date(), [initialDate]);
   const calendarDays = useMemo(
     () => getCalendarDays(currentMonth),
     [currentMonth],
@@ -95,6 +106,7 @@ export default function CalendarPage() {
   });
 
   useEffect(() => {
+    if (initialItems !== undefined) return;
     let isActive = true;
 
     async function loadCalendarItems() {
@@ -196,7 +208,7 @@ export default function CalendarPage() {
     return () => {
       isActive = false;
     };
-  }, [visibleEnd, visibleStart]);
+  }, [initialItems, visibleEnd, visibleStart]);
 
   const itemsByDate = useMemo(() => {
     return items.reduce<Record<string, CalendarItem[]>>((dates, item) => {
@@ -363,7 +375,7 @@ export default function CalendarPage() {
                           </>
                         ) : (
                           dayItems.map((item) => (
-                            <CalendarItemChip key={`${item.kind}-${item.id}`} item={item} />
+                            <CalendarItemChip key={`${item.kind}-${item.id}`} item={item} readOnly={readOnly} />
                           ))
                         )}
                       </div>
@@ -378,27 +390,21 @@ export default function CalendarPage() {
   );
 }
 
-function CalendarItemChip({ item }: { item: CalendarItem }) {
+function CalendarItemChip({
+  item,
+  readOnly,
+}: {
+  item: CalendarItem;
+  readOnly: boolean;
+}) {
   const color = getClassColor(item.classColor);
   const href =
     item.kind === "assignment"
       ? "/planner/assignments"
       : `/planner/tasks/${item.id}?from=calendar`;
 
-  return (
-    <Link
-      href={href}
-      title={`${item.title} · ${item.className}${
-        item.kind === "assignment" ? " · Assignment due" : ""
-      }`}
-      className={cn(
-        "group flex min-h-7 items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition hover:-translate-y-px hover:shadow-sm",
-        color.bg,
-        color.border,
-        color.text,
-        item.isComplete && "opacity-55",
-      )}
-    >
+  const content = (
+    <>
       {item.kind === "assignment" ? (
         <ClipboardList className="h-3 w-3 shrink-0" aria-hidden="true" />
       ) : (
@@ -415,6 +421,31 @@ function CalendarItemChip({ item }: { item: CalendarItem }) {
       {item.isComplete ? (
         <Check className="h-3 w-3 shrink-0 text-emerald-700" aria-hidden="true" />
       ) : null}
+    </>
+  );
+  const className = cn(
+    "group flex min-h-7 items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition hover:-translate-y-px hover:shadow-sm",
+    color.bg,
+    color.border,
+    color.text,
+    item.isComplete && "opacity-55",
+  );
+
+  return readOnly ? (
+    <div className={className}>{content}</div>
+  ) : (
+    <Link
+      href={href}
+      title={`${item.title} · ${item.className}${
+        item.kind === "assignment" ? " · Assignment due" : ""
+      }`}
+      className={className}
+    >
+      {content}
     </Link>
   );
+}
+
+export default function CalendarPage() {
+  return <Suspense fallback={null}><CalendarPageContent /></Suspense>;
 }

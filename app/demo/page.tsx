@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { DemoWorkspace } from "./DemoWorkspace";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Sample Workspace | ADHD Study AI",
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function DemoPage() {
-  return <DemoWorkspace />;
+  redirect("/dashboard?demo=1");
 }

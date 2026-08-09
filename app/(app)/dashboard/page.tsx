@@ -6,9 +6,19 @@ import {
   normalizeUpcomingAssignments,
   type DashboardInitialData,
 } from "@/app/(app)/dashboard/dashboardData";
+import { demoDashboardData } from "@/lib/demo/readOnlyWorkspace";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ demo?: string }>;
+}) {
+  const { demo } = await searchParams;
+  if (demo === "1") {
+    return <DashboardClient initialData={demoDashboardData} readOnly />;
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

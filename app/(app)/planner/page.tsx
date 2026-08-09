@@ -6,13 +6,15 @@ import {
 } from "@/lib/calendar/getCalendarDays";
 import { Button } from "@/components/ui/button";
 import { TaskCard, type StudyTask } from "@/components/ui/taskCard";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import PlannerCalendar from "@/components/StudyPlanner/StudyPlannerCalendar";
 import StudyPlannerModal from "@/components/StudyPlanner/StudyPlannerModal";
 import type { StudyPlanImportSummary } from "@/types/syllabus";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { CompletionProgress } from "@/components/ui/completionProgress";
+import { demoClasses, demoDate, demoTasks } from "@/lib/demo/readOnlyWorkspace";
 
 type ClassItem = {
     id: string,
@@ -22,11 +24,18 @@ type ClassItem = {
 
 const STUDY_PLAN_NOTICE_DURATION_MS = 5_000;
 
-export default function PlannerPage() {
+function PlannerPageContent() {
+    const searchParams = useSearchParams();
+    const readOnly = searchParams.get("demo") === "1";
+    const initialClasses = readOnly
+        ? demoClasses.map(({ id, name, color }) => ({ id, name, color }))
+        : undefined;
+    const initialTasks = readOnly ? demoTasks : undefined;
+    const initialDate = readOnly ? demoDate : undefined;
 
     { /* Calendar Variables */}
     const weekDays= ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState(initialDate ?? new Date());
     const [calendarMonth, setCalendarMonth] = useState(
         () => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
     );
@@ -114,13 +123,14 @@ export default function PlannerPage() {
     //Supabase variables
 
     const [userId, setUserId] = useState<string | null>(null);
-    const [classes, setClasses] = useState<ClassItem[]>([]);
-    const [tasks, setTasks] = useState<StudyTask[]>([]);
+    const [classes, setClasses] = useState<ClassItem[]>(initialClasses ?? []);
+    const [tasks, setTasks] = useState<StudyTask[]>(initialTasks ?? []);
     const [taskRefreshToken, setTaskRefreshToken] = useState(0);
 
     const selectedDateString = toLocalDateString(selectedDate);
 
     async function handleAddTask () {
+        if (readOnly) return;
         if (!userId) return;
 
         const classId = selectedClassId;
@@ -159,6 +169,7 @@ export default function PlannerPage() {
     }
 
     useEffect(() => {
+        if (readOnly || initialTasks !== undefined) return;
         async function loadUser() {
             const {
                 data: { user },
@@ -170,10 +181,11 @@ export default function PlannerPage() {
         }
 
         loadUser();
-    }, []);
+    }, [initialTasks, readOnly]);
 
     
     useEffect(() => {
+        if (readOnly || initialClasses !== undefined) return;
         async function loadClasses() {
             if (!userId) return;
 
@@ -192,11 +204,12 @@ export default function PlannerPage() {
         }
 
         loadClasses();
-    }, [userId]);
+    }, [initialClasses, readOnly, userId]);
 
 
     { /* Task Card Data */ }
     useEffect(() => {
+        if (readOnly || initialTasks !== undefined) return;
         async function loadTasks() {
             if (!userId) return;
 
@@ -231,7 +244,7 @@ export default function PlannerPage() {
         }
 
         loadTasks();
-    }, [userId, selectedDateString, taskRefreshToken]);
+    }, [initialTasks, readOnly, userId, selectedDateString, taskRefreshToken]);
 
 
     // Prograss Bar Variables
@@ -242,6 +255,7 @@ export default function PlannerPage() {
         totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
     async function handleToggleTask(task: StudyTask) {
+        if (readOnly) return;
         const newStatus = task.status === "completed" ? "todo" : "completed";
 
         setTasks((prevTasks) =>
@@ -307,19 +321,20 @@ export default function PlannerPage() {
                             className="text-base bg-linear-to-br from-purple-500 to-blue-500"
                             variant="default"
                             size="lg"
-                            onClick={() => setIsGenerateModalOpen(true)}>
+                            onClick={() => setIsGenerateModalOpen(true)}
+                            disabled={readOnly}>
                             Generate Study Plan
                         </Button>
                     </div>
                 </div>
 
 
-                <StudyPlannerModal
+                {readOnly ? null : <StudyPlannerModal
                     isOpen={isGenerateModalOpen}
                     classes={classes}
                     onClose={() => setIsGenerateModalOpen(false)}
                     onStudyPlanCreated={handleCreateStudyPlan}
-                />
+                />}
 
                 {studyPlanNotice ? (
                     <div
@@ -435,6 +450,7 @@ export default function PlannerPage() {
                                     variant="default"
                                     size="default"
                                     onClick={() => setIsTaskModalOpen(true)}
+                                    disabled={readOnly}
                                 >
                                     + Add Task
                                 </Button>
@@ -448,6 +464,7 @@ export default function PlannerPage() {
                                     key={task.id}
                                     task={task}
                                     onToggle={handleToggleTask}
+                                    readOnly={readOnly}
                                 />
                             ))}
                         </div>
@@ -460,7 +477,7 @@ export default function PlannerPage() {
 
 
             {/* Pop-Up Section */}
-            {isTaskModalOpen && (
+            {!readOnly && isTaskModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
                     <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-lg">
 
@@ -597,4 +614,8 @@ export default function PlannerPage() {
 
         </div>
     );
+}
+
+export default function PlannerPage() {
+    return <Suspense fallback={null}><PlannerPageContent /></Suspense>;
 }

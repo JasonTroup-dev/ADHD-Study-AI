@@ -1,19 +1,24 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { notifyClassesChanged } from "@/lib/classEvents";
 import ClassCard from "@/components/classes/ClassCard";
 import AddClassModal from "@/components/classes/AddClassModal";
 import StudyPlannerModal from "@/components/StudyPlanner/StudyPlannerModal";
 import type { ClassSummary, CreateClassInput } from "@/types/classes";
 import type { StudyPlanImportSummary } from "@/types/syllabus";
+import { demoClasses } from "@/lib/demo/readOnlyWorkspace";
 
-export default function ClassesPage() {
-  const [classes, setClasses] = useState<ClassSummary[]>([]);
+function ClassesPageContent() {
+  const searchParams = useSearchParams();
+  const readOnly = searchParams.get("demo") === "1";
+  const initialClasses = readOnly ? demoClasses : undefined;
+  const [classes, setClasses] = useState<ClassSummary[]>(initialClasses ?? []);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSyllabusModalOpen, setIsSyllabusModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(initialClasses === undefined);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -67,6 +72,8 @@ export default function ClassesPage() {
   }
 
   useEffect(() => {
+    if (initialClasses !== undefined) return;
+
     async function loadPage() {
       try {
         await fetchClasses();
@@ -82,7 +89,7 @@ export default function ClassesPage() {
     }
 
     void loadPage();
-  }, []);
+  }, [initialClasses]);
 
 
   return (
@@ -99,6 +106,7 @@ export default function ClassesPage() {
               variant="default" 
               size="default"
               onClick={() => setIsModalOpen(true)}
+              disabled={readOnly}
               >
                   + Add Class
             </Button>
@@ -158,20 +166,21 @@ export default function ClassesPage() {
               flashcardSetCount={classItem.flashcardSetCount}
               noteCount={classItem.noteCount}
               sessionCount={classItem.sessionCount}
+              readOnly={readOnly}
             />
           ))}
         </div>
       </div>
 
 
-      <AddClassModal
+      {readOnly ? null : <AddClassModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCreateClass={handleAddClass}
         onUploadSyllabus={() => setIsSyllabusModalOpen(true)}
-      />
+      />}
 
-      <StudyPlannerModal
+      {readOnly ? null : <StudyPlannerModal
         isOpen={isSyllabusModalOpen}
         classes={classes.map((classItem) => ({
           id: classItem.id,
@@ -179,10 +188,14 @@ export default function ClassesPage() {
         }))}
         onClose={() => setIsSyllabusModalOpen(false)}
         onStudyPlanCreated={handleSyllabusImport}
-      />
+      />}
                 
     </div>
   );
+}
+
+export default function ClassesPage() {
+  return <Suspense fallback={null}><ClassesPageContent /></Suspense>;
 }
 
 async function readJson(response: Response): Promise<unknown> {
