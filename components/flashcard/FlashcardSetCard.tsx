@@ -13,7 +13,9 @@ type FlashcardSetCardProps = {
   title: string;
   cardCount?: number;
   classColor?: string | null;
-  onDelete: (id: string, title: string) => void;
+  onDelete?: (id: string, title: string) => void;
+  reviewHref?: string;
+  editHref?: string;
 };
 
 export default function FlashcardSetCard({
@@ -22,12 +24,15 @@ export default function FlashcardSetCard({
   cardCount,
   classColor,
   onDelete,
+  reviewHref,
+  editHref,
 }: FlashcardSetCardProps) {
   const color = getClassColor(classColor);
   const [menuOpen, setMenuOpen] = useState(false);
   const [fallbackCardCount, setFallbackCardCount] = useState<number | null>(null);
   const displayedCardCount = cardCount ?? fallbackCardCount ?? 0;
-  const reviewHref = `/study/flashcards/${id}`;
+  const resolvedReviewHref = reviewHref ?? `/study/flashcards/${id}`;
+  const resolvedEditHref = editHref ?? `/study/flashcards/${id}/edit`;
 
   useEffect(() => {
     if (typeof cardCount === "number") {
@@ -60,9 +65,9 @@ export default function FlashcardSetCard({
   }, [cardCount, id]);
 
   return (
-    <div className="relative flex min-h-60 flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg">
+    <div className="relative flex min-h-60 cursor-pointer flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg">
       <Link
-        href={reviewHref}
+        href={resolvedReviewHref}
         className="absolute inset-0 z-0 rounded-2xl"
         aria-label={`Open ${title}`}
       />
@@ -92,7 +97,7 @@ export default function FlashcardSetCard({
           {menuOpen ? (
             <div className="absolute right-0 top-8 z-30 w-36 rounded-xl border border-gray-200 bg-white p-1 shadow-lg">
               <Link
-                href={`/study/flashcards/${id}/edit`}
+                href={resolvedEditHref}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 onClick={() => setMenuOpen(false)}
               >
@@ -100,17 +105,19 @@ export default function FlashcardSetCard({
                 Edit set
               </Link>
 
-              <button
-                type="button"
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                onClick={() => {
-                  setMenuOpen(false);
-                  onDelete(id, title);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete set
-              </button>
+              {onDelete ? (
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onDelete(id, title);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete set
+                </button>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -143,7 +150,7 @@ export default function FlashcardSetCard({
           variant="outline"
           className="w-full bg-white text-gray-900 hover:bg-gray-100 hover:text-gray-900"
         >
-          <Link href={reviewHref}>Study</Link>
+          <Link href={resolvedReviewHref}>Study</Link>
         </Button>
       </div>
     </div>

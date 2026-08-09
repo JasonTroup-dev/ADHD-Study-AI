@@ -94,7 +94,8 @@ function getWorkspaceHref(href: string, demo: boolean) {
   if (href === "/calendar") return "/demo/calendar";
   if (href.startsWith("/classes/")) return `/demo${href}`;
   if (href.startsWith("/classes")) return "/demo/classes";
-  if (href.startsWith("/study")) return "/demo/study";
+  if (href === "/study") return "/demo/study";
+  if (href.startsWith("/study/")) return `/demo${href}`;
   if (href.startsWith("/planner")) return "/demo/planner";
   return "/demo";
 }
@@ -104,6 +105,7 @@ function getWorkspacePathname(pathname: string, demo: boolean) {
   if (pathname === "/demo") return "/dashboard";
   if (pathname.startsWith("/demo/classes/")) return pathname.slice(5);
   if (pathname.startsWith("/demo/classes")) return "/classes";
+  if (pathname.startsWith("/demo/study/")) return pathname.slice(5);
   if (pathname.startsWith("/demo/study")) return "/study";
   if (pathname.startsWith("/demo/planner")) return "/planner";
   if (pathname.startsWith("/demo/calendar")) return "/calendar";
@@ -565,7 +567,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               role="status"
               className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs font-medium text-amber-900"
             >
-              Sample workspace · read only. Changes, uploads, and AI requests are disabled.
+              Sample workspace · read only. Account changes, uploads, and AI requests are disabled.{" "}
+              <Link
+                href="/login"
+                className="font-semibold underline decoration-amber-500 underline-offset-2 transition-colors hover:text-amber-700 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700"
+              >
+                Open the live workspace
+              </Link>
             </div>
           ) : null}
           {readOnlyDemo ? (

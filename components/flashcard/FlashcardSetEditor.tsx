@@ -92,6 +92,11 @@ export type FlashcardSetEditorInitialSet = {
 
 type FlashcardSetEditorProps = {
   initialSet?: FlashcardSetEditorInitialSet;
+  demo?: {
+    returnHref: string;
+    classes: ClassOption[];
+    onSave: (set: FlashcardSetEditorInitialSet) => void;
+  };
 };
 
 function createCardId() {
@@ -154,15 +159,15 @@ function FlashcardSetEditorLoading() {
   );
 }
 
-function FlashcardSetEditorContent({ initialSet }: FlashcardSetEditorProps) {
+function FlashcardSetEditorContent({ initialSet, demo }: FlashcardSetEditorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEditing = Boolean(initialSet);
   const studySessionId = searchParams.get("studySessionId");
   const classFromUrl = searchParams.get("classId") ?? "";
-  const returnHref = isEditing
-    ? `/study/flashcards/${initialSet?.id}`
-    : "/study/flashcards";
+  const returnHref =
+    demo?.returnHref ??
+    (isEditing ? `/study/flashcards/${initialSet?.id}` : "/study/flashcards");
 
   const [setTitle, setSetTitle] = useState(initialSet?.title ?? "");
   const [setDescription, setSetDescription] = useState(
@@ -171,14 +176,16 @@ function FlashcardSetEditorContent({ initialSet }: FlashcardSetEditorProps) {
   const [selectedClassId, setSelectedClassId] = useState(
     initialSet?.classId ?? classFromUrl,
   );
-  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [classes, setClasses] = useState<ClassOption[]>(() => demo?.classes ?? []);
   const [flashcards, setFlashcards] = useState<FlashcardItem[]>(
     initialSet?.cards.length
       ? initialSet.cards
       : [{ id: "draft-card-1", question: "", answer: "", card_order: 1 }],
   );
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(() =>
+    demo ? "demo-user" : null,
+  );
+  const [isLoading, setIsLoading] = useState(() => !demo);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
   const [showPreviews, setShowPreviews] = useState(false);
@@ -216,6 +223,8 @@ function FlashcardSetEditorContent({ initialSet }: FlashcardSetEditorProps) {
   }, []);
 
   useEffect(() => {
+    if (demo) return;
+
     let isMounted = true;
 
     async function loadEditor() {
@@ -256,7 +265,7 @@ function FlashcardSetEditorContent({ initialSet }: FlashcardSetEditorProps) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [demo]);
 
   function clearMessage() {
     setMessage(null);
@@ -410,6 +419,24 @@ function FlashcardSetEditorContent({ initialSet }: FlashcardSetEditorProps) {
 
   async function saveFlashcardSet() {
     clearMessage();
+
+    if (demo) {
+      demo.onSave({
+        id: initialSet?.id ?? "demo-flashcard-set",
+        title: setTitle.trim(),
+        description: setDescription.trim(),
+        classId: selectedClassId,
+        cards: flashcards.map((card, index) => ({
+          ...card,
+          card_order: index + 1,
+        })),
+      });
+      setMessage({
+        type: "success",
+        text: "Demo changes applied for this session. No account data was changed.",
+      });
+      return;
+    }
 
     if (!userId) {
       setMessage({ type: "error", text: "Sign in to save this set." });
@@ -684,7 +711,13 @@ function FlashcardSetEditorContent({ initialSet }: FlashcardSetEditorProps) {
                 className="bg-blue-600 px-5 hover:bg-blue-700"
               >
                 <Save aria-hidden="true" />
-                {isSaving ? "Saving…" : isEditing ? "Save changes" : "Create set"}
+                {isSaving
+                  ? "Saving…"
+                  : demo
+                    ? "Apply demo changes"
+                    : isEditing
+                      ? "Save changes"
+                      : "Create set"}
               </Button>
             </div>
           </div>
@@ -968,10 +1001,16 @@ function FlashcardSetEditorContent({ initialSet }: FlashcardSetEditorProps) {
               className="mt-5 w-full bg-blue-600 hover:bg-blue-700"
             >
               <Save aria-hidden="true" />
-              {isSaving ? "Saving…" : isEditing ? "Save changes" : "Create set"}
+              {isSaving
+                ? "Saving…"
+                : demo
+                  ? "Apply demo changes"
+                  : isEditing
+                    ? "Save changes"
+                    : "Create set"}
             </Button>
             <p className="mt-2 text-center text-xs leading-5 text-slate-500">
-              {saveHint}
+              {demo ? "Changes stay in this demo session." : saveHint}
             </p>
           </section>
 

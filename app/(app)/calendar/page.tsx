@@ -430,11 +430,16 @@ function CalendarItemChip({
     item.isComplete && "opacity-55",
   );
 
-  return readOnly ? (
+  const demoTaskHref =
+    readOnly && item.kind === "task"
+      ? `/demo/planner/tasks/${item.id}?from=calendar`
+      : null;
+
+  return readOnly && !demoTaskHref ? (
     <div className={className}>{content}</div>
   ) : (
     <Link
-      href={href}
+      href={demoTaskHref ?? href}
       title={`${item.title} · ${item.className}${
         item.kind === "assignment" ? " · Assignment due" : ""
       }`}

@@ -7,10 +7,19 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { StudyGuideSummary } from "./types";
 
-export default function StudyGuideCard({ guide }: { guide: StudyGuideSummary }) {
+type StudyGuideCardProps = {
+  guide: StudyGuideSummary;
+  href?: string;
+  allowDelete?: boolean;
+};
+
+export default function StudyGuideCard({
+  guide,
+  href = `/study/study-guide/${guide.id}`,
+  allowDelete = true,
+}: StudyGuideCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
-  const href = `/study/study-guide/${guide.id}`;
 
   async function deleteGuide() {
     const confirmed = window.confirm(`Delete “${guide.title}”?`);
@@ -31,7 +40,7 @@ export default function StudyGuideCard({ guide }: { guide: StudyGuideSummary }) 
   }
 
   return (
-    <article className="relative flex min-h-64 flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg">
+    <article className="relative flex min-h-64 cursor-pointer flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg">
       <Link href={href} className="absolute inset-0 rounded-2xl" aria-label={`Open ${guide.title}`} />
 
       <div className="pointer-events-none relative z-10 flex items-start justify-between gap-4">
@@ -64,17 +73,19 @@ export default function StudyGuideCard({ guide }: { guide: StudyGuideSummary }) 
         <Button asChild variant="outline" size="sm" className="flex-1 bg-white">
           <Link href={href}>Open guide</Link>
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-sm"
-          onClick={deleteGuide}
-          disabled={isDeleting}
-          aria-label={`Delete ${guide.title}`}
-          className="bg-white text-red-600 hover:bg-red-50 hover:text-red-700"
-        >
-          <Trash2 aria-hidden="true" />
-        </Button>
+        {allowDelete ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-sm"
+            onClick={deleteGuide}
+            disabled={isDeleting}
+            aria-label={`Delete ${guide.title}`}
+            className="bg-white text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <Trash2 aria-hidden="true" />
+          </Button>
+        ) : null}
       </div>
     </article>
   );

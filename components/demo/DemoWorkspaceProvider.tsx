@@ -1,6 +1,19 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+
+import type { FlashcardSetEditorInitialSet } from "@/components/flashcard/FlashcardSetEditor";
+import {
+  demoFlashcardSets,
+  type DemoFlashcardSet,
+} from "@/lib/demo/flashcards";
 
 import {
   demoCalendarItems,
@@ -10,7 +23,7 @@ import {
   demoTasks,
 } from "@/lib/demo/readOnlyWorkspace";
 
-const demoWorkspaceValue = {
+const staticDemoWorkspaceValue = {
   calendarItems: demoCalendarItems,
   classes: demoClasses,
   dashboardData: demoDashboardData,
@@ -19,13 +32,37 @@ const demoWorkspaceValue = {
   tasks: demoTasks,
 };
 
-type DemoWorkspaceValue = typeof demoWorkspaceValue;
+type DemoWorkspaceValue = typeof staticDemoWorkspaceValue & {
+  flashcardSets: DemoFlashcardSet[];
+  updateFlashcardSet: (set: FlashcardSetEditorInitialSet) => void;
+};
 
 const DemoWorkspaceContext = createContext<DemoWorkspaceValue | null>(null);
 
 export function DemoWorkspaceProvider({ children }: { children: ReactNode }) {
+  const [flashcardSets, setFlashcardSets] = useState<DemoFlashcardSet[]>(
+    () => demoFlashcardSets,
+  );
+  const updateFlashcardSet = useCallback((updatedSet: FlashcardSetEditorInitialSet) => {
+    setFlashcardSets((currentSets) =>
+      currentSets.map((currentSet) =>
+        currentSet.id === updatedSet.id
+          ? { ...currentSet, ...updatedSet }
+          : currentSet,
+      ),
+    );
+  }, []);
+  const value = useMemo(
+    () => ({
+      ...staticDemoWorkspaceValue,
+      flashcardSets,
+      updateFlashcardSet,
+    }),
+    [flashcardSets, updateFlashcardSet],
+  );
+
   return (
-    <DemoWorkspaceContext.Provider value={demoWorkspaceValue}>
+    <DemoWorkspaceContext.Provider value={value}>
       {children}
     </DemoWorkspaceContext.Provider>
   );

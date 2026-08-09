@@ -1,4 +1,5 @@
 import type { DashboardInitialData } from "@/app/(app)/dashboard/dashboardData";
+import type { TaskDetailsData } from "@/components/tasks/TaskDetailsView";
 import type { StudyTask } from "@/components/ui/taskCard";
 import type { ClassColor } from "@/lib/classColors";
 import type { ClassWorkspaceData } from "@/lib/classes/classWorkspace";
@@ -156,6 +157,57 @@ export const demoCalendarItems = [
   className: string;
   classColor: ClassColor | null;
 }>;
+
+const demoTaskAssignmentContent: Record<
+  string,
+  { originalFileName: string; extractedText: string }
+> = {
+  "demo-task-outline": {
+    originalFileName: "membrane-transport-lab-rubric.pdf",
+    extractedText:
+      "Draft a focused discussion that compares passive and active membrane transport using observations from the lab. Connect the results to concentration gradients, transport proteins, and cellular energy use, then address one limitation in the experimental design.",
+  },
+  "demo-task-flashcards": {
+    originalFileName: "working-memory-reflection.pdf",
+    extractedText:
+      "Review the working memory model and identify how the phonological loop, visuospatial sketchpad, and central executive interact. Use the review to prepare a short reflection connecting one model component to an everyday learning strategy.",
+  },
+  "demo-task-annotation": {
+    originalFileName: "factory-testimony-source.pdf",
+    extractedText:
+      "Annotate the primary source for claims about factory conditions, working hours, and worker agency. Mark two passages that reveal the author’s perspective and add a brief note explaining the historical context of each passage.",
+  },
+};
+
+export function getDemoTaskDetailsData(taskId: string): TaskDetailsData | null {
+  const task = demoTasks.find((item) => item.id === taskId);
+  if (!task) return null;
+
+  const classItem = demoClasses.find((item) => item.id === task.class_id);
+  const assignment = classItem?.nextAssignment;
+  const assignmentContent = demoTaskAssignmentContent[task.id];
+  const taskClass = Array.isArray(task.classes) ? task.classes[0] ?? null : task.classes;
+
+  return {
+    id: task.id,
+    classId: task.class_id,
+    assignmentId: task.assignment_id,
+    title: task.title,
+    priority: task.priority,
+    status: task.status,
+    scheduledDate: task.scheduled_date,
+    taskClass,
+    assignment: assignment
+      ? {
+          id: assignment.id,
+          title: assignment.title,
+          dueDate: assignment.dueDate,
+          originalFileName: assignmentContent?.originalFileName ?? null,
+          extractedText: assignmentContent?.extractedText ?? null,
+        }
+      : null,
+  };
+}
 
 export function getDemoClassWorkspaceData(
   classId: string,

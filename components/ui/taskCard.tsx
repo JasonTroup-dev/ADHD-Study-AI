@@ -32,6 +32,7 @@ type TaskCardProps = {
   onToggle?: (task: StudyTask) => void;
   className?: string;
   detailsOrigin?: "dashboard" | "planner";
+  detailsHref?: string;
   readOnly?: boolean;
 };
 
@@ -76,6 +77,7 @@ export function TaskCard({
   onToggle,
   className,
   detailsOrigin = "planner",
+  detailsHref,
   readOnly = false,
 }: TaskCardProps) {
   const isCompleted = task.status === "completed";
@@ -83,6 +85,8 @@ export function TaskCard({
   const classColor = taskClass ? getClassColor(taskClass.color) : null;
   const priorityStyle =
     priorityStyles[task.priority?.toLowerCase() ?? ""] ?? fallbackPriorityStyle;
+  const resolvedDetailsHref =
+    detailsHref ?? (readOnly ? null : `/planner/tasks/${task.id}?from=${detailsOrigin}`);
 
   return (
     <div
@@ -93,15 +97,15 @@ export function TaskCard({
         className,
       )}
     >
-      {readOnly ? null : (
+      {resolvedDetailsHref ? (
         <Link
-          href={`/planner/tasks/${task.id}?from=${detailsOrigin}`}
+          href={resolvedDetailsHref}
           aria-label={`View details for ${task.title}`}
           className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500/35 focus-visible:ring-offset-2"
         >
           <span className="sr-only">View task details</span>
         </Link>
-      )}
+      ) : null}
 
       <div
         aria-hidden="true"

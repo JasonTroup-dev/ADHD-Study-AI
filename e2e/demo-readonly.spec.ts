@@ -14,7 +14,25 @@ test("public demo follows the real workspace workflow without authentication or 
   await expect(page).toHaveURL(/\/demo$/);
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   await expect(page.getByRole("status")).toContainText("Sample workspace · read only");
+  await expect(page.getByRole("link", { name: "Open the live workspace" })).toHaveAttribute(
+    "href",
+    "/login",
+  );
   const navigation = page.getByRole("navigation", { name: "Workspace navigation" });
+
+  await page
+    .getByRole("link", { name: "View details for Outline the membrane transport discussion" })
+    .click();
+  await expect(page).toHaveURL(
+    /\/demo\/planner\/tasks\/demo-task-outline\?from=dashboard$/,
+    { timeout: 20_000 },
+  );
+  await expect(
+    page.getByRole("heading", { name: "Outline the membrane transport discussion" }),
+  ).toBeVisible();
+  await expect(page.getByText("What this task involves")).toBeVisible();
+  await page.getByRole("link", { name: "Back to dashboard" }).click();
+  await expect(page).toHaveURL(/\/demo$/, { timeout: 20_000 });
 
   await navigation.getByRole("link", { name: "Classes", exact: true }).click();
   await expect(page).toHaveURL(/\/demo\/classes$/, { timeout: 20_000 });
@@ -30,9 +48,73 @@ test("public demo follows the real workspace workflow without authentication or 
   await navigation.getByRole("link", { name: "Study Tools", exact: true }).click();
   await expect(page).toHaveURL(/\/demo\/study$/, { timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Study Tools" })).toBeVisible();
-  await expect(navigation.getByRole("link", { name: "AI Tutor" })).toBeVisible();
-  await expect(navigation.getByRole("link", { name: "Study Guides" })).toBeVisible();
-  await expect(navigation.getByRole("link", { name: "Flashcards" })).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "AI Tutor" })).toHaveAttribute(
+    "href",
+    "/demo/study/ai-tutor",
+  );
+  await expect(navigation.getByRole("link", { name: "Study Guides" })).toHaveAttribute(
+    "href",
+    "/demo/study/study-guide",
+  );
+  await expect(navigation.getByRole("link", { name: "Flashcards" })).toHaveAttribute(
+    "href",
+    "/demo/study/flashcards",
+  );
+
+  await navigation.getByRole("link", { name: "AI Tutor" }).click();
+  await expect(page).toHaveURL(/\/demo\/study\/ai-tutor$/, { timeout: 20_000 });
+  await expect(page.getByText("What are you working on?")).toBeVisible();
+
+  await navigation.getByRole("link", { name: "Study Guides" }).click();
+  await expect(page).toHaveURL(/\/demo\/study\/study-guide$/, { timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Study guides" })).toBeVisible();
+  await page.getByRole("link", { name: "Open Cell Membranes and Transport" }).first().click();
+  await expect(page).toHaveURL(
+    /\/demo\/study\/study-guide\/demo-guide-cell-membranes$/,
+    { timeout: 20_000 },
+  );
+  await expect(
+    page.getByRole("heading", { name: "Cell Membranes and Transport" }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Core concepts" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Delete guide" })).toHaveCount(0);
+  await page.getByRole("link", { name: "All study guides" }).click();
+  await expect(page).toHaveURL(/\/demo\/study\/study-guide$/, { timeout: 20_000 });
+
+  await navigation.getByRole("link", { name: "Flashcards" }).click();
+  await expect(page).toHaveURL(/\/demo\/study\/flashcards$/, { timeout: 20_000 });
+  await expect(
+    page.getByRole("heading", { name: "Flashcards", exact: true }),
+  ).toBeVisible();
+
+  await page.getByRole("link", { name: "Open Cell Membranes and Transport" }).click();
+  await expect(page).toHaveURL(
+    /\/demo\/study\/flashcards\/demo-flashcards-membranes$/,
+    { timeout: 20_000 },
+  );
+  await expect(
+    page.getByRole("heading", { name: "Cell Membranes and Transport" }),
+  ).toBeVisible();
+  await expect(page.getByText("What is the main function of the phospholipid bilayer?")).toBeVisible();
+  await page.getByRole("link", { name: "Edit set" }).click();
+  await expect(page).toHaveURL(
+    /\/demo\/study\/flashcards\/demo-flashcards-membranes\/edit$/,
+    { timeout: 20_000 },
+  );
+  await expect(page.getByRole("heading", { name: "Make this set sharper" })).toBeVisible();
+  await page.getByLabel(/^Title/).fill("Cell Membranes: Demo Edit");
+  await page.getByRole("button", { name: "Apply demo changes" }).first().click();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "Demo changes applied for this session" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Back to set" }).click();
+  await expect(page).toHaveURL(/\/demo\/study\/flashcards$/, { timeout: 20_000 });
+  await expect(
+    page.getByRole("heading", { name: "Cell Membranes: Demo Edit" }),
+  ).toBeVisible();
 
   await navigation.getByRole("link", { name: "Planner", exact: true }).click();
   await expect(page).toHaveURL(/\/demo\/planner$/, { timeout: 20_000 });

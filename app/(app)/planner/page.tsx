@@ -468,6 +468,11 @@ export default function PlannerPage() {
                                     key={task.id}
                                     task={task}
                                     onToggle={handleToggleTask}
+                                    detailsHref={
+                                        readOnly
+                                            ? `/demo/planner/tasks/${task.id}?from=planner`
+                                            : undefined
+                                    }
                                     readOnly={readOnly}
                                 />
                             ))}

@@ -14,7 +14,7 @@ type StudyGuideReaderProps = {
   copied: boolean;
   guide: SavedStudyGuide;
   onCopy: () => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onDownload: () => void;
 };
 
@@ -58,22 +58,24 @@ export default function StudyGuideReader({
               <Download aria-hidden="true" />
               Download
             </Button>
-            <details className="relative">
-              <summary className="flex size-8 cursor-pointer list-none items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 [&::-webkit-details-marker]:hidden">
-                <MoreHorizontal className="size-4" aria-hidden="true" />
-                <span className="sr-only">More guide actions</span>
-              </summary>
-              <div className="absolute right-0 z-10 mt-2 w-40 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
-                <button
-                  type="button"
-                  onClick={onDelete}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                >
-                  <Trash2 className="size-4" aria-hidden="true" />
-                  Delete guide
-                </button>
-              </div>
-            </details>
+            {onDelete ? (
+              <details className="relative">
+                <summary className="flex size-8 cursor-pointer list-none items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 [&::-webkit-details-marker]:hidden">
+                  <MoreHorizontal className="size-4" aria-hidden="true" />
+                  <span className="sr-only">More guide actions</span>
+                </summary>
+                <div className="absolute right-0 z-10 mt-2 w-40 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+                  <button
+                    type="button"
+                    onClick={onDelete}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-red-700 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                    Delete guide
+                  </button>
+                </div>
+              </details>
+            ) : null}
           </div>
         </div>
       </header>

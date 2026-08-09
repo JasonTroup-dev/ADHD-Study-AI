@@ -8,7 +8,19 @@ import { useState } from "react";
 import StudyGuideReader from "./StudyGuideReader";
 import type { SavedStudyGuide } from "./types";
 
-export default function StudyGuideDetail({ guide }: { guide: SavedStudyGuide }) {
+type StudyGuideDetailProps = {
+  guide: SavedStudyGuide;
+  backHref?: string;
+  allowCreate?: boolean;
+  allowDelete?: boolean;
+};
+
+export default function StudyGuideDetail({
+  guide,
+  backHref = "/study/study-guide",
+  allowCreate = true,
+  allowDelete = true,
+}: StudyGuideDetailProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 
@@ -54,21 +66,23 @@ export default function StudyGuideDetail({ guide }: { guide: SavedStudyGuide }) 
       <div className="mx-auto max-w-5xl">
         <div className="mb-4 flex items-center justify-between gap-4">
           <Button asChild variant="ghost" className="-ml-3 text-slate-600">
-            <Link href="/study/study-guide">
+            <Link href={backHref}>
               <ArrowLeft aria-hidden="true" />
               All study guides
             </Link>
           </Button>
-          <Button asChild size="sm">
-            <Link href="/study/study-guide/create">New guide</Link>
-          </Button>
+          {allowCreate ? (
+            <Button asChild size="sm">
+              <Link href="/study/study-guide/create">New guide</Link>
+            </Button>
+          ) : null}
         </div>
         <div>
           <StudyGuideReader
             copied={copied}
             guide={guide}
             onCopy={copyGuide}
-            onDelete={deleteGuide}
+            onDelete={allowDelete ? deleteGuide : undefined}
             onDownload={downloadGuide}
           />
         </div>

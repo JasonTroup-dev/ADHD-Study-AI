@@ -341,6 +341,11 @@ export default function DashboardClient({
                         task={task}
                         onToggle={handleToggleTask}
                         detailsOrigin="dashboard"
+                        detailsHref={
+                          readOnly
+                            ? `/demo/planner/tasks/${task.id}?from=dashboard`
+                            : undefined
+                        }
                         readOnly={readOnly}
                       />
                     ))

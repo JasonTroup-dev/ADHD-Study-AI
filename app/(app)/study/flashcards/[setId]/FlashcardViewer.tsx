@@ -18,6 +18,8 @@ type FlashcardViewerProps = {
   title: string;
   flashcards: FlashcardItem[];
   studySessionId?: string;
+  setsHref?: string;
+  editHref?: string;
 };
 
 export default function FlashcardViewer({
@@ -25,6 +27,8 @@ export default function FlashcardViewer({
   title,
   flashcards,
   studySessionId,
+  setsHref = "/study/flashcards",
+  editHref = `/study/flashcards/${setId}/edit`,
 }: FlashcardViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -50,14 +54,14 @@ export default function FlashcardViewer({
     return (
       <div className="min-h-full w-full bg-gray-100">
         <div className="mx-auto w-full max-w-screen-xl px-6 py-8 lg:px-8">
-          <Link href="/study/flashcards">
+          <Link href={setsHref}>
             <Button variant="ghost" size="default" className="text-md">
               {"← Back to Sets"}
             </Button>
           </Link>
 
           <Button asChild variant="outline" className="mt-4">
-            <Link href={`/study/flashcards/${setId}/edit`}>
+            <Link href={editHref}>
               <Pencil aria-hidden="true" />
               Edit set
             </Link>
@@ -77,7 +81,7 @@ export default function FlashcardViewer({
           <FlashcardStudySessionBar sessionId={studySessionId} />
         ) : null}
         <div>
-          <Link href="/study/flashcards">
+          <Link href={setsHref}>
             <Button variant="ghost" size="default" className="text-md">
               {"← Back to Sets"}
             </Button>
@@ -86,7 +90,7 @@ export default function FlashcardViewer({
 
         <div className="mt-4 flex justify-end">
           <Button asChild variant="outline">
-            <Link href={`/study/flashcards/${setId}/edit`}>
+            <Link href={editHref}>
               <Pencil aria-hidden="true" />
               Edit set
             </Link>
