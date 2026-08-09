@@ -369,7 +369,7 @@ function Navigation({
         onNavigate={onNavigate}
         demo={demo}
       >
-        {(demo ? [] : studyLinks).map((item) => (
+        {studyLinks.map((item) => (
           <ChildLink key={item.href} {...item} pathname={pathname} onNavigate={onNavigate} demo={demo} />
         ))}
       </NavGroup>
@@ -459,7 +459,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const pageLabel = getPageLabel(pathname);
 
   return (
-    <div className="flex min-h-svh bg-slate-50 text-slate-950">
+    <div
+      className={cn(
+        "flex min-h-svh bg-slate-50 text-slate-950",
+        readOnlyDemo && "h-svh overflow-hidden",
+      )}
+    >
       <a
         href="#main-content"
         className="sr-only z-[100] rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
@@ -532,8 +537,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur md:hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur md:hidden">
           <Button
             type="button"
             size="icon"
@@ -550,13 +555,26 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main id="main-content" tabIndex={-1} className="min-h-0 flex-1 overflow-x-clip focus:outline-none">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex min-h-0 flex-1 flex-col overflow-x-clip focus:outline-none"
+        >
           {readOnlyDemo ? (
-            <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs font-medium text-amber-900">
+            <div
+              role="status"
+              className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs font-medium text-amber-900"
+            >
               Sample workspace · read only. Changes, uploads, and AI requests are disabled.
             </div>
           ) : null}
-          {children}
+          {readOnlyDemo ? (
+            <div className="min-h-0 flex-1 overflow-y-auto [&>*]:h-full [&>*]:min-h-0">
+              {children}
+            </div>
+          ) : (
+            children
+          )}
         </main>
       </div>
 

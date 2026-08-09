@@ -13,8 +13,7 @@ test("public demo follows the real workspace workflow without authentication or 
   await page.goto("/demo");
   await expect(page).toHaveURL(/\/demo$/);
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-  await expect(page.getByText("Sample workspace · read only", { exact: false })).toBeVisible();
-
+  await expect(page.getByRole("status")).toContainText("Sample workspace · read only");
   const navigation = page.getByRole("navigation", { name: "Workspace navigation" });
 
   await navigation.getByRole("link", { name: "Classes", exact: true }).click();
@@ -31,6 +30,9 @@ test("public demo follows the real workspace workflow without authentication or 
   await navigation.getByRole("link", { name: "Study Tools", exact: true }).click();
   await expect(page).toHaveURL(/\/demo\/study$/, { timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Study Tools" })).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "AI Tutor" })).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "Study Guides" })).toBeVisible();
+  await expect(navigation.getByRole("link", { name: "Flashcards" })).toBeVisible();
 
   await navigation.getByRole("link", { name: "Planner", exact: true }).click();
   await expect(page).toHaveURL(/\/demo\/planner$/, { timeout: 20_000 });
@@ -40,6 +42,13 @@ test("public demo follows the real workspace workflow without authentication or 
   await navigation.getByRole("link", { name: "Calendar", exact: true }).click();
   await expect(page).toHaveURL(/\/demo\/calendar$/, { timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "October 2026" })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollHeight <= document.documentElement.clientHeight,
+      ),
+    )
+    .toBe(true);
 
   expect(writeRequests).toEqual([]);
 });
