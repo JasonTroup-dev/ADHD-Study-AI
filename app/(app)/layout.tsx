@@ -87,10 +87,14 @@ function getPageLabel(pathname: string) {
   return match?.label ?? "Study space";
 }
 
-function Brand({ compact = false }: { compact?: boolean }) {
+function withDemoMode(href: string, demo: boolean) {
+  return demo ? `${href}${href.includes("?") ? "&" : "?"}demo=1` : href;
+}
+
+function Brand({ compact = false, demo = false }: { compact?: boolean; demo?: boolean }) {
   return (
     <Link
-      href="/dashboard"
+      href={withDemoMode("/dashboard", demo)}
       aria-label="ADHD Study AI dashboard"
       className={cn(
         "flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500/30",
@@ -116,6 +120,7 @@ function NavLink({
   label,
   pathname,
   onNavigate,
+  demo = false,
 }: {
   compact: boolean;
   href: string;
@@ -123,10 +128,11 @@ function NavLink({
   label: string;
   pathname: string;
   onNavigate?: () => void;
+  demo?: boolean;
 }) {
   return (
     <Link
-      href={href}
+      href={withDemoMode(href, demo)}
       title={compact ? label : undefined}
       aria-label={compact ? label : undefined}
       aria-current={pathname === href ? "page" : undefined}
@@ -157,6 +163,7 @@ function NavGroup({
   label,
   pathname,
   onNavigate,
+  demo = false,
 }: {
   children: ReactNode;
   compact: boolean;
@@ -166,6 +173,7 @@ function NavGroup({
   label: string;
   pathname: string;
   onNavigate?: () => void;
+  demo?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const contentId = useId();
@@ -179,6 +187,7 @@ function NavGroup({
         label={label}
         pathname={pathname}
         onNavigate={onNavigate}
+        demo={demo}
       />
     );
   }
@@ -187,7 +196,7 @@ function NavGroup({
     <div>
       <div className="flex items-center justify-between">
         <Link
-          href={href}
+          href={withDemoMode(href, demo)}
           aria-current={pathname === href ? "page" : undefined}
           onClick={onNavigate}
           className="text-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
@@ -243,10 +252,11 @@ function ChildLink({
   label,
   pathname,
   onNavigate,
-}: NavChild & { pathname: string; onNavigate?: () => void }) {
+  demo = false,
+}: NavChild & { pathname: string; onNavigate?: () => void; demo?: boolean }) {
   return (
     <Link
-      href={href}
+      href={withDemoMode(href, demo)}
       aria-current={pathname === href ? "page" : undefined}
       onClick={onNavigate}
       className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
@@ -261,11 +271,13 @@ function Navigation({
   compact,
   pathname,
   onNavigate,
+  demo = false,
 }: {
   classes: SidebarClass[] | null;
   compact: boolean;
   pathname: string;
   onNavigate?: () => void;
+  demo?: boolean;
 }) {
   return (
     <nav aria-label="Workspace navigation" className="flex flex-col gap-4">
@@ -276,6 +288,7 @@ function Navigation({
         label="Dashboard"
         pathname={pathname}
         onNavigate={onNavigate}
+        demo={demo}
       />
 
       <NavGroup
@@ -285,6 +298,7 @@ function Navigation({
         label="Classes"
         pathname={pathname}
         onNavigate={onNavigate}
+        demo={demo}
       >
         {classes === null ? (
           <div className="space-y-2 py-2" aria-label="Loading classes">
@@ -300,7 +314,7 @@ function Navigation({
             return (
               <Link
                 key={classItem.id}
-                href={href}
+                href={withDemoMode(href, demo)}
                 aria-current={active ? "page" : undefined}
                 onClick={onNavigate}
                 className={cn(
@@ -318,7 +332,7 @@ function Navigation({
           })
         ) : (
           <Link
-            href="/classes"
+            href={withDemoMode("/classes", demo)}
             onClick={onNavigate}
             className="block rounded-lg px-2.5 py-2 text-xs leading-5 text-slate-500 hover:bg-slate-100"
           >
@@ -334,9 +348,10 @@ function Navigation({
         label="Study Tools"
         pathname={pathname}
         onNavigate={onNavigate}
+        demo={demo}
       >
-        {studyLinks.map((item) => (
-          <ChildLink key={item.href} {...item} pathname={pathname} onNavigate={onNavigate} />
+        {(demo ? [] : studyLinks).map((item) => (
+          <ChildLink key={item.href} {...item} pathname={pathname} onNavigate={onNavigate} demo={demo} />
         ))}
       </NavGroup>
 
@@ -347,9 +362,10 @@ function Navigation({
         label="Planner"
         pathname={pathname}
         onNavigate={onNavigate}
+        demo={demo}
       >
-        {plannerLinks.map((item) => (
-          <ChildLink key={item.href} {...item} pathname={pathname} onNavigate={onNavigate} />
+        {(demo ? [{ href: "/calendar", label: "Calendar" }] : plannerLinks).map((item) => (
+          <ChildLink key={item.href} {...item} pathname={pathname} onNavigate={onNavigate} demo={demo} />
         ))}
       </NavGroup>
     </nav>
@@ -450,13 +466,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         )}
       >
         <div className="p-4">
-          <Brand compact={!desktopExpanded} />
+          <Brand compact={!desktopExpanded} demo={readOnlyDemo} />
         </div>
         <div className="my-2 h-px w-full bg-gray-300" />
 
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {desktopExpanded ? (
-            <Navigation classes={classes} compact={false} pathname={pathname} />
+            <Navigation classes={classes} compact={false} pathname={pathname} demo={readOnlyDemo} />
           ) : null}
         </div>
 
@@ -468,7 +484,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               : "flex-col items-center gap-2",
           )}
         >
-          <div className="flex flex-col gap-2">
+          {!readOnlyDemo ? <div className="flex flex-col gap-2">
             <Link
               href="/report-bug"
               aria-label="Report a bug"
@@ -491,7 +507,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <Settings className={desktopExpanded ? "mr-2" : ""} />
               <span className={desktopExpanded ? "" : "hidden"}>Settings</span>
             </Link>
-          </div>
+          </div> : null}
           <button
             type="button"
             onClick={toggleDesktopSidebar}
@@ -540,14 +556,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <SheetContent side="left" className="w-[min(90vw,20rem)] bg-gray-100 p-0">
           <SheetHeader className="border-b border-gray-300 pr-14">
             <SheetTitle asChild>
-              <div><Brand /></div>
+              <div><Brand demo={readOnlyDemo} /></div>
             </SheetTitle>
             <SheetDescription className="sr-only">Workspace navigation</SheetDescription>
           </SheetHeader>
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <Navigation classes={classes} compact={false} pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+            <Navigation classes={classes} compact={false} pathname={pathname} onNavigate={() => setMobileOpen(false)} demo={readOnlyDemo} />
           </div>
-          <div className="flex flex-col gap-2 border-t border-gray-300 p-4">
+          {!readOnlyDemo ? <div className="flex flex-col gap-2 border-t border-gray-300 p-4">
             <Link
               href="/report-bug"
               onClick={() => setMobileOpen(false)}
@@ -570,7 +586,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <Settings className="mr-2" aria-hidden="true" />
               Settings
             </Link>
-          </div>
+          </div> : null}
         </SheetContent>
       </Sheet>
     </div>
