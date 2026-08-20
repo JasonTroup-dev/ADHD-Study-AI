@@ -4,13 +4,39 @@ import { fileURLToPath } from "node:url";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
+function getConfiguredSupabaseConnectSources() {
+  const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!configuredUrl) return [];
+
+  try {
+    const url = new URL(configuredUrl);
+
+    if (url.protocol !== "http:" && url.protocol !== "https:") return [];
+
+    const websocketProtocol = url.protocol === "https:" ? "wss:" : "ws:";
+    return [url.origin, `${websocketProtocol}//${url.host}`];
+  } catch {
+    return [];
+  }
+}
+
+const supabaseConnectSources = getConfiguredSupabaseConnectSources();
+const connectSources = [
+  "'self'",
+  "https://*.supabase.co",
+  "wss://*.supabase.co",
+  ...supabaseConnectSources,
+  "https://*.vercel-insights.com",
+].join(" ");
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.vercel-insights.com",
+  `connect-src ${connectSources}`,
   "media-src 'self' blob:",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
