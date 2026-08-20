@@ -3,7 +3,7 @@ create table if not exists public.study_guides (
   user_id uuid not null references auth.users(id) on delete cascade,
   class_id uuid references public.classes(id) on delete set null,
   assignment_id uuid references public.assignments(id) on delete set null,
-  source_file_id uuid references public.assignment_files(id) on delete set null,
+  source_file_id uuid references public.assignment_materials(id) on delete set null,
   title text not null,
   content text not null,
   created_at timestamptz not null default now(),

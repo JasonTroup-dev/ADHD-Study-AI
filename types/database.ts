@@ -529,7 +529,7 @@ export type Database = {
             foreignKeyName: "study_guides_source_file_id_fkey"
             columns: ["source_file_id"]
             isOneToOne: false
-            referencedRelation: "assignment_files"
+            referencedRelation: "assignment_materials"
             referencedColumns: ["id"]
           },
         ]
