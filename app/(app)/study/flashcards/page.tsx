@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import FlashcardSetCard from "@/components/flashcard/FlashcardSetCard";
 import FlashcardGenerationBanner from "@/components/flashcard/FlashcardGenerationBanner";
 
@@ -18,6 +19,8 @@ type FlashcardSet = {
 };
 
 export default function Flashcards() {
+
+    const router = useRouter();
 
     const [flashcardSets, setFlashcardSets] = useState<FlashcardSet[]>([]);
     const [userId, setUserId] = useState<string | null>(null);
@@ -137,7 +140,7 @@ export default function Flashcards() {
                 {/* AI Flashcard Generation Card */}
                 <FlashcardGenerationBanner
                     onGenerateClick={() => {
-                        window.location.href = "/study/flashcards/create?mode=ai";
+                        router.push("/study/flashcards/create?mode=ai");
                     }}
                 />
 

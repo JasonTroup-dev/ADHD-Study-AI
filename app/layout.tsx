@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
+import { HydrationMarker } from "@/components/HydrationMarker";
 import { getSiteUrl } from "@/lib/site";
 
 const geistSans = Geist({
@@ -58,6 +59,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className="antialiased">
+        <HydrationMarker />
         {children}
         <Analytics />
       </body>
