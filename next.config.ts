@@ -28,13 +28,14 @@ const connectSources = [
   "wss://*.supabase.co",
   ...supabaseConnectSources,
   "https://*.vercel-insights.com",
+  "https://*.paddle.com",
 ].join(" ");
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://cdn.paddle.com${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://*.paddle.com",
   "font-src 'self' data:",
   `connect-src ${connectSources}`,
   "media-src 'self' blob:",
@@ -43,7 +44,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-src 'none'",
+  "frame-src https://*.paddle.com",
   "frame-ancestors 'none'",
   ...(process.env.NODE_ENV === "production" ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
@@ -56,7 +57,7 @@ const securityHeaders = [
   {
     key: "Permissions-Policy",
     value:
-      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
+      'camera=(), microphone=(), geolocation=(), payment=(self "https://*.paddle.com"), usb=(), browsing-topics=()',
   },
   {
     key: "Strict-Transport-Security",

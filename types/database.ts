@@ -211,6 +211,45 @@ export type Database = {
           },
         ]
       }
+      billing_subscriptions: {
+        Row: {
+          created_at: string
+          last_event_occurred_at: string
+          next_billed_at: string | null
+          paddle_customer_id: string
+          paddle_subscription_id: string
+          price_id: string | null
+          scheduled_change: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_event_occurred_at: string
+          next_billed_at?: string | null
+          paddle_customer_id: string
+          paddle_subscription_id: string
+          price_id?: string | null
+          scheduled_change?: string | null
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_event_occurred_at?: string
+          next_billed_at?: string | null
+          paddle_customer_id?: string
+          paddle_subscription_id?: string
+          price_id?: string | null
+          scheduled_change?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       classes: {
         Row: {
           class_code: string | null
@@ -721,6 +760,21 @@ export type Database = {
       consume_ai_quota: {
         Args: { requested_quota: string }
         Returns: Json
+      }
+      process_paddle_subscription_event: {
+        Args: {
+          p_customer_id: string
+          p_event_id: string
+          p_event_type: string
+          p_next_billed_at: string | null
+          p_occurred_at: string
+          p_price_id: string | null
+          p_scheduled_change: string | null
+          p_status: string
+          p_subscription_id: string
+          p_user_id: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

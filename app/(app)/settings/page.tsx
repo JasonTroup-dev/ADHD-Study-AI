@@ -5,6 +5,7 @@ import {
   BellRing,
   Check,
   Clock3,
+  CreditCard,
   LoaderCircle,
   RotateCcw,
   ShieldAlert,
@@ -419,6 +420,33 @@ export default function SettingsPage() {
                   />
                 </button>
               </div>
+            </div>
+          </section>
+
+          <section
+            aria-labelledby="billing-heading"
+            className="workspace-card workspace-card-gold p-6"
+          >
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                  <CreditCard className="size-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2
+                    id="billing-heading"
+                    className="text-lg font-semibold text-gray-950"
+                  >
+                    Plan and billing
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-gray-500">
+                    Choose a plan, update payment details, or manage your subscription.
+                  </p>
+                </div>
+              </div>
+              <Button asChild variant="outline">
+                <Link href="/billing">Open billing</Link>
+              </Button>
             </div>
           </section>
 

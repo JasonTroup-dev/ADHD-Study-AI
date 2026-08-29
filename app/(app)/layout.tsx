@@ -69,6 +69,7 @@ const pageLinks: NavChild[] = [
   { href: "/calendar", label: "Calendar" },
   { href: "/planner/progress", label: "Progress" },
   { href: "/planner/assignments", label: "Assignments" },
+  { href: "/billing", label: "Billing" },
   { href: "/settings", label: "Settings" },
   { href: "/report-bug", label: "Report a problem" },
 ];
