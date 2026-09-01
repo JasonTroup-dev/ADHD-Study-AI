@@ -173,7 +173,7 @@ function AssignmentCard({
 
   return (
     <article
-      className={`group relative flex min-h-24 items-start justify-between gap-4 overflow-hidden rounded-2xl border px-5 py-5 transition-colors hover:border-slate-300 sm:px-6 ${cardStyles}`}
+      className={`workspace-card workspace-card-interactive group relative flex min-h-24 items-start justify-between gap-4 overflow-hidden px-5 py-5 sm:px-6 ${cardStyles}`}
     >
       {classColor ? (
         <span
@@ -283,8 +283,8 @@ export default function AssignmentList({
 
   if (assignments.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+      <div className="workspace-empty-state px-6 py-16 text-center">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e5eddf] text-[#4d765f]">
           <BookOpen className="h-6 w-6" aria-hidden="true" />
         </div>
         <h2 className="mt-4 text-lg font-semibold text-slate-950">

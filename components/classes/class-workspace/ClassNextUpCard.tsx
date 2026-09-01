@@ -15,7 +15,7 @@ export function ClassNextUpCard({ nextUp }: { nextUp: NextUpItem }) {
   }[nextUp.tone];
 
   return (
-    <article className={`rounded-xl border bg-white p-6 shadow-sm ${toneClasses.border}`}>
+    <article className={`workspace-card workspace-card-gold p-6 ${toneClasses.border}`}>
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 gap-4">
           <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${toneClasses.icon}`}>

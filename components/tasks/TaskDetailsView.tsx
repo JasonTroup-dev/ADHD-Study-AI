@@ -69,7 +69,7 @@ export function TaskDetailsView({
           Back to {returnLabel}
         </Link>
 
-        <header className="mt-4 shrink-0 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <header className="workspace-card mt-4 shrink-0 overflow-hidden">
           <div
             className={cn(
               "h-2 w-full",
@@ -139,7 +139,7 @@ export function TaskDetailsView({
 
         <div className="mt-4 grid min-h-0 flex-1 gap-4 overflow-y-auto pr-1 lg:grid-cols-[minmax(0,1fr)_18rem] lg:overflow-hidden lg:pr-0">
           <div className="grid content-start gap-4">
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+            <section className="workspace-card p-5 sm:p-6">
               <div className="flex items-center gap-3">
                 <span className="flex size-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                   <Target className="size-5" aria-hidden="true" />
@@ -155,14 +155,14 @@ export function TaskDetailsView({
                 {getTaskOverview(task.assignment)}
               </p>
               {task.assignment && task.assignment.title !== task.title ? (
-                <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                <div className="workspace-inset mt-4 px-4 py-3 text-sm text-slate-600">
                   <span className="font-semibold text-slate-900">Part of:</span>{" "}
                   {task.assignment.title}
                 </div>
               ) : null}
             </section>
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-5">
+            <section className="workspace-card workspace-card-soft p-5">
               <div className="flex items-center gap-3">
                 <span className="flex size-9 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
                   <BookOpen className="size-[18px]" aria-hidden="true" />
@@ -202,7 +202,7 @@ export function TaskDetailsView({
               </div>
             ) : null}
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+            <div className="workspace-card p-5">
               <p className="text-sm font-semibold text-slate-950">Assignment context</p>
               <dl className="mt-4 space-y-4 text-sm">
                 <div>

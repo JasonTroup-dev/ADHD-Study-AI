@@ -300,7 +300,7 @@ export default function DashboardClient({
 
           <div className="space-y-6 lg:col-span-8">
             { /* Main Card Div */}
-            <div className="rounded-2xl bg-white p-6">
+            <div className="workspace-card p-6">
               <div className="flex items-start justify-between">
                 <div>
                   <header className="text-xl font-semibold">{formattedDate}</header>
@@ -370,12 +370,12 @@ export default function DashboardClient({
             <div>
               <header className="ml-2 text-sm font-semibold text-gray-950">Quick Actions</header>
 
-              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="dashboard-quick-actions mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <button
                   type="button"
                   onClick={() => setIsGenerateModalOpen(true)}
                   disabled={readOnly}
-                  className="flex h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold transition hover:bg-gray-50"
+                  className="workspace-card workspace-card-interactive flex h-24 cursor-pointer flex-col items-center justify-center gap-2 text-sm font-semibold"
                 >
                   <Sparkles className="h-4 w-4 text-gray-700" />
                   Generate Study Plan
@@ -383,7 +383,7 @@ export default function DashboardClient({
 
                 <button
                   type="button"
-                  className="flex h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold transition hover:bg-gray-50"
+                  className="workspace-card workspace-card-interactive flex h-24 cursor-pointer flex-col items-center justify-center gap-2 text-sm font-semibold"
                 >
                   <Brain className="h-4 w-4 text-gray-700" />
                   Summarize Notes
@@ -391,14 +391,14 @@ export default function DashboardClient({
 
 
                 {readOnly ? (
-                  <button type="button" disabled className="flex h-20 flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-400">
+                  <button type="button" disabled className="workspace-card flex h-24 flex-col items-center justify-center gap-2 text-sm font-semibold text-gray-400">
                     <FileText className="h-4 w-4" />
                     Create Flashcards
                   </button>
                 ) : (
                   <Link
                     href="/study/flashcards/create?mode=ai"
-                    className="flex h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold transition hover:bg-gray-50"
+                    className="workspace-card workspace-card-interactive flex h-24 cursor-pointer flex-col items-center justify-center gap-2 text-sm font-semibold"
                   >
                     <FileText className="h-4 w-4 text-gray-700" />
                     Create Flashcards
@@ -411,10 +411,10 @@ export default function DashboardClient({
 
           {/* Secondary Card Div */}
           <div className="lg:col-span-4">
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="workspace-card workspace-card-dark p-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#ed9b79]">
                     <ListChecks className="h-4 w-4" aria-hidden="true" />
                     Start here
                   </div>
@@ -422,7 +422,7 @@ export default function DashboardClient({
                     Your next useful move
                   </header>
                 </div>
-                <span className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-[#e9dfc7]">
                   {remainingTasks.length} left
                 </span>
               </div>
@@ -455,8 +455,8 @@ export default function DashboardClient({
                 </div>
               ) : recommendedTask ? (
                 <div className="mt-6 space-y-5">
-                  <div className="border-l-4 border-gray-900 pl-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  <div className="border-l-4 border-[#ed9b79] pl-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[#ed9b79]">
                       Recommended now
                     </p>
                     <h2 className="mt-2 text-lg font-semibold text-gray-950">
@@ -536,7 +536,7 @@ export default function DashboardClient({
                 </div>
               )}
 
-              <div className="mt-6 grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
+              <div className="mt-6 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Today</p>
                   {studyError ? (
@@ -561,7 +561,7 @@ export default function DashboardClient({
               </div>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
+            <div className="workspace-card workspace-card-soft mt-6 p-6">
               <header className="text-xl font-semibold">Upcoming Deadlines</header>
 
               <div className="mt-6 max-h-72 space-y-4 overflow-y-auto pr-2">

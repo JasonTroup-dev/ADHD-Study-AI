@@ -37,7 +37,7 @@ export function ClassAssignmentsSection({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+        <div className="workspace-empty-state px-6 py-12 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-slate-100 text-slate-600"><BookOpen className="h-6 w-6" aria-hidden="true" /></div>
           <h3 className="mt-4 text-lg font-semibold text-slate-950">No assignments yet</h3>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">Add an assignment or upload instructions so this class can produce useful study blocks.</p>
@@ -56,7 +56,7 @@ function CourseAssignmentCard({ classId, classColor, assignment }: { classId: st
   const DueIcon = dueState.kind === "completed" ? CheckCircle2 : dueState.kind === "urgent" ? AlertCircle : CalendarClock;
 
   return (
-    <article className={`relative flex flex-col gap-4 overflow-hidden rounded-xl border bg-white p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between ${classColorOption.border} ${dueState.cardClass}`}>
+    <article className={`workspace-card relative flex flex-col gap-4 overflow-hidden p-4 sm:flex-row sm:items-start sm:justify-between ${classColorOption.border} ${dueState.cardClass}`}>
       <span aria-hidden="true" className={`absolute inset-y-0 left-0 w-1 ${classColorOption.accent}`} />
       <div className="min-w-0 flex-1 pl-2">
         <div className="flex flex-wrap items-center gap-2">

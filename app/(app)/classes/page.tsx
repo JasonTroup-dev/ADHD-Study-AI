@@ -143,7 +143,7 @@ export default function ClassesPage() {
           ) : null}
 
           {!isLoading && !errorMessage && classes.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-12 text-center lg:col-span-12">
+            <div className="workspace-empty-state px-6 py-12 text-center lg:col-span-12">
               <h2 className="text-lg font-semibold">Add your first class</h2>
               <p className="mt-2 text-sm text-gray-600">
                 Keep assignments, notes, flashcards, and study sessions

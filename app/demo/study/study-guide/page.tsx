@@ -30,16 +30,17 @@ export default function DemoStudyGuidesPage() {
           </Button>
         </header>
 
-        <section className="relative mt-6 overflow-hidden rounded-2xl bg-slate-950 px-6 py-6 text-white shadow-sm sm:px-8">
-          <div className="pointer-events-none absolute -right-16 -top-24 size-72 rounded-full bg-blue-500/20 blur-3xl" />
+        <section className="workspace-card workspace-card-dark relative mt-6 overflow-hidden px-6 py-6 text-white sm:px-8">
+          <div className="pointer-events-none absolute -right-10 -top-20 size-44 rounded-full bg-[#d76543]" />
+          <div className="pointer-events-none absolute right-24 top-20 size-20 rounded-full bg-[#ddc56f]" />
           <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-4">
-              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-blue-200">
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#fffaf0] text-[#9e3f28]">
                 <Sparkles className="size-6" aria-hidden="true" />
               </span>
               <div>
                 <h2 className="text-xl font-semibold">Turn notes into a clear study path</h2>
-                <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-300">
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-[#c4cec8]">
                   Upload class material and get summaries, core concepts, knowledge checks, and next steps.
                 </p>
               </div>

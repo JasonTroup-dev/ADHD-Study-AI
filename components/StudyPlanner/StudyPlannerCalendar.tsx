@@ -124,7 +124,7 @@ export default function PlannerCalendar({
                     }}
                     className={`rounded-lg py-2 text-sm bg-white border transition ${
                         isSameDay(date.date, selectedDate)
-                        ? "bg-blue-600 text-white border-blue-600"
+                        ? "border-[#19241f] bg-[#19241f] text-white"
                         : date.isCurrentMonth
                         ? "text-gray-900 hover:bg-gray-100"
                         : "text-gray-400 hover:bg-gray-100"

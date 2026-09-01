@@ -5,7 +5,7 @@ import type { ClassMaterial } from "./types";
 export function MaterialsList({ materials }: { materials: ClassMaterial[] }) {
   if (materials.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white px-5 py-8 text-center">
+      <div className="workspace-empty-state px-5 py-8 text-center">
         <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
           <BookOpen className="h-5 w-5" aria-hidden="true" />
         </div>
@@ -18,7 +18,7 @@ export function MaterialsList({ materials }: { materials: ClassMaterial[] }) {
   }
 
   return materials.map((material) => (
-    <article key={material.id} className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article key={material.id} className="workspace-card flex items-center justify-between gap-4 p-4">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
           <FileText className="h-5 w-5" aria-hidden="true" />

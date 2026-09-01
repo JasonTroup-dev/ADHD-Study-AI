@@ -91,7 +91,7 @@ export function TaskCard({
   return (
     <div
       className={cn(
-        "group relative grid w-full cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-3 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-xs transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-gray-300 hover:shadow-sm sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center",
+        "workspace-inset group relative grid w-full cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-3 overflow-hidden p-4 transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-[#19241f]/20 hover:shadow-sm sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center",
         isCompleted &&
           "bg-gray-50/80 shadow-none hover:translate-y-0 hover:border-gray-200 hover:shadow-none",
         className,

@@ -745,7 +745,7 @@ function FlashcardSetEditorContent({ initialSet, demo }: FlashcardSetEditorProps
             </div>
           ) : null}
 
-          <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-200/50">
+          <section className="workspace-card overflow-hidden">
             <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
               <div className="flex items-center gap-3">
                 <span className="flex size-8 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white">
@@ -862,7 +862,7 @@ function FlashcardSetEditorContent({ initialSet, demo }: FlashcardSetEditorProps
                 <article
                   key={card.id}
                   className={cn(
-                    "overflow-hidden rounded-3xl border bg-white shadow-sm shadow-slate-200/40 transition",
+                    "workspace-card overflow-hidden transition",
                     isPartial ? "border-amber-300" : "border-slate-200",
                   )}
                 >
@@ -957,7 +957,7 @@ function FlashcardSetEditorContent({ initialSet, demo }: FlashcardSetEditorProps
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-6">
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/50">
+          <section className="workspace-card workspace-card-soft p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-slate-950">Set check</h2>
               <span className="text-xs font-medium text-slate-500">
@@ -967,7 +967,7 @@ function FlashcardSetEditorContent({ initialSet, demo }: FlashcardSetEditorProps
 
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-blue-600 transition-[width] duration-300"
+                className="h-full rounded-full bg-[#d76543] transition-[width] duration-300"
                 style={{
                   width: `${Math.round(
                     ((Number(hasTitle) + completeCardCount) /
@@ -998,7 +998,7 @@ function FlashcardSetEditorContent({ initialSet, demo }: FlashcardSetEditorProps
               type="button"
               onClick={saveFlashcardSet}
               disabled={!canSave}
-              className="mt-5 w-full bg-blue-600 hover:bg-blue-700"
+              className="mt-5 w-full bg-[#19241f] hover:bg-[#2d4037]"
             >
               <Save aria-hidden="true" />
               {isSaving
