@@ -10,6 +10,7 @@ export type AIWorkflow =
   | "assignment_guide"
   | "class_material_analysis"
   | "flashcards"
+  | "practice_quiz"
   | "study_guide"
   | "study_session_tutor"
   | "tutor"
@@ -40,6 +41,12 @@ export const AI_WORKFLOWS: Record<AIWorkflow, WorkflowConfig> = {
   flashcards: {
     defaultModel: "gpt-5-mini",
     modelEnv: "OPENAI_FLASHCARDS_MODEL",
+    timeoutMs: DEFAULT_SDK_TIMEOUT_MS,
+    maxRetries: 2,
+  },
+  practice_quiz: {
+    defaultModel: "gpt-5-mini",
+    modelEnv: "OPENAI_PRACTICE_QUIZ_MODEL",
     timeoutMs: DEFAULT_SDK_TIMEOUT_MS,
     maxRetries: 2,
   },

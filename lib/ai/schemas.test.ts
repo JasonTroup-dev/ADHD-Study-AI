@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import {
   getGeneratedFlashcardsSchema,
+  getPracticeQuizSchema,
   materialAnalysisSchema,
   studyTutorResponseSchema,
   syllabusAnalysisSchema,
@@ -32,6 +33,36 @@ describe("AI structured output schemas", () => {
       false,
     );
     assert.equal(schema.safeParse({ ...validDeck, markdown: true }).success, false);
+  });
+
+  it("requires four choices and the requested practice quiz length", () => {
+    const schema = getPracticeQuizSchema(1);
+    const validQuiz = {
+      title: "Cell membrane transport",
+      questions: [
+        {
+          question: "Which process moves water across a selectively permeable membrane?",
+          choices: ["Osmosis", "Exocytosis", "Phagocytosis", "Transcription"],
+          correctChoiceIndex: 0,
+          explanation: "Osmosis is the diffusion of water across a selectively permeable membrane.",
+          topic: "Osmosis",
+          difficulty: "foundational",
+        },
+      ],
+    };
+
+    assert.equal(schema.safeParse(validQuiz).success, true);
+    assert.equal(
+      schema.safeParse({
+        ...validQuiz,
+        questions: [{ ...validQuiz.questions[0], choices: ["A", "B", "C"] }],
+      }).success,
+      false,
+    );
+    assert.equal(
+      schema.safeParse({ ...validQuiz, questions: [] }).success,
+      false,
+    );
   });
 
   it("keeps every object schema strict", () => {

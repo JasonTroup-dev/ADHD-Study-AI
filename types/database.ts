@@ -385,6 +385,97 @@ export type Database = {
           },
         ]
       }
+      practice_quiz_sets: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          id: string
+          is_shared: boolean
+          share_token: string
+          source_name: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          is_shared?: boolean
+          share_token?: string
+          source_name?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          is_shared?: boolean
+          share_token?: string
+          source_name?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_quiz_sets_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_quiz_questions: {
+        Row: {
+          choices: Json
+          correct_choice_index: number
+          created_at: string
+          difficulty: string
+          explanation: string
+          id: string
+          question: string
+          question_order: number
+          quiz_set_id: string
+          topic: string
+        }
+        Insert: {
+          choices: Json
+          correct_choice_index: number
+          created_at?: string
+          difficulty: string
+          explanation: string
+          id?: string
+          question: string
+          question_order: number
+          quiz_set_id: string
+          topic: string
+        }
+        Update: {
+          choices?: Json
+          correct_choice_index?: number
+          created_at?: string
+          difficulty?: string
+          explanation?: string
+          id?: string
+          question?: string
+          question_order?: number
+          quiz_set_id?: string
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_quiz_questions_quiz_set_id_fkey"
+            columns: ["quiz_set_id"]
+            isOneToOne: false
+            referencedRelation: "practice_quiz_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       focus_sessions: {
         Row: {
           actual_minutes: number | null

@@ -6,6 +6,7 @@ export type AIQuotaKey =
   | "chat"
   | "chat_files"
   | "flashcards"
+  | "practice_quiz"
   | "study_guides";
 
 type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;

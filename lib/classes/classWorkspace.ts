@@ -4,6 +4,7 @@ import {
   CalendarClock,
   CalendarDays,
   Clock3,
+  FileQuestion,
   Plus,
   Sparkles,
   Target,
@@ -32,6 +33,14 @@ export type FlashcardSet = {
   lastStudied: string;
   mastery: number;
   cardCount: number;
+  href: string;
+};
+
+export type PracticeQuizSummary = {
+  id: string;
+  title: string;
+  createdAt: string;
+  questionCount: number;
   href: string;
 };
 
@@ -102,6 +111,13 @@ type FlashcardSetRow = {
   flashcards?: { mastery_level: number | null }[] | null;
 };
 
+type PracticeQuizRow = {
+  id: string;
+  title: string;
+  created_at: string;
+  practice_quiz_questions?: { id: string }[] | null;
+};
+
 type NoteRow = {
   id: string;
   title: string | null;
@@ -156,6 +172,7 @@ export type PlannerTaskRow = {
 export type ClassWorkspaceData = {
   course: Course;
   flashcardSets: FlashcardSet[];
+  practiceQuizzes: PracticeQuizSummary[];
   materials: ClassMaterial[];
   materialCount: number;
   assignments: ClassAssignmentOption[];
@@ -184,6 +201,7 @@ export async function getClassWorkspaceData(
     const [
       courseResult,
       flashcardResult,
+      practiceQuizResult,
       notesResult,
       assignmentsResult,
       studySessionsResult,
@@ -192,6 +210,7 @@ export async function getClassWorkspaceData(
     ] = await Promise.all([
       supabase.from("classes").select("name, class_code, prof_name, color").eq("id", classId).maybeSingle(),
       supabase.from("flashcard_sets").select("id, title, created_at, flashcards(mastery_level)").eq("class_id", classId).order("created_at", { ascending: false }),
+      supabase.from("practice_quiz_sets").select("id, title, created_at, practice_quiz_questions(id)").eq("class_id", classId).order("created_at", { ascending: false }).limit(3),
       supabase.from("notes").select("id, title, source_type, created_at").eq("class_id", classId).order("created_at", { ascending: false }).limit(3),
       supabase.from("assignments").select("id, title, due_date, status, importance, original_file_name, file_type, file_size_bytes, context_status, created_at, updated_at").eq("class_id", classId).order("due_date", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false }),
       supabase.from("study_sessions").select("id, title, assignment_id, class_id, planned_minutes, actual_minutes, session_type, started_at, ended_at").eq("class_id", classId).eq("status", "completed").not("ended_at", "is", null).order("ended_at", { ascending: false }),
@@ -210,6 +229,13 @@ export async function getClassWorkspaceData(
       : fallbackCourse;
     const dbFlashcardSets = (flashcardResult.data ?? []) as FlashcardSetRow[];
     const flashcardSets = dbFlashcardSets.slice(0, 3).map(toFlashcardSet);
+    const practiceQuizzes = ((practiceQuizResult.data ?? []) as PracticeQuizRow[]).map((quiz) => ({
+      id: quiz.id,
+      title: quiz.title,
+      createdAt: formatRelativeDate(quiz.created_at),
+      questionCount: Array.isArray(quiz.practice_quiz_questions) ? quiz.practice_quiz_questions.length : 0,
+      href: `/study/practice-quiz/${quiz.id}`,
+    }));
     const dbNotes = (notesResult.data ?? []) as NoteRow[];
     const dbAssignments = (assignmentsResult.data ?? []) as AssignmentRow[];
     const dbStudySessions = (studySessionsResult.data ?? []) as StudySessionRow[];
@@ -249,6 +275,7 @@ export async function getClassWorkspaceData(
     return {
       course,
       flashcardSets,
+      practiceQuizzes,
       courseProgress: getCourseProgress(dbAssignments, dbFlashcardSets, dbStudySessions),
       assignments,
       assignmentSummaries,
@@ -394,6 +421,7 @@ export function getQuickActions(classId: string): QuickAction[] {
     { label: "Add Assignment", icon: Plus, href: "#materials" },
     { label: "Upload Materials", icon: Upload, href: "#materials" },
     { label: "Create Flashcards", icon: Brain, href: `/study/flashcards/create?classId=${classId}` },
+    { label: "Create Practice Quiz", icon: FileQuestion, href: `/study/practice-quiz/create?classId=${classId}` },
     { label: "Open Planner", icon: CalendarDays, href: "/planner" },
     { label: "Study Tools", icon: Sparkles, href: "/study" },
   ];
@@ -576,6 +604,7 @@ function emptyWorkspaceData(): ClassWorkspaceData {
   return {
     course: fallbackCourse,
     flashcardSets: [],
+    practiceQuizzes: [],
     courseProgress: getCourseProgress([], [], []),
     assignments: [],
     assignmentSummaries: [],

@@ -1,5 +1,7 @@
-import { FileQuestionMark } from "lucide-react"
-import { StartStudySessionButton } from "@/components/study-sessions/StartStudySessionButton";
+import { FileQuestionMark, Play } from "lucide-react";
+import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
 
 export default function PracticeQuizGenCard() {
     return (
@@ -28,12 +30,13 @@ export default function PracticeQuizGenCard() {
                         <p>Instant Feedback</p>
                     </div>
                 </div>
-                <StartStudySessionButton
-                    title="Practice quiz"
-                    sessionType="practice_quiz"
-                    className="mt-4 w-full"
-                />
+                <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+                    <Link href="/study/practice-quiz">
+                        <Play aria-hidden="true" />
+                        Get Started
+                    </Link>
+                </Button>
             </div>
         </div>
-    )
+    );
 }
