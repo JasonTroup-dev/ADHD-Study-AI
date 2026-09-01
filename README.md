@@ -1,557 +1,233 @@
 # ADHD Study AI
 
-**An ADHD-friendly study planning and tutoring app that turns class materials into clear next steps.**
+An ADHD-friendly study workspace that turns course material into clear, manageable next steps.
 
-ADHD Study AI is a full-stack web app built to help students reduce overwhelm, understand what to work on next, and study with AI support that is grounded in their actual coursework. Students can upload syllabi, assignments, notes, readings, and study materials, then use the app to generate study plans, study guides, flashcards, and guided focus sessions.
+[Live app](https://adhdstudyai.com) · [Explore the read-only demo](https://adhdstudyai.com/demo)
 
-> Built by a software engineering student with ADHD to help students turn overwhelming coursework into clear, manageable study steps.
+![ADHD Study AI dashboard](docs/screenshots/dashboard.png)
 
-**Live Site:** [ADHDStudyAI.com](https://adhdstudyai.com) · **Recruiter Demo:** [Explore the read-only sample workspace](https://adhdstudyai.com/demo)
+ADHD Study AI brings planning, course organization, AI tutoring, study guides, flashcards, and focused work sessions into one workspace. Students can upload a syllabus or assignment, review the information extracted by AI, and turn it into work they can act on without rebuilding their academic life in another complicated planner.
 
-**60-second Walkthrough:** [Watch the recruiter demo](docs/demo-walkthrough.gif)
+The product is built around a simple idea: when starting is the hard part, the interface should make the next useful action obvious.
 
-**Deployment:** Deployed on Vercel
+## What the app does
 
----
+### Turn a syllabus into a plan
 
-## Table of Contents
+- Upload a PDF or DOCX syllabus.
+- Extract course details, assignments, exams, projects, and due dates with structured AI output.
+- Review and edit the result before anything is saved.
+- Match the syllabus to an existing class or create a new class.
+- Generate balanced study tasks with a configurable daily limit.
+- See the resulting work across the dashboard, planner, assignments view, and calendar.
 
-- [Why I Built This](#why-i-built-this)
-- [Product Overview](#product-overview)
-- [Core Features](#core-features)
-- [ADHD-Focused Design Decisions](#adhd-focused-design-decisions)
-- [Tech Stack](#tech-stack)
-- [Architecture Highlights](#architecture-highlights)
-- [Screenshots](#screenshots)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [Build and Checks](#build-and-checks)
-- [Project Status](#project-status)
-- [What This Project Demonstrates](#what-this-project-demonstrates)
+### Organize each class in one workspace
 
----
+- Track assignments, due dates, priority, status, and related tasks.
+- Upload assignment instructions and supporting course material.
+- Let AI classify new material and suggest an assignment match.
+- Review every classification before saving it.
+- See the next assignment, weekly work, recent study activity, materials, and flashcard sets together.
 
-## Why I Built This
+### Study with course context
 
-As a student with ADHD, I know that the hardest part of studying is not always the material itself. A lot of the time, the hardest part is figuring out where to start.
+- Start a timed guided session from a task or assignment.
+- Give the tutor access to the relevant instructions and study material.
+- Receive streaming, step-by-step help designed to guide rather than complete the work for the student.
+- Save tutor messages and session progress.
+- Refine future plan items when newly uploaded assignment context changes the scope of the work.
+- Mark the study task or assignment complete from the session flow.
 
-Students with ADHD can have the syllabus, the assignment, the textbook, the notes, and the deadline in front of them and still feel stuck because the task is too large and too unclear. Traditional planners often assume the student already knows how to break the work down. Traditional AI tools can explain topics, but they usually are not aware of the student's actual class, deadlines, uploaded materials, or current task.
+### Create reusable study material
 
-I built ADHD Study AI to solve that gap.
+- Generate structured study guides from uploaded files and keep them in a persistent library.
+- Generate flashcards, choose the card count, edit the result, and save sets by class.
+- Create flashcard sets manually.
+- Review cards with progress and mastery tracking.
+- Render Markdown and KaTeX-compatible math in tutor responses, guides, and flashcards.
 
-The goal is not to replace studying. The goal is to protect the momentum it takes to start.
+### Keep the workspace useful day to day
 
-When you have ADHD and finally feel ready to focus, you do not want to spend that energy answering a dozen setup questions before you can begin. What do I need to work on today? What is the next step? What does this assignment actually require? Which study material is relevant to what I am working on? What can I do right now without getting overwhelmed?
+- Dashboard centered on today's work, progress, upcoming deadlines, and active sessions.
+- Daily planner, assignment list, calendar, and weekly progress view.
+- User preferences for default focus length and break reminders.
+- Privacy information, sign-out controls, and permanent account/data deletion.
+- A bug-report form that prepares a reproducible GitHub issue without silently sending private study data.
 
-ADHD Study AI is built to answer those questions faster, so students can move from intention to action while their focus is still there.
+## Try it without an account
 
-This project is very personal to me because it reflects the kind of tool I wish I had while trying to balance coursework, maintaining focus, deadlines, and the executive dysfunction that can come with ADHD.
+The public [sample workspace](https://adhdstudyai.com/demo) mirrors the real product with seeded classes, assignments, tasks, study guides, flashcards, planner data, and locally scripted tutor interactions. It is deliberately read-only: account changes, uploads, writes, and paid AI requests are disabled.
 
----
+![Read-only sample workspace](docs/screenshots/demo-workspace.png)
 
-## Product Overview
+## ADHD-focused product decisions
 
-ADHD Study AI combines a study planner, AI tutor, file-aware assignment assistant, flashcard generator, study guide generator, and class dashboard into one focused workspace.
+1. **One obvious next action.** Pages prioritize what is useful now instead of presenting every possible action at once.
+2. **Review before save.** AI-generated syllabus data, plans, flashcards, and material classifications remain editable until the student confirms them.
+3. **Smaller work blocks.** Large assignments become achievable sessions tied to real deadlines and course context.
+4. **Context before guessing.** The tutor uses the student's files and clearly asks for more information when the source material is insufficient.
+5. **Calm, consistent UI.** Short sections, predictable controls, responsive layouts, keyboard focus states, and reduced-motion support keep the interface approachable.
+6. **Momentum survives navigation.** Active timers, session messages, saved guides, and study state persist so a student can resume instead of restarting.
 
-Instead of giving students another blank productivity app, ADHD Study AI uses uploaded course context to create a more guided workflow:
-
-1. Upload a syllabus, assignment, or study material.
-2. Let AI extract the important information.
-3. Review the AI output before saving it.
-4. Turn coursework into assignments, study blocks, flashcards, or study guides.
-5. Start a focused session with an AI tutor that understands the assignment context.
-
----
-
-## Core Features
-
-### ADHD-Friendly Dashboard
-
-The dashboard is designed around the question: **"What should I do today?"**
-
-It includes:
-
-- Today's scheduled study tasks
-- Upcoming deadlines
-- Daily study progress
-- Study minutes and session counts
-- Active study session awareness
-- A clear entry point for generating an AI study plan
-
-The goal is to reduce decision fatigue by making the next action obvious.
-
----
-
-### AI Syllabus Import
-
-Students can upload a syllabus and turn it into structured course data.
-
-The syllabus importer can:
-
-- Accept PDF and DOCX syllabus files
-- Extract class information
-- Detect assignments, exams, quizzes, projects, and due dates
-- Estimate assignment importance and difficulty
-- Let the user review the extracted results before saving
-- Match the syllabus to an existing class or create a new class
-- Generate balanced study plan tasks from the extracted deadlines
-- Limit the number of generated tasks per day to avoid overload
-
-This turns a long syllabus into a practical study schedule.
-
----
-
-### Planner and Calendar
-
-The planner gives students a structured way to manage coursework without turning the app into a complicated project management system.
-
-Current planner features include:
-
-- Manual study task creation
-- AI-generated study plan tasks
-- Daily task lists
-- Calendar view
-- Assignment deadline visibility
-- Task completion toggles
-- Priority and estimated-minute tracking
-- Active study session integration
-
-The calendar gives a visual overview of upcoming work while the daily planner keeps the focus on one day at a time.
-
----
-
-### Class Workspaces
-
-Each class has its own workspace so students can keep assignments, study materials, and flashcards organized by course.
-
-A class workspace includes:
-
-- "Next Up" card for the most relevant upcoming work
-- Assignments for that class
-- Uploaded class materials
-- Flashcard sets connected to the class
-- Course snapshot with progress, assignment status, material count, flashcard mastery, and study streak data
-- This-week overview
-- Quick actions for creating assignments, uploading materials, generating flashcards, and starting study sessions
-
-This gives every course a central hub instead of scattering materials across different tools.
-
----
-
-### Assignment Uploads and Study Materials
-
-Students can upload assignment instructions and supporting study materials so the AI tutor can respond with better context.
-
-The app supports:
-
-- Assignment instruction files
-- Supporting study materials
-- PDF, DOCX, TXT, MD, CSV, and JSON study files
-- File text extraction
-- Assignment material storage
-- Matching uploaded materials to existing assignments
-- Creating new assignment records from uploaded files
-- Context versioning so future study blocks can be refined when assignment details change
-
-This is one of the most important parts of the project because it keeps the AI from guessing based only on an assignment title.
-
----
-
-### AI Material Classification
-
-When students upload class files, the app can analyze them and decide whether they look like:
-
-- Assignment instructions
-- Study materials
-- General class resources
-
-The AI can also suggest whether a file should be matched to an existing assignment or used to create a new one. The user reviews this before saving, which keeps the workflow controlled and avoids silent AI mistakes.
-
----
-
-### Guided Study Sessions
-
-Guided study sessions turn assignments into focused work blocks.
-
-A session can include:
-
-- A timer
-- Assignment context
-- Uploaded assignment instructions
-- Related study materials
-- AI tutor messages saved to the session
-- Completion tracking
-- Task completion updates
-- Assignment completion updates
-
-The tutor is designed to guide the student through the work instead of simply doing the assignment for them. It can ask questions, give hints, explain relevant concepts, and help the student make progress one step at a time.
-
----
-
-### Context-Aware AI Tutor
-
-The AI tutor is designed for focused learning support.
-
-Tutor features include:
-
-- Streaming chat responses
-- File attachment support
-- Multi-file context handling
-- Markdown rendering
-- Math rendering with KaTeX-compatible formatting
-- Assignment-aware tutoring inside guided sessions
-- Clear behavior when there is not enough context
-- Prompt-injection-resistant handling of uploaded file text
-
-Instead of pretending to know what the student needs, the tutor can use uploaded files as source material and ask for context when the assignment is unclear.
-
----
-
-### AI Study Guide Generator
-
-Students can upload study materials and generate structured study guides.
-
-Generated guides can include:
-
-- Quick summaries
-- Key concepts
-- Vocabulary
-- Step-by-step explanations
-- Common mistakes
-- Practice questions
-- Estimated study plans
-
-The study guide output is formatted for readability with short sections, clear headings, and markdown support.
-
----
-
-### Flashcards
-
-The flashcard system supports both manual creation and AI-generated cards.
-
-Flashcard features include:
-
-- Create flashcard sets manually
-- Generate flashcards from uploaded files
-- Choose the number of generated cards
-- Preview and edit generated flashcards before saving
-- Save cards to Supabase
-- Connect flashcard sets to classes
-- Review flashcards with a flip-card interface
-- Render markdown and math inside cards
-- Delete flashcard sets
-
-This gives students a fast way to turn dense material into active recall practice.
-
----
-
-### Authentication and User-Owned Data
-
-The app uses Supabase authentication and user-scoped data so each student has their own private workspace.
-
-Implemented persistence includes:
-
-- Classes
-- Assignments
-- Study tasks
-- Study sessions
-- Study session messages
-- Flashcard sets
-- Flashcards
-- Uploaded assignment and study material metadata
-
----
-
-## ADHD-Focused Design Decisions
-
-This project is intentionally designed around ADHD pain points rather than generic productivity advice.
-
-### 1. One obvious next action
-
-The app tries to avoid making the student decide between too many options at once. Dashboards, class pages, and study sessions are built around surfacing the next useful step.
-
-### 2. Review before saving AI output
-
-AI-generated plans, syllabus imports, flashcards, and file classifications are designed to be reviewed before they become part of the user's workspace. This keeps the user in control while still reducing manual work.
-
-### 3. Break large assignments into smaller sessions
-
-Instead of estimating one giant completion time and overwhelming the student, the app can create smaller study blocks tied to actual assignments and deadlines.
-
-### 4. Context over guessing
-
-A major goal of the project is to stop the AI from making up generic steps. The tutor works best when it has the actual assignment file and study materials, and the UI encourages the student to upload that context.
-
-### 5. Calm, readable interface
-
-The UI favors short sections, clear labels, predictable actions, and minimal clutter. The goal is to make studying feel more approachable, especially when the student is already overwhelmed.
-
----
-
-## Tech Stack
-
-### Frontend
-
-- Next.js App Router
-- React
-- TypeScript
-- Tailwind CSS
-- shadcn/ui-style components
-- Lucide React icons
-- React Markdown
-- KaTeX-compatible math rendering
-
-### Backend
-
-- Next.js API routes
-- Supabase Auth
-- Supabase Postgres
-- Supabase Storage
-- Row-level-security-style user data isolation
-
-### AI
-
-- OpenAI API
-- Streaming tutor responses
-- Structured AI outputs for syllabus parsing and file classification
-- AI-generated study guides
-- AI-generated flashcards
-- Assignment-aware guided tutoring
-
-### File Processing
-
-- PDF text extraction
-- DOCX text extraction
-- Plain text and markdown handling
-- CSV and JSON study material support
-- Upload limits and validation for safer file handling
-
----
-
-## Architecture Highlights
-
-### Syllabus-to-plan workflow
+## How the main workflow fits together
 
 ```text
-Upload syllabus
-   ->
-Extract file text
-   ->
-AI analyzes course + assignments
-   ->
-User reviews results
-   ->
-Create or match class
-   ->
-Create assignments
-   ->
-Generate study plan tasks
-   ->
-Show tasks in planner, dashboard, and calendar
+Syllabus or course file
+        |
+        v
+Text extraction + structured AI analysis
+        |
+        v
+Student review and confirmation
+        |
+        +----------> Class + assignments
+        |                    |
+        |                    v
+        +----------> Planner + calendar
+                             |
+                             v
+                    Guided study session
+                             |
+                    +--------+---------+
+                    |                  |
+                    v                  v
+                AI tutor       Guides + flashcards
 ```
 
-### Assignment-aware study session workflow
-
-```text
-Select assignment or study task
-   ->
-Start guided study session
-   ->
-Load assignment instructions + materials
-   ->
-AI tutor guides the student step-by-step
-   ->
-Session messages and timer are saved
-   ->
-Student completes or cancels session
-   ->
-Task and assignment status can be updated
-```
-
-### File-aware AI workflow
-
-```text
-Upload class files
-   ->
-Extract text
-   ->
-AI classifies file purpose
-   ->
-AI suggests assignment match or new assignment
-   ->
-User reviews before saving
-   ->
-Material becomes available to tutor and study sessions
-```
-
----
+The same ownership boundary runs through the full flow. Authenticated requests are resolved to a Supabase user, relationships are checked server-side, and row-level security keeps one user's classes, assignments, sessions, files, guides, and flashcards separate from another user's data.
 
 ## Screenshots
 
-The screenshots below are stored in `docs/screenshots/` so they render directly on GitHub.
+### Syllabus review and plan generation
 
-### Recruiter Demo
+![Syllabus upload and AI study-plan flow](docs/screenshots/study-plan-upload.png)
 
-The public sample workspace lets visitors inspect a complete product state without creating an account, uploading a syllabus, or making paid AI requests. It includes seeded classes and tasks, explicit read-only guardrails, and locally scripted tutor interactions.
+### Guided study session
 
-[![Read-only recruiter demo workspace](docs/screenshots/demo-workspace.png)](docs/demo-walkthrough.gif)
+![Assignment-aware guided study session](docs/screenshots/guided-study-session.png)
 
-Click the image to watch the 60-second walkthrough.
+### Class workspace
 
-### Landing Page
+![Class workspace with assignments, course progress, and weekly work](docs/screenshots/class-workspace.png)
 
-The landing page explains the core value proposition clearly: ADHD Study AI turns class material into study guides, flashcards, quizzes, and next steps so students spend less energy figuring out where to start.
+### Flashcard review
 
-![ADHD Study AI landing page](docs/screenshots/landing-page.png)
+![Flashcard review with progress tracking](docs/screenshots/flashcard-review.png)
 
-### Dashboard
+## Tech stack
 
-The dashboard focuses on the student's next useful move. It shows today's scheduled work, progress, an active session card, quick actions, and upcoming deadlines in one place.
+| Area | Technology |
+| --- | --- |
+| Web app | Next.js 16 App Router, React 19, TypeScript |
+| UI | Tailwind CSS 4, Radix UI, shadcn-style components, Lucide icons |
+| Data | Supabase Postgres, Auth, Storage, and row-level security |
+| AI | OpenAI Responses API, streaming responses, Zod-validated structured output |
+| Content | React Markdown, remark-math, rehype-katex, KaTeX |
+| File parsing | pdf-parse and Mammoth |
+| Testing | Vitest, Node test runner, Playwright, Supabase database tests, axe-core |
+| Delivery | Vercel and GitHub Actions |
 
-![Dashboard showing scheduled study tasks, active session, and upcoming deadlines](docs/screenshots/dashboard.png)
+## File support
 
-### AI Study Plan Generation
+| Workflow | Accepted files |
+| --- | --- |
+| Syllabus import | PDF, DOCX |
+| Assignment instructions | PDF, DOCX, TXT, MD |
+| General study material | PDF, DOCX, TXT, MD, CSV, JSON |
 
-Students can upload a syllabus and generate a structured study plan instead of manually copying deadlines into a calendar.
+Study-material uploads are limited to 25 MB. Tutor conversations accept up to five attachments, with server-side extraction and context limits to keep requests bounded.
 
-![Generate study plan modal with syllabus upload](docs/screenshots/study-plan-upload.png)
+## Security, privacy, and reliability
 
-### Guided Study Session
+- Supabase row-level security and server-side relationship checks protect user-owned records.
+- Private Storage policies isolate uploaded assignment files and study materials.
+- AI endpoints require authentication and enforce request/usage protections.
+- Uploaded text is treated as untrusted source material rather than as model instructions.
+- A strict Content Security Policy and standard browser security headers are applied by Next.js.
+- Optional monitoring sends redacted error events; Vercel Runtime Logs remain the default server sink.
+- AI calls emit structured latency, token, status, and estimated-cost metrics.
+- Account deletion removes private files and application data before deleting the auth user.
+- The CI suite checks linting, types, unit/API behavior, coverage, database policies, builds, accessibility, browser journeys, resource isolation, upload boundaries, and tutor resilience.
 
-Guided sessions break assignments into smaller blocks and give the student a clear roadmap, common traps, and an assignment-aware AI tutor input.
+See the in-app [privacy page](https://adhdstudyai.com/privacy) for the user-facing data policy.
 
-![Guided study session for a food web analysis assignment](docs/screenshots/guided-study-session.png)
+## Local development
 
-### Class Workspace
+### Prerequisites
 
-Each class has a dedicated workspace for assignments, uploaded materials, progress, weekly work, and resumable study blocks.
+- Node.js 22
+- npm
+- Docker Desktop for the local Supabase stack and database/browser tests
+- An OpenAI API key for live AI features and evaluations
 
-![Class workspace showing assignments, course snapshot, and weekly work](docs/screenshots/class-workspace.png)
-
-### Flashcard Review
-
-The flashcard review interface supports active recall with progress tracking, card flipping, and mastery counts.
-
-![Flashcard review page showing a plasma membrane question](docs/screenshots/flashcard-review.png)
-
----
-
-## Getting Started
-
-### 1. Clone the repository
+### 1. Clone and install
 
 ```bash
-git clone <your-repo-url>
-cd adhd-study-ai
-```
-
-### 2. Install dependencies
-
-```bash
+git clone https://github.com/JasonTroup-dev/ADHD-Study-AI.git
+cd ADHD-Study-AI
 npm install
 ```
 
-### 3. Configure environment variables
-
-Create a `.env.local` file and add the required values.
+### 2. Start Supabase
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-OPENAI_API_KEY=
+npx supabase start
 ```
 
-Depending on your local setup, you may also need any Supabase service keys, site URLs, or model configuration variables used by your deployment.
+The local stack applies the migrations in `supabase/migrations/`, including the private `assignment-files` Storage bucket and its ownership policies. Run `npx supabase status` to view the local project URL and keys.
 
-### 4. Set up Supabase
+### 3. Configure the app
 
-Apply the SQL migrations in `supabase/migrations/` to your Supabase project and create a private storage bucket named `assignment-files` for assignment and study material uploads.
+Create `.env.local` in the project root:
 
-The app expects Supabase-backed persistence for:
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-local-anon-key
+OPENAI_API_KEY=your-openai-api-key
+```
 
-- Authenticated users
-- Classes
-- Assignments
-- Study tasks
-- Study sessions
-- Session messages
-- Flashcards
-- Uploaded assignment files and study materials
+Use the values printed by the local Supabase CLI. Never expose a service-role or secret key through a `NEXT_PUBLIC_` variable.
 
-### 5. Run the development server
+### 4. Run the app
 
 ```bash
 npm run dev
 ```
 
-Open the local app in your browser and sign up or log in to begin testing the full workflow.
+Open [http://localhost:3000](http://localhost:3000), create an account, and start with a class or syllabus import.
 
----
+## Environment variables
 
-## Environment Variables
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL used by the client and server |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Public anon key used for authenticated Supabase access |
+| `OPENAI_API_KEY` | For AI features | Server-only OpenAI API key |
+| `NEXT_PUBLIC_SITE_URL` | No | Canonical site origin; defaults to `https://adhdstudyai.com` |
+| `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | For account deletion and billing | Server-only admin credential used by account deletion and verified Paddle webhooks |
+| `PADDLE_ENVIRONMENT` | For billing | `sandbox` while testing; set to `production` when going live |
+| `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` | For billing | Public Paddle.js token from Developer tools → Authentication |
+| `PADDLE_API_KEY` | For billing | Server-only Paddle API key for transactions and portal sessions |
+| `PADDLE_WEBHOOK_SECRET` | For billing | Server-only secret for the Paddle notification destination |
+| `PADDLE_PRICE_ID` | For billing | Recurring Paddle price sold by the Pro checkout |
+| `OPENAI_*_MODEL` | No | Per-workflow model overrides; see `lib/ai/runtime.ts` |
+| `ERROR_MONITORING_ENDPOINT` | No | Webhook for redacted server error events |
+| `ERROR_MONITORING_TOKEN` | No | Optional bearer token for the monitoring webhook |
 
-| Variable | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL used by the client and server |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public Supabase anon key for authenticated client access |
-| `NEXT_PUBLIC_SITE_URL` | Optional canonical origin; defaults to `https://adhdstudyai.com` |
-| `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` | Server-only Supabase admin credential required for permanent account deletion |
-| `OPENAI_API_KEY` | OpenAI API key used by AI routes |
-| `OPENAI_FLASHCARDS_MODEL`, `OPENAI_STUDY_GUIDE_MODEL` | Optional model overrides for generated study content |
-| `OPENAI_SYLLABUS_MODEL`, `OPENAI_CLASS_MATERIAL_MODEL` | Optional model overrides for extraction and classification |
-| `OPENAI_ASSIGNMENT_GUIDE_MODEL`, `OPENAI_STUDY_TUTOR_MODEL`, `OPENAI_TUTOR_MODEL` | Optional model overrides for tutoring workflows |
-| `ERROR_MONITORING_ENDPOINT` | Optional server-side webhook for redacted application error events; Vercel Runtime Logs remain the default sink |
-| `ERROR_MONITORING_TOKEN` | Optional bearer token for the error-monitoring webhook |
-| Additional Supabase/server variables | Used as needed for server-side storage, auth, or deployment configuration |
+Supported model override names are `OPENAI_ASSIGNMENT_GUIDE_MODEL`, `OPENAI_CLASS_MATERIAL_MODEL`, `OPENAI_FLASHCARDS_MODEL`, `OPENAI_STUDY_GUIDE_MODEL`, `OPENAI_STUDY_TUTOR_MODEL`, `OPENAI_TUTOR_MODEL`, and `OPENAI_SYLLABUS_MODEL`.
 
----
+### Paddle sandbox setup
 
-## AI Measurement and Evaluations
+1. Under **Checkout → Checkout settings**, set the default payment link to your app's `/billing` URL. Sandbox accepts a localhost URL; live mode requires an approved domain.
+2. In Paddle Sandbox, create a product and a recurring price. Copy the `pri_...` price ID to `PADDLE_PRICE_ID`.
+3. Under **Developer tools → Authentication**, create a client-side token and an API key. Put them in `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` and `PADDLE_API_KEY`.
+4. Under **Developer tools → Notifications**, add a destination pointing to `https://your-domain.example/api/paddle/webhook`. Subscribe it to all `subscription.*` events and copy its endpoint secret to `PADDLE_WEBHOOK_SECRET`.
+5. Set `SUPABASE_SECRET_KEY` (or the legacy `SUPABASE_SERVICE_ROLE_KEY`) so the verified webhook can update billing state.
+6. Apply the Supabase migrations, start the app, and open `/billing`. Use Paddle's sandbox card `4242 4242 4242 4242`, any future expiry, and security code `100`.
 
-Model defaults, request timeouts, retries, and pricing are centralized in `lib/ai/runtime.ts`. Every AI request writes a structured `ai.request` JSON log containing the workflow, model, response ID, status, latency, token counts, cached and reasoning tokens, and estimated standard-API cost. Cost is `null` for an unknown model override so dashboards do not report a made-up rate.
+Sandbox and live Paddle catalogs and credentials are separate. When going live, replace every Paddle value with its live counterpart and change `PADDLE_ENVIRONMENT` to `production` in the same deployment.
 
-Validate the representative BIO, PSY, and HIST evaluation fixtures without making API calls:
-
-```bash
-npm run eval:ai:validate
-```
-
-Run the live schema and quality evaluation suite with `OPENAI_API_KEY` configured:
-
-```bash
-npm run eval:ai
-npm run eval:ai -- --case bio210-syllabus
-```
-
-The live runner emits one `ai.eval_case` record per case and an `ai.eval_summary` record, and exits nonzero when any case scores below 0.85.
-
----
-
-## Build and Checks
-
-The default test command runs the existing scheduling and markdown suites,
-the API route suite, and the AI runtime/schema suites:
-
-```bash
-npm test
-```
-
-Generate the HTML/LCOV coverage report and enforce the domain/API thresholds:
-
-```bash
-npm run test:coverage
-```
-
-The database and browser suites use a local Supabase stack and require Docker:
-
-```bash
-npx supabase start
-npm run test:db
-npm run test:e2e
-npx supabase stop --no-backup
-```
-
-Before sharing or deploying changes, run the same core checks used by CI:
+## Quality checks
 
 ```bash
 npm run lint
@@ -561,72 +237,34 @@ npm run eval:ai:validate
 npm run build
 ```
 
-GitHub Actions also starts an isolated Supabase stack for the two-user RLS tests
-and the Playwright browser journeys. Each CI run publishes a coverage summary
-and retains the full report as an artifact.
+Additional suites:
 
----
+```bash
+npm run test:coverage  # HTML/LCOV coverage with enforced thresholds
+npm run test:db        # Supabase database and RLS tests
+npm run test:e2e       # Playwright browser journeys
+npm run eval:ai        # Live representative AI evaluations
+```
 
-## Project Status
+`test:db` and `test:e2e` expect the local Supabase stack to be running. `eval:ai` makes real OpenAI requests; `eval:ai:validate` only validates the checked-in evaluation fixtures and does not call the API.
 
-### Implemented
+## AI evaluation and observability
 
-- Authentication
-- Class management
-- Assignment tracking
-- Syllabus upload and AI extraction
-- AI-generated study plans
-- Planner and calendar views
-- Assignment file uploads
-- Study material uploads
-- AI file classification
-- Guided study sessions
-- Context-aware AI tutor
-- AI study guide generation
-- AI flashcard generation
-- Manual flashcard creation
-- Flashcard review interface
-- Supabase-backed persistence
+AI defaults, timeouts, retry behavior, and model pricing live in `lib/ai/runtime.ts`. Each request writes a structured `ai.request` record containing the workflow, model, response status, latency, token usage, cached/reasoning tokens, and estimated standard-API cost. Unknown model overrides report a `null` cost instead of applying an incorrect rate.
 
-### In Progress / Planned
+The evaluation suite uses representative biology, psychology, and history fixtures. A live run emits one `ai.eval_case` record per case plus an `ai.eval_summary`, and exits nonzero when a case falls below the configured quality threshold.
 
-- Full practice quiz generator
-- Reading time estimator
-- Standalone assignment breakdown tool
-- Dedicated distraction-free study mode
-- More detailed progress analytics
-- Settings page polish
-- Bug report workflow polish
-- Production-ready screenshot/demo documentation
+## Project status
 
----
+The core authenticated product and public read-only demo are implemented. Current work is focused on:
 
-## What This Project Demonstrates
+- completing practice-quiz generation and feedback after the new material-selection flow;
+- assignment breakdown and reading-time utilities;
+- a dedicated distraction-reduced study mode;
+- deeper progress insights and continued accessibility/UI polish.
 
-This project demonstrates more than a simple AI wrapper. It shows full-stack product thinking across user experience, data modeling, AI integration, and real student workflows.
+## Why I built it
 
-Key engineering areas demonstrated:
+As a student with ADHD, I know the hardest part of studying is often not the material itself. It is deciding where to begin while the syllabus, notes, assignment, deadline, and pressure all compete for attention.
 
-- Full-stack Next.js development
-- Authenticated user flows
-- Supabase database integration
-- File upload and storage workflows
-- AI API integration
-- Streaming AI responses
-- Structured AI outputs with validation
-- PDF and DOCX text extraction
-- CRUD interfaces
-- Calendar and planner UI
-- User-owned data modeling
-- ADHD-conscious UX design
-- Portfolio-ready product polish
-
----
-
-## Personal Note
-
-ADHD Study AI started as a portfolio project, but the idea is rooted in a real problem: students with ADHD often do not need more pressure, more clutter, or another blank planner. They need help turning messy academic responsibilities into small, clear, doable steps.
-
-That is the product philosophy behind this app:
-
-**Make the next step clear enough that starting feels possible.**
+Traditional planners assume the student already knows how to break work down. General-purpose AI can explain a topic, but it usually does not know the student's real class, uploaded material, deadline, or current task. ADHD Study AI is my attempt to close that gap. It uses the student's actual coursework to offer relevant support and make the next step clear enough that getting started feels possible.
