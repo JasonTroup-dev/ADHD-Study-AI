@@ -1,11 +1,13 @@
 import {
   ArrowUp,
   FileText,
+  ImageIcon,
   LoaderCircle,
   Plus,
+  Square,
   X,
 } from "lucide-react";
-import { useRef, type RefObject } from "react";
+import { useRef, type ClipboardEvent, type RefObject } from "react";
 
 import { STUDY_FILE_ACCEPT } from "@/lib/files/uploadConstraints";
 
@@ -13,6 +15,7 @@ export default function InputBar({
   input,
   setInput,
   handleSend,
+  onStopResponse,
   textareaRef,
   files,
   onFilesSelected,
@@ -30,6 +33,7 @@ export default function InputBar({
   input: string;
   setInput: (value: string) => void;
   handleSend: () => void;
+  onStopResponse?: () => void;
   textareaRef?: RefObject<HTMLTextAreaElement | null>;
   files: File[];
   onFilesSelected: (files: File[]) => void;
@@ -46,6 +50,30 @@ export default function InputBar({
 }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const canSend = input.trim().length > 0 || files.length > 0;
+  const canStopResponse = disabled && Boolean(onStopResponse);
+
+  function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
+    if (disabled || attachmentDisabled || !accept.includes("image/")) return;
+
+    const pastedImages = Array.from(event.clipboardData.items)
+      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+      .map((item, index) => {
+        const image = item.getAsFile();
+        if (!image) return null;
+
+        const extension = image.type.split("/")[1]?.replace("jpeg", "jpg") || "png";
+        return new File(
+          [image],
+          `clipboard-image-${Date.now()}-${index + 1}.${extension}`,
+          { type: image.type, lastModified: Date.now() },
+        );
+      })
+      .filter((image): image is File => image !== null);
+
+    if (pastedImages.length > 0) {
+      onFilesSelected(pastedImages);
+    }
+  }
 
   return (
     <div className="mt-12 mb-8 w-full max-w-2xl lg:max-w-xl xl:max-w-4xl">
@@ -57,7 +85,11 @@ export default function InputBar({
                 key={`${file.name}-${file.size}-${file.lastModified}-${index}`}
                 className="flex max-w-full items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
               >
-                <FileText className="h-4 w-4 shrink-0 text-gray-500" />
+                {file.type.startsWith("image/") ? (
+                  <ImageIcon className="h-4 w-4 shrink-0 text-gray-500" />
+                ) : (
+                  <FileText className="h-4 w-4 shrink-0 text-gray-500" />
+                )}
                 <span className="max-w-52 truncate">{file.name}</span>
                 <button
                   type="button"
@@ -102,6 +134,7 @@ export default function InputBar({
             ref={textareaRef}
             value={input}
             onChange={(event) => setInput(event.target.value)}
+            onPaste={handlePaste}
             onKeyDown={(event) => {
               if (
                 event.key === "Enter"
@@ -122,12 +155,14 @@ export default function InputBar({
 
           <button
             type="button"
-            onClick={handleSend}
-            disabled={disabled || !canSend}
-            aria-label="Send message"
+            onClick={canStopResponse ? onStopResponse : handleSend}
+            disabled={!canStopResponse && (disabled || !canSend)}
+            aria-label={canStopResponse ? "Stop response" : "Send message"}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-black hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {disabled ? (
+            {canStopResponse ? (
+              <Square className="h-4 w-4 fill-white text-white" />
+            ) : disabled ? (
               <LoaderCircle className="h-5 w-5 animate-spin text-white" />
             ) : (
               <ArrowUp className="text-white" />

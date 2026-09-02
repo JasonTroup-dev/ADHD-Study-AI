@@ -12,6 +12,9 @@ export function SessionCompletionBanner({ controller }: { controller: GuidedSess
       <div>
         <p className="text-sm font-medium text-emerald-950">Ready to complete</p>
         {controller.completionReason ? <p className="mt-0.5 text-xs text-emerald-700">{controller.completionReason}</p> : null}
+        <p className="mt-0.5 text-xs text-emerald-700">
+          Complete the session now, or keep asking questions.
+        </p>
       </div>
       <Button type="button" className="rounded-full bg-emerald-700 text-white hover:bg-emerald-800" disabled={controller.isCompleting} onClick={() => void controller.completeSession()}>
         <Check /> {controller.isCompleting ? "Saving..." : "Complete session"}

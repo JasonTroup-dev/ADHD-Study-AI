@@ -1,6 +1,17 @@
 export const MAX_STUDY_FILE_BYTES = 25 * 1024 * 1024;
 export const MAX_TUTOR_FILES = 5;
 export const MAX_TUTOR_ATTACHMENT_CHARS = 60_000;
+export const MAX_TUTOR_IMAGE_BYTES = 512 * 1024;
+
+export const SUPPORTED_TUTOR_IMAGE_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+] as const;
+
+export type SupportedTutorImageType =
+  (typeof SUPPORTED_TUTOR_IMAGE_TYPES)[number];
 
 export const SUPPORTED_STUDY_FILE_EXTENSIONS = [
   ".txt",
@@ -13,6 +24,10 @@ export const SUPPORTED_STUDY_FILE_EXTENSIONS = [
 
 export const STUDY_FILE_ACCEPT = SUPPORTED_STUDY_FILE_EXTENSIONS.join(",");
 export const SUPPORTED_STUDY_FILE_LABEL = "TXT, MD, PDF, DOCX, CSV, or JSON";
+export const TUTOR_ATTACHMENT_ACCEPT = [
+  STUDY_FILE_ACCEPT,
+  ...SUPPORTED_TUTOR_IMAGE_TYPES,
+].join(",");
 
 export type SupportedStudyFileExtension =
   (typeof SUPPORTED_STUDY_FILE_EXTENSIONS)[number];

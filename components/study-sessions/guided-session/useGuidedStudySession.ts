@@ -18,7 +18,11 @@ import {
   uploadAssignmentContextFile,
   uploadAssignmentMaterials,
 } from "./api";
-import { createMissingContextMessage, getReadyCompletion } from "./domain";
+import {
+  createMissingContextMessage,
+  getReadyCompletion,
+  removePendingTutorMessage,
+} from "./domain";
 import type {
   AssignmentSessionContext,
   GuidedSessionController,
@@ -139,6 +143,7 @@ export function useGuidedStudySession({
           plannerTaskId,
           abortController.signal,
         );
+        if (abortController.signal.aborted) return;
         const nextMessages: TutorMessage[] = [{
           id: assistantMessageId,
           role: "assistant",
@@ -209,6 +214,7 @@ export function useGuidedStudySession({
         plannerTaskId,
         abortController.signal,
       );
+      if (abortController.signal.aborted) return;
       const completedMessages: TutorMessage[] = [
         ...nextMessages,
         {
@@ -234,6 +240,17 @@ export function useGuidedStudySession({
         if (abortControllerRef.current === abortController) abortControllerRef.current = null;
       }
     }
+  }
+
+  function stopTutorResponse() {
+    const abortController = abortControllerRef.current;
+    if (!abortController || !isTutorLoading) return;
+
+    abortControllerRef.current = null;
+    abortController.abort();
+    setMessages((current) => removePendingTutorMessage(current));
+    setTutorError("Response stopped. You can ask another question.");
+    setIsTutorLoading(false);
   }
 
   async function uploadAssignmentFile(file: File | null) {
@@ -356,6 +373,7 @@ export function useGuidedStudySession({
     uploadAssignmentFile,
     uploadStudyMaterials,
     applyPlanRefinement,
+    stopTutorResponse,
     completeSession,
   };
 }

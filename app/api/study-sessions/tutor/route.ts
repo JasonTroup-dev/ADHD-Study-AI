@@ -167,6 +167,13 @@ export async function POST(request: Request) {
   }
 
   const messages = body.messages as StudyTutorMessage[];
+  const tutorStartedAt = Date.now();
+
+  console.info(JSON.stringify({
+    event: "study_tutor.request.started",
+    messageCount: messages.length,
+    hasAssignment: Boolean(assignment),
+  }));
 
   try {
     const result = await getStudyTutorResponse(
@@ -191,8 +198,21 @@ export async function POST(request: Request) {
       request.signal,
     );
 
+    console.info(JSON.stringify({
+      event: "study_tutor.request.completed",
+      messageCount: messages.length,
+      completionStatus: result.completionStatus,
+      latencyMs: Date.now() - tutorStartedAt,
+    }));
+
     return Response.json(result);
   } catch (error) {
+    console.error(JSON.stringify({
+      event: "study_tutor.request.failed",
+      messageCount: messages.length,
+      latencyMs: Date.now() - tutorStartedAt,
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    }));
     console.error("Study tutor response error:", error);
     return Response.json(
       { error: "The study tutor could not respond right now." },

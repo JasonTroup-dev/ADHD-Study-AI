@@ -144,6 +144,30 @@ describe("AI API protection", () => {
     expect(guideIdentifier).toBe(chatIdentifier);
     expect(chatIdentifier).not.toContain(user.id);
   });
+
+  it("accepts pasted tutor images without attempting text extraction", async () => {
+    createClient.mockResolvedValue(authClient(user, allowedQuota()));
+    const formData = new FormData();
+    formData.set("files", new File([new Uint8Array([1, 2, 3])], "clipboard.png", {
+      type: "image/png",
+    }));
+
+    const response = await chatFiles(new Request("http://localhost/api/chat/files", {
+      method: "POST",
+      body: formData,
+    }));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      attachments: [{
+        name: "clipboard.png",
+        kind: "image",
+        mediaType: "image/png",
+        content: "data:image/png;base64,AQID",
+      }],
+    });
+    expect(extractTextFromFile).not.toHaveBeenCalled();
+  });
 });
 
 function authClient(

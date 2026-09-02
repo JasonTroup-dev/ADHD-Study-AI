@@ -45,10 +45,12 @@ test("shows streaming failures, retries the turn, and cancels an in-flight respo
 
   await composer.fill("Give me another explanation.");
   await composer.press("Enter");
-  await expect(page.getByRole("button", { name: "Stop response" })).toBeVisible();
+  const stopResponse = page.getByRole("button", { name: "Stop response" });
+  await expect(stopResponse).toBeVisible();
+  await expect(stopResponse.locator("svg.lucide-square")).toBeVisible();
   await expect.poll(() => pendingRoute).not.toBeNull();
 
-  await page.getByRole("button", { name: "Stop response" }).click();
+  await stopResponse.click();
   await expect(page.getByText("Response stopped. You can retry.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Retry response" })).toBeVisible();
 

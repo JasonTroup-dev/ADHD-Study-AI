@@ -6,6 +6,8 @@ import {
 import {
     MAX_TUTOR_ATTACHMENT_CHARS,
     MAX_TUTOR_FILES,
+    MAX_TUTOR_IMAGE_BYTES,
+    SUPPORTED_TUTOR_IMAGE_TYPES,
 } from "@/lib/files/uploadConstraints";
 import { requireUser } from "@/lib/api/requireUser";
 import {
@@ -15,7 +17,12 @@ import {
 
 const MAX_TUTOR_MESSAGES = 24;
 const MAX_TUTOR_CONVERSATION_CHARS = 160_000;
-const MAX_TUTOR_REQUEST_BYTES = 768 * 1024;
+const MAX_TUTOR_REQUEST_BYTES = 4 * 1024 * 1024;
+const MAX_TUTOR_IMAGE_DATA_URL_CHARS = Math.ceil(
+    MAX_TUTOR_IMAGE_BYTES * 4 / 3,
+) + 64;
+const MAX_TUTOR_IMAGE_PAYLOAD_CHARS =
+    MAX_TUTOR_IMAGE_DATA_URL_CHARS * MAX_TUTOR_FILES;
 
 export async function POST(req: Request) {
     const auth = await requireUser();
@@ -53,7 +60,10 @@ export async function POST(req: Request) {
         );
     }
 
-    if (getConversationSize(body.messages) > MAX_TUTOR_CONVERSATION_CHARS) {
+    if (
+        getConversationSize(body.messages) > MAX_TUTOR_CONVERSATION_CHARS
+        || getImagePayloadSize(body.messages) > MAX_TUTOR_IMAGE_PAYLOAD_CHARS
+    ) {
         return conversationTooLargeResponse();
     }
 
@@ -137,16 +147,45 @@ function isTutorMessage(value: unknown): value is TutorMessage {
 }
 
 function isTutorAttachment(value: unknown): value is TutorAttachment {
-    return (
+    if (
+        !(
         isRecord(value)
         && typeof value.id === "string"
         && typeof value.name === "string"
         && value.name.length > 0
         && value.name.length <= 255
+        && (value.kind === "text" || value.kind === "image")
         && typeof value.content === "string"
         && value.content.length > 0
-        && value.content.length <= MAX_TUTOR_ATTACHMENT_CHARS
+        )
+    ) {
+        return false;
+    }
+
+    if (value.kind === "text") {
+        return value.content.length <= MAX_TUTOR_ATTACHMENT_CHARS;
+    }
+
+    return (
+        typeof value.mediaType === "string"
+        && SUPPORTED_TUTOR_IMAGE_TYPES.includes(
+            value.mediaType as (typeof SUPPORTED_TUTOR_IMAGE_TYPES)[number],
+        )
+        && value.content.length <= MAX_TUTOR_IMAGE_DATA_URL_CHARS
+        && isValidTutorImageDataUrl(value.content, value.mediaType)
     );
+}
+
+function isValidTutorImageDataUrl(content: string, mediaType: string) {
+    const prefix = `data:${mediaType};base64,`;
+    if (!content.startsWith(prefix)) return false;
+
+    const base64 = content.slice(prefix.length);
+    if (!/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) return false;
+
+    const paddingBytes = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+    const decodedBytes = Math.floor(base64.length * 3 / 4) - paddingBytes;
+    return decodedBytes > 0 && decodedBytes <= MAX_TUTOR_IMAGE_BYTES;
 }
 
 function getConversationSize(messages: TutorMessage[]) {
@@ -156,13 +195,24 @@ function getConversationSize(messages: TutorMessage[]) {
                 attachmentTotal
                 + attachment.id.length
                 + attachment.name.length
-                + attachment.content.length
+                + (attachment.kind === "text" ? attachment.content.length : 0)
             ),
             0,
         );
 
         return total + message.id.length + message.content.length + attachmentCharacters;
     }, 0);
+}
+
+function getImagePayloadSize(messages: TutorMessage[]) {
+    return messages.reduce(
+        (messageTotal, message) => messageTotal + (message.attachments ?? []).reduce(
+            (attachmentTotal, attachment) => attachmentTotal
+                + (attachment.kind === "image" ? attachment.content.length : 0),
+            0,
+        ),
+        0,
+    );
 }
 
 function conversationTooLargeResponse() {

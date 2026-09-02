@@ -1,4 +1,8 @@
-import type { AssignmentSessionContext, TutorMessage } from "./types";
+import type {
+  AssignmentSessionContext,
+  GuidedSessionController,
+  TutorMessage,
+} from "./types";
 
 export function createMissingContextMessage(
   title: string,
@@ -26,6 +30,23 @@ export function getReadyCompletion(messages: TutorMessage[]) {
   return [...messages].reverse().find(
     (message) => message.role === "assistant" && message.completionStatus === "ready",
   ) ?? null;
+}
+
+export function shouldDisableTutorComposer(
+  controller: Pick<
+    GuidedSessionController,
+    "isCompleting" | "isTutorLoading" | "isUploading"
+  >,
+) {
+  return controller.isTutorLoading
+    || controller.isUploading
+    || controller.isCompleting;
+}
+
+export function removePendingTutorMessage(messages: TutorMessage[]) {
+  return messages.filter(
+    (message) => message.role !== "assistant" || message.content.trim().length > 0,
+  );
 }
 
 export function formatPlanDate(value: string) {

@@ -8,6 +8,9 @@ import {
   MAX_STUDY_FILE_BYTES,
   MAX_TUTOR_ATTACHMENT_CHARS,
   MAX_TUTOR_FILES,
+  MAX_TUTOR_IMAGE_BYTES,
+  SUPPORTED_TUTOR_IMAGE_TYPES,
+  type SupportedTutorImageType,
 } from "@/lib/files/uploadConstraints";
 import { requireUser } from "@/lib/api/requireUser";
 import { enforceAIQuota } from "@/lib/ai/requestProtection";
@@ -83,10 +86,30 @@ export async function POST(req: Request) {
     const attachments = [];
 
     for (const file of files) {
+      if (isTutorImage(file)) {
+        if (file.size > MAX_TUTOR_IMAGE_BYTES) {
+          return Response.json(
+            {
+              error: `Images must be ${formatFileSize(MAX_TUTOR_IMAGE_BYTES)} or smaller after compression.`,
+            },
+            { status: 413 },
+          );
+        }
+
+        attachments.push({
+          name: file.name,
+          kind: "image",
+          mediaType: file.type,
+          content: await imageDataUrl(file),
+        });
+        continue;
+      }
+
       const extracted = await extractTextFromFile(file);
 
       attachments.push({
         name: extracted.originalName,
+        kind: "text",
         content: prepareTutorSourceText(
           extracted.text,
           perFileCharacterBudget,
@@ -110,6 +133,19 @@ export async function POST(req: Request) {
       { status: 500 },
     );
   }
+}
+
+function isTutorImage(
+  file: File,
+): file is File & { type: SupportedTutorImageType } {
+  return SUPPORTED_TUTOR_IMAGE_TYPES.includes(
+    file.type as SupportedTutorImageType,
+  );
+}
+
+async function imageDataUrl(file: File) {
+  const base64 = Buffer.from(await file.arrayBuffer()).toString("base64");
+  return `data:${file.type};base64,${base64}`;
 }
 
 function filesTooLargeResponse() {

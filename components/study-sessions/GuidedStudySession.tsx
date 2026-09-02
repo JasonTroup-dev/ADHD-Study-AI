@@ -11,6 +11,7 @@ import {
   GuidedSessionContextHeader,
   MissingContextActions,
 } from "./guided-session/GuidedSessionContext";
+import { shouldDisableTutorComposer } from "./guided-session/domain";
 import { SessionCompletionBanner } from "./guided-session/SessionCompletionBanner";
 import type { GuidedStudySessionProps } from "./guided-session/types";
 import { useGuidedStudySession } from "./guided-session/useGuidedStudySession";
@@ -38,6 +39,9 @@ export function GuidedStudySession(props: GuidedStudySessionProps) {
           input={controller.input}
           setInput={controller.setInput}
           handleSend={() => void controller.sendMessage()}
+          onStopResponse={controller.isTutorLoading && !controller.isContextLoading
+            ? controller.stopTutorResponse
+            : undefined}
           files={[]}
           onFilesSelected={(files) => {
             if (assignment?.hasExtractedText) {
@@ -52,10 +56,14 @@ export function GuidedStudySession(props: GuidedStudySessionProps) {
           attachmentDisabled={!assignment || controller.isContextLoading}
           attachmentLabel={assignment?.hasExtractedText ? "Add study materials" : "Add assignment file"}
           placeholder={assignment?.hasExtractedText ? "Ask about the assignment" : "Describe the problem or what feels confusing"}
-          status={controller.isUploading ? "Uploading assignment..." : "Tutor is thinking..."}
+          status={controller.isCompleting
+            ? "Saving session..."
+            : controller.isUploading
+              ? "Uploading assignment..."
+              : "Tutor is thinking..."}
           error={controller.tutorError ?? controller.contextError}
           notice={controller.uploadNotice}
-          disabled={controller.isTutorLoading || controller.isUploading || controller.completionUnlocked}
+          disabled={shouldDisableTutorComposer(controller)}
         />
       }
     />

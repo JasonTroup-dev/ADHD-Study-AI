@@ -8,12 +8,18 @@ import {
     formatFileSize,
     MAX_STUDY_FILE_BYTES,
     MAX_TUTOR_FILES,
+    MAX_TUTOR_IMAGE_BYTES,
+    SUPPORTED_TUTOR_IMAGE_TYPES,
+    TUTOR_ATTACHMENT_ACCEPT,
+    type SupportedTutorImageType,
 } from "@/lib/files/uploadConstraints";
 
 type TutorAttachment = {
     id: string;
     name: string;
     content: string;
+    kind: "text" | "image";
+    mediaType?: SupportedTutorImageType;
 };
 
 type Message = {
@@ -277,28 +283,20 @@ export default function AiTutor() {
                     </button>
                 ) : null
             }
-            composerHeader={isLoading ? (
-                <div className="mx-auto flex w-full max-w-2xl justify-end px-3 lg:max-w-xl xl:max-w-4xl">
-                    <button
-                        type="button"
-                        onClick={handleCancelResponse}
-                        className="rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-sm transition hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                    >
-                        Stop response
-                    </button>
-                </div>
-            ) : null}
             composer={(
                 <InputBar
                     input={input}
                     setInput={setInput}
                     handleSend={handleSend}
+                    onStopResponse={isLoading ? handleCancelResponse : undefined}
                     textareaRef={textareaRef}
                     files={files}
                     onFilesSelected={handleFilesSelected}
                     onRemoveFile={handleRemoveFile}
                     status={loadingStatus}
                     error={composerError}
+                    accept={TUTOR_ATTACHMENT_ACCEPT}
+                    attachmentLabel="Attach study files or images"
                     disabled={isLoading}
                 />
             )}
@@ -310,6 +308,8 @@ export default function AiTutor() {
 type UploadedTutorAttachment = {
     name: string;
     content: string;
+    kind: "text" | "image";
+    mediaType?: SupportedTutorImageType;
 };
 
 class TutorFileUploadError extends Error {}
@@ -319,8 +319,11 @@ async function uploadTutorFiles(
     signal: AbortSignal,
 ): Promise<UploadedTutorAttachment[]> {
     const formData = new FormData();
+    const preparedFiles = await Promise.all(
+        files.map((file) => prepareTutorFile(file)),
+    );
 
-    files.forEach((file) => {
+    preparedFiles.forEach((file) => {
         formData.append("files", file);
     });
 
@@ -372,5 +375,98 @@ function isUploadedTutorAttachment(
         && typeof value.name === "string"
         && "content" in value
         && typeof value.content === "string"
+        && "kind" in value
+        && (value.kind === "text" || value.kind === "image")
+        && (
+            value.kind === "text"
+            || (
+                "mediaType" in value
+                && typeof value.mediaType === "string"
+                && SUPPORTED_TUTOR_IMAGE_TYPES.includes(
+                    value.mediaType as SupportedTutorImageType,
+                )
+            )
+        )
     );
+}
+
+async function prepareTutorFile(file: File): Promise<File> {
+    if (!file.type.startsWith("image/") || file.size <= MAX_TUTOR_IMAGE_BYTES) {
+        return file;
+    }
+
+    try {
+        return await compressTutorImage(file);
+    } catch {
+        throw new TutorFileUploadError(
+            `Images must be ${formatFileSize(MAX_TUTOR_IMAGE_BYTES)} or smaller after compression.`,
+        );
+    }
+}
+
+async function compressTutorImage(file: File): Promise<File> {
+    const source = await createImageBitmap(file);
+
+    try {
+        let width = source.width;
+        let height = source.height;
+        const longestSide = Math.max(width, height);
+
+        if (longestSide > 1600) {
+            const scale = 1600 / longestSide;
+            width = Math.max(1, Math.round(width * scale));
+            height = Math.max(1, Math.round(height * scale));
+        }
+
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const context = canvas.getContext("2d");
+
+            if (!context) {
+                throw new Error("Canvas rendering is unavailable.");
+            }
+
+            context.drawImage(source, 0, 0, width, height);
+            const quality = Math.max(0.45, 0.86 - attempt * 0.08);
+            const blob = await canvasToBlob(canvas, "image/webp", quality);
+
+            if (blob.size <= MAX_TUTOR_IMAGE_BYTES) {
+                return new File(
+                    [blob],
+                    replaceFileExtension(file.name, "webp"),
+                    { type: "image/webp", lastModified: file.lastModified },
+                );
+            }
+
+            width = Math.max(1, Math.round(width * 0.8));
+            height = Math.max(1, Math.round(height * 0.8));
+        }
+    } finally {
+        source.close();
+    }
+
+    throw new Error("The image could not be compressed enough.");
+}
+
+function canvasToBlob(
+    canvas: HTMLCanvasElement,
+    type: string,
+    quality: number,
+): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+            if (blob) {
+                resolve(blob);
+            } else {
+                reject(new Error("The image could not be encoded."));
+            }
+        }, type, quality);
+    });
+}
+
+function replaceFileExtension(fileName: string, extension: string) {
+    const baseName = fileName.replace(/\.[^.]+$/, "") || "clipboard-image";
+    return `${baseName}.${extension}`;
 }

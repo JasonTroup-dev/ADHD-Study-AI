@@ -71,5 +71,6 @@ export type GuidedSessionController = {
   uploadAssignmentFile: (file: File | null) => Promise<void>;
   uploadStudyMaterials: (files: File[]) => Promise<void>;
   applyPlanRefinement: () => Promise<void>;
+  stopTutorResponse: () => void;
   completeSession: () => Promise<void>;
 };
