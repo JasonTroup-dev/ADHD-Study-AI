@@ -35,7 +35,6 @@ export default async function TaskDetailsPage({
   searchParams,
 }: TaskDetailsPageProps) {
   const [{ id }, { from }] = await Promise.all([params, searchParams]);
-  const returnDestination = getTaskReturnDestination(from);
   const supabase = await createClient();
   const {
     data: { user },
@@ -70,7 +69,27 @@ export default async function TaskDetailsPage({
   if (!task) notFound();
 
   const assignment = getSingleRelation(task.assignments) as TaskAssignment | null;
+  const { data: supportingMaterials, error: materialsError } = assignment
+    ? await supabase
+        .from("assignment_materials")
+        .select("original_file_name, extracted_text")
+        .eq("assignment_id", assignment.id)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+    : { data: [], error: null };
+  if (materialsError) {
+    throw new Error("The assignment materials could not be loaded.");
+  }
+  const studySessionId = task.status === "completed"
+    ? await findCompletedStudySessionId(supabase, user.id, {
+        id: task.id,
+        assignmentId: task.assignment_id,
+        classId: task.class_id,
+        title: task.title,
+      })
+    : null;
   const taskClass = getSingleRelation(task.classes) as TaskClass | null;
+  const returnDestination = getTaskReturnDestination(from, task.assignment_id);
   const taskDetails: TaskDetailsData = {
     id: task.id,
     classId: task.class_id,
@@ -79,6 +98,7 @@ export default async function TaskDetailsPage({
     priority: task.priority,
     status: task.status,
     scheduledDate: task.scheduled_date,
+    studySessionId,
     taskClass,
     assignment: assignment
       ? {
@@ -87,6 +107,10 @@ export default async function TaskDetailsPage({
           dueDate: assignment.due_date,
           originalFileName: assignment.original_file_name,
           extractedText: assignment.extracted_text,
+          supportingMaterials: (supportingMaterials ?? []).map((material) => ({
+            name: material.original_file_name,
+            text: material.extracted_text,
+          })),
         }
       : null,
   };
@@ -100,8 +124,72 @@ export default async function TaskDetailsPage({
   );
 }
 
-function getTaskReturnDestination(from: string | string[] | undefined) {
+async function findCompletedStudySessionId(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  task: {
+    id: string;
+    assignmentId: string | null;
+    classId: string | null;
+    title: string;
+  },
+) {
+  const { data: linkedSession, error: linkedSessionError } = await supabase
+    .from("study_sessions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("planner_task_id", task.id)
+    .eq("status", "completed")
+    .order("ended_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (linkedSessionError) {
+    throw new Error("The completed study session could not be loaded.");
+  }
+  if (linkedSession) return linkedSession.id;
+
+  // Sessions created before planner_task_id was added can still be recovered
+  // from the immutable completed task title and its assignment/class context.
+  let historicalQuery = supabase
+    .from("study_sessions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("title", task.title)
+    .eq("status", "completed")
+    .is("planner_task_id", null)
+    .order("ended_at", { ascending: false })
+    .limit(1);
+
+  historicalQuery = task.assignmentId
+    ? historicalQuery.eq("assignment_id", task.assignmentId)
+    : historicalQuery.is("assignment_id", null);
+  historicalQuery = task.classId
+    ? historicalQuery.eq("class_id", task.classId)
+    : historicalQuery.is("class_id", null);
+
+  const { data: historicalSession, error: historicalSessionError } =
+    await historicalQuery.maybeSingle();
+
+  if (historicalSessionError) {
+    throw new Error("The completed study session could not be loaded.");
+  }
+
+  return historicalSession?.id ?? null;
+}
+
+function getTaskReturnDestination(
+  from: string | string[] | undefined,
+  assignmentId: string | null,
+) {
   const origin = Array.isArray(from) ? from[0] : from;
+
+  if (origin === "assignment" && assignmentId) {
+    return {
+      href: `/planner/assignments/${assignmentId}`,
+      label: "assignment",
+    };
+  }
 
   if (origin && origin in taskReturnDestinations) {
     return taskReturnDestinations[

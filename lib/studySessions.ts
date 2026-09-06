@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
+import { retainStudyTutorMessages } from "@/lib/ai/studyTutorContext";
 import type {
   StudySession,
   StudySessionInsert,
@@ -6,10 +7,10 @@ import type {
   StudySessionType,
 } from "@/types/database";
 
-const MAX_STORED_SESSION_MESSAGES = 40;
 const MAX_STORED_SESSION_MESSAGE_CHARS = 12_000;
 
 type CreateStudySessionInput = {
+  plannerTaskId?: string | null;
   assignmentId?: string | null;
   classId?: string | null;
   title: string;
@@ -53,6 +54,7 @@ export async function createStudySession(
   const now = new Date().toISOString();
   const newSession: StudySessionInsert = {
     user_id: userId,
+    planner_task_id: input.plannerTaskId ?? null,
     assignment_id: input.assignmentId ?? null,
     class_id: input.classId ?? null,
     title: input.title.trim() || "Study Session",
@@ -183,7 +185,9 @@ export async function completeStudySession(
     taskCompletionError = taskError?.message ?? null;
   }
 
-  if (assignmentIdToComplete) {
+  // Linked task sessions derive their assignment status from all sibling tasks.
+  // Only assignment-level sessions may explicitly complete the whole assignment.
+  if (assignmentIdToComplete && !plannerTaskId) {
     const { error: assignmentError } = await supabase
       .from("assignments")
       .update({ status: "completed" })
@@ -315,7 +319,7 @@ export function normalizeStudySessionMessages(
 ): StudySessionMessage[] {
   if (!Array.isArray(value)) return [];
 
-  return value
+  return retainStudyTutorMessages(value
     .flatMap((message, index): StudySessionMessage[] => {
       if (!isRecord(message)) return [];
 
@@ -351,8 +355,7 @@ export function normalizeStudySessionMessages(
           ...(completionReason ? { completionReason } : {}),
         },
       ];
-    })
-    .slice(-MAX_STORED_SESSION_MESSAGES);
+    }));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

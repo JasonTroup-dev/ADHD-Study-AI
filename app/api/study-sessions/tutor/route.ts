@@ -1,7 +1,9 @@
 import {
   getStudyTutorResponse,
+  type StudyTutorContext,
   type StudyTutorMessage,
 } from "@/lib/ai/studySessionTutor";
+import { buildAssignmentProblemIndex, MAX_STUDY_TUTOR_MESSAGES, prepareCompletedSessionContext } from "@/lib/ai/studyTutorContext";
 import { createClient } from "@/lib/supabase/server";
 import {
   getAssignmentStudySessionGoal,
@@ -10,7 +12,7 @@ import {
 
 const MAX_ASSIGNMENT_CONTEXT_CHARS = 60_000;
 const MAX_MATERIAL_CONTEXT_CHARS = 60_000;
-const MAX_CONVERSATION_MESSAGES = 16;
+const MAX_CONVERSATION_MESSAGES = MAX_STUDY_TUTOR_MESSAGES;
 const MAX_MESSAGE_CHARS = 12_000;
 
 type AssignmentRow = {
@@ -28,6 +30,8 @@ type AssignmentMaterialRow = {
 
 type PlannerTaskRow = {
   id: string;
+  title: string;
+  status: string;
 };
 
 export async function POST(request: Request) {
@@ -71,7 +75,7 @@ export async function POST(request: Request) {
 
   const { data: session, error: sessionError } = await supabase
     .from("study_sessions")
-    .select("id, assignment_id, title, session_type")
+    .select("id, assignment_id, planner_task_id, title, session_type")
     .eq("id", body.sessionId)
     .eq("user_id", user.id)
     .eq("status", "active")
@@ -95,6 +99,9 @@ export async function POST(request: Request) {
   let assignment: AssignmentRow | null = null;
   let materials: AssignmentMaterialRow[] = [];
   let studySessionGoal: AssignmentStudySessionGoal | null = null;
+  let currentTask: StudyTutorContext["currentTask"] = null;
+  let completedTasks: NonNullable<StudyTutorContext["completedTasks"]> = [];
+  let completedSessions: NonNullable<StudyTutorContext["completedSessions"]> = [];
 
   if (session.assignment_id) {
     const { data, error } = await supabase
@@ -140,12 +147,11 @@ export async function POST(request: Request) {
 
       materials = (materialData ?? []) as AssignmentMaterialRow[];
 
-      const plannerTaskId = typeof body.plannerTaskId === "string"
-        ? body.plannerTaskId
-        : null;
+      const plannerTaskId = session.planner_task_id
+        ?? (typeof body.plannerTaskId === "string" ? body.plannerTaskId : null);
       const { data: taskData, error: taskError } = await supabase
         .from("study_plan_tasks")
-        .select("id")
+        .select("id, title, status")
         .eq("assignment_id", session.assignment_id)
         .eq("user_id", user.id)
         .order("scheduled_date", { ascending: true })
@@ -159,10 +165,29 @@ export async function POST(request: Request) {
         );
       }
 
-      studySessionGoal = getAssignmentStudySessionGoal(
-        (taskData ?? []) as PlannerTaskRow[],
-        plannerTaskId,
-      );
+      const tasks = (taskData ?? []) as PlannerTaskRow[];
+      // Older sessions have no persisted link. A unique exact title match is
+      // a safe fallback; do not guess from percentages or problem numbers.
+      const titleMatches = tasks.filter((task) => task.title === session.title);
+      currentTask = tasks.find((task) => task.id === plannerTaskId)
+        ?? (!plannerTaskId && titleMatches.length === 1 ? titleMatches[0] : null);
+      studySessionGoal = getAssignmentStudySessionGoal(tasks, currentTask?.id);
+      completedTasks = tasks.filter((task) => task.status === "completed")
+        .map(({ id, title }) => ({ id, title }));
+
+      const { data: previousSessions, error: previousSessionsError } = await supabase
+        .from("study_sessions")
+        .select("title, ended_at, messages")
+        .eq("assignment_id", session.assignment_id)
+        .eq("user_id", user.id)
+        .eq("status", "completed")
+        .order("ended_at", { ascending: false })
+        .limit(8);
+      if (previousSessionsError) {
+        console.error("Error loading prior study session progress:", previousSessionsError);
+        return Response.json({ error: "Previous study progress could not be loaded. Please try again." }, { status: 500 });
+      }
+      completedSessions = prepareCompletedSessionContext(previousSessions ?? []);
     }
   }
 
@@ -175,11 +200,16 @@ export async function POST(request: Request) {
     hasAssignment: Boolean(assignment),
   }));
 
-  try {
+  const abortController = new AbortController();
+  const signal = AbortSignal.any([request.signal, abortController.signal]);
+  const generate = async (onMessage?: (message: string) => void) => {
     const result = await getStudyTutorResponse(
       {
         sessionTitle: session.title ?? "Study session",
         sessionType: session.session_type,
+        currentTask,
+        completedTasks,
+        completedSessions,
         assignment: assignment
           ? {
               title: assignment.title,
@@ -190,12 +220,14 @@ export async function POST(request: Request) {
                 ? truncateText(assignment.extracted_text)
                 : null,
               materials: prepareMaterialContext(materials),
+              problemIndex: buildAssignmentProblemIndex(prepareMaterialContext(materials)),
               studySessionGoal,
             }
           : null,
       },
       messages,
-      request.signal,
+      signal,
+      onMessage,
     );
 
     console.info(JSON.stringify({
@@ -205,7 +237,43 @@ export async function POST(request: Request) {
       latencyMs: Date.now() - tutorStartedAt,
     }));
 
-    return Response.json(result);
+    return result;
+  };
+
+  if (request.headers.get("accept")?.includes("application/x-ndjson")) {
+    const encoder = new TextEncoder();
+    let cancelled = false;
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const send = (event: unknown) => {
+          if (!cancelled) controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        };
+        try {
+          const result = await generate((message) => send({ type: "message", message }));
+          send({ type: "complete", ...result });
+        } catch (error) {
+          if (!signal.aborted) console.error("Study tutor stream error:", error);
+          send({ type: "error", error: "The study tutor could not respond right now. Please try again." });
+        } finally {
+          if (!cancelled) controller.close();
+        }
+      },
+      cancel() {
+        cancelled = true;
+        abortController.abort();
+      },
+    });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  }
+
+  try {
+    return Response.json(await generate());
   } catch (error) {
     console.error(JSON.stringify({
       event: "study_tutor.request.failed",

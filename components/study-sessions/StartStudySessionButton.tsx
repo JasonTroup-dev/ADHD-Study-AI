@@ -45,6 +45,7 @@ export function StartStudySessionButton({
 
     try {
       const { session, isExisting } = await createStudySession({
+        plannerTaskId,
         assignmentId,
         classId,
         title,

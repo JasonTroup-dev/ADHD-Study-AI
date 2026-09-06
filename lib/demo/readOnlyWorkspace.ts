@@ -196,6 +196,7 @@ export function getDemoTaskDetailsData(taskId: string): TaskDetailsData | null {
     priority: task.priority,
     status: task.status,
     scheduledDate: task.scheduled_date,
+    studySessionId: null,
     taskClass,
     assignment: assignment
       ? {
@@ -204,6 +205,7 @@ export function getDemoTaskDetailsData(taskId: string): TaskDetailsData | null {
           dueDate: assignment.dueDate,
           originalFileName: assignmentContent?.originalFileName ?? null,
           extractedText: assignmentContent?.extractedText ?? null,
+          supportingMaterials: [],
         }
       : null,
   };

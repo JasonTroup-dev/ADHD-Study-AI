@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { GuidedStudySession } from "@/components/study-sessions/GuidedStudySession";
+import { StudySessionReview } from "@/components/study-sessions/StudySessionReview";
 import { Button } from "@/components/ui/button";
 import { getStudySessionById } from "@/lib/studySessions";
 import type { StudySession } from "@/types/database";
@@ -81,6 +82,10 @@ export default function StudySessionPage() {
         plannerTaskId={plannerTaskId}
       />
     );
+  }
+
+  if (session?.status === "completed") {
+    return <StudySessionReview session={session} />;
   }
 
   return (

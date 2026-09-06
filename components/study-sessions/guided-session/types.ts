@@ -1,4 +1,5 @@
 import type { StudySession, StudySessionMessage } from "@/types/database";
+import type { AssignmentProblemIndexEntry } from "@/lib/ai/studyTutorContext";
 
 export type GuidedStudySessionProps = {
   session: StudySession;
@@ -23,6 +24,7 @@ export type AssignmentSessionContext = {
     originalFileName: string;
     hasExtractedText: boolean;
   }>;
+  problemIndex: AssignmentProblemIndexEntry[];
   studySessionGoal: {
     sessionNumber: number;
     totalSessions: number;
@@ -53,6 +55,8 @@ export type GuidedSessionController = {
   assignment: AssignmentSessionContext | null;
   messages: TutorMessage[];
   input: string;
+  selectedQuote: string | null;
+  setSelectedQuote: (quote: string | null) => void;
   contextError: string | null;
   tutorError: string | null;
   uploadNotice: string | null;

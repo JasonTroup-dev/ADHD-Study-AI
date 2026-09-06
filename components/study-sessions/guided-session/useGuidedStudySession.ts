@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { withTutorQuote } from "@/lib/ai/tutorQuote";
 
 import { formatFileSize, MAX_STUDY_FILE_BYTES } from "@/lib/files/uploadConstraints";
 import {
@@ -19,7 +20,6 @@ import {
   uploadAssignmentMaterials,
 } from "./api";
 import {
-  createMissingContextMessage,
   getReadyCompletion,
   removePendingTutorMessage,
 } from "./domain";
@@ -42,6 +42,7 @@ export function useGuidedStudySession({
   const [assignment, setAssignment] = useState<AssignmentSessionContext | null>(null);
   const [messages, setMessages] = useState<TutorMessage[]>(savedMessages);
   const [input, setInput] = useState("");
+  const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
   const [contextError, setContextError] = useState<string | null>(null);
   const [tutorError, setTutorError] = useState<string | null>(null);
   const [uploadNotice, setUploadNotice] = useState<string | null>(null);
@@ -58,11 +59,9 @@ export function useGuidedStudySession({
   const startedContextVersionRef = useRef<number | null>(null);
   const hasSavedMessagesRef = useRef(savedMessages.length > 0);
 
+  useEffect(() => () => { abortControllerRef.current?.abort(); }, []);
+
   const assignmentContextVersion = assignment?.contextVersion ?? -1;
-  const assignmentHasExtractedText = assignment?.hasExtractedText ?? false;
-  const assignmentTitle = assignment?.title ?? session.title ?? "this assignment";
-  const assignmentDescription = assignment?.description ?? null;
-  const assignmentStudySessionGoal = assignment?.studySessionGoal ?? null;
   const hasLinkedAssignment = Boolean(assignment);
 
   const persistMessages = useCallback(
@@ -115,19 +114,6 @@ export function useGuidedStudySession({
     if (startedContextVersionRef.current === assignmentContextVersion) return;
     startedContextVersionRef.current = assignmentContextVersion;
 
-    if (session.session_type === "assignment" && !assignmentHasExtractedText) {
-      const missingContextMessage = createMissingContextMessage(
-        assignmentTitle,
-        assignmentDescription,
-        assignmentStudySessionGoal,
-      );
-      hasSavedMessagesRef.current = true;
-      setMessages([missingContextMessage]);
-      void persistMessages([missingContextMessage]);
-      setIsTutorLoading(false);
-      return;
-    }
-
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
@@ -142,6 +128,12 @@ export function useGuidedStudySession({
           [],
           plannerTaskId,
           abortController.signal,
+          (content) => {
+            if (!abortController.signal.aborted) {
+              setMessages((current) => current.map((message) =>
+                message.id === assistantMessageId ? { ...message, content } : message));
+            }
+          },
         );
         if (abortController.signal.aborted) return;
         const nextMessages: TutorMessage[] = [{
@@ -172,10 +164,6 @@ export function useGuidedStudySession({
     };
   }, [
     assignmentContextVersion,
-    assignmentDescription,
-    assignmentHasExtractedText,
-    assignmentStudySessionGoal,
-    assignmentTitle,
     hasLinkedAssignment,
     isContextLoading,
     plannerTaskId,
@@ -191,8 +179,8 @@ export function useGuidedStudySession({
   }
 
   async function sendMessage() {
-    const content = input.trim();
-    if (!content || isTutorLoading) return;
+    if (!input.trim() || isTutorLoading) return;
+    const content = withTutorQuote(input, selectedQuote);
     const userMessage: TutorMessage = { id: crypto.randomUUID(), role: "user", content };
     const nextMessages = [...messages, userMessage];
     const abortController = new AbortController();
@@ -203,6 +191,7 @@ export function useGuidedStudySession({
     hasSavedMessagesRef.current = true;
     setMessages([...nextMessages, { id: assistantMessageId, role: "assistant", content: "" }]);
     setInput("");
+    setSelectedQuote(null);
     setTutorError(null);
     setIsTutorLoading(true);
     void persistMessages(nextMessages, { quiet: true });
@@ -213,6 +202,12 @@ export function useGuidedStudySession({
         nextMessages,
         plannerTaskId,
         abortController.signal,
+        (content) => {
+          if (!abortController.signal.aborted) {
+            setMessages((current) => current.map((message) =>
+              message.id === assistantMessageId ? { ...message, content } : message));
+          }
+        },
       );
       if (abortController.signal.aborted) return;
       const completedMessages: TutorMessage[] = [
@@ -248,7 +243,10 @@ export function useGuidedStudySession({
 
     abortControllerRef.current = null;
     abortController.abort();
-    setMessages((current) => removePendingTutorMessage(current));
+    const stoppedMessages = removePendingTutorMessage(messages);
+    setMessages(stoppedMessages);
+    if (stoppedMessages.length > 0) hasSavedMessagesRef.current = true;
+    void persistMessages(stoppedMessages);
     setTutorError("Response stopped. You can ask another question.");
     setIsTutorLoading(false);
   }
@@ -336,7 +334,7 @@ export function useGuidedStudySession({
     setIsCompleting(true);
     setTutorError(null);
     try {
-      const result = await completeStudySession(session.id, plannerTaskId, assignment?.id ?? null);
+      const result = await completeStudySession(session.id, plannerTaskId);
       window.localStorage.removeItem(`study-session-task:${session.id}`);
       if (result.taskCompletionError || result.assignmentCompletionError) {
         setTutorError(result.taskCompletionError ?? result.assignmentCompletionError ?? "The session was saved, but linked work could not be updated.");
@@ -368,6 +366,8 @@ export function useGuidedStudySession({
     completionUnlocked,
     completionReason,
     setInput,
+    selectedQuote,
+    setSelectedQuote,
     dismissPlanRefinement: () => setPlanRefinement(null),
     sendMessage,
     uploadAssignmentFile,

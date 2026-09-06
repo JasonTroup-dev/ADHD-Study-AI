@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Circle,
   Clock3,
+  Eye,
   Flag,
   Target,
 } from "lucide-react";
@@ -13,7 +14,9 @@ import Link from "next/link";
 import { ResetStudySessionButton } from "@/components/study-sessions/ResetStudySessionButton";
 import { StartStudySessionButton } from "@/components/study-sessions/StartStudySessionButton";
 import { AssignmentFileDropzone } from "@/components/tasks/AssignmentFileDropzone";
+import { Button } from "@/components/ui/button";
 import { estimateTaskMinutes } from "@/lib/assignments/estimateTaskTime";
+import { getTaskOverview } from "@/lib/assignments/taskOverview";
 import { getClassColor } from "@/lib/classColors";
 import { inferTaskSessionType } from "@/lib/studySessions";
 import { cn } from "@/lib/utils";
@@ -26,6 +29,7 @@ export type TaskDetailsData = {
   priority: string | null;
   status: string;
   scheduledDate: string;
+  studySessionId: string | null;
   taskClass: {
     name: string;
     color: string | null;
@@ -36,6 +40,10 @@ export type TaskDetailsData = {
     dueDate: string | null;
     originalFileName: string | null;
     extractedText: string | null;
+    supportingMaterials: Array<{
+      name: string;
+      text: string | null;
+    }>;
   } | null;
 };
 
@@ -51,10 +59,13 @@ export function TaskDetailsView({
   readOnly?: boolean;
 }) {
   const classColor = task.taskClass ? getClassColor(task.taskClass.color) : null;
+  const supportingContextText = task.assignment?.supportingMaterials.find(
+    (material) => material.text?.trim(),
+  )?.text ?? null;
   const estimateMinutes = estimateTaskMinutes({
     taskTitle: task.title,
     assignmentFileName: task.assignment?.originalFileName ?? null,
-    extractedText: task.assignment?.extractedText ?? null,
+    extractedText: supportingContextText ?? task.assignment?.extractedText ?? null,
   });
   const isCompleted = task.status === "completed";
 
@@ -121,7 +132,14 @@ export function TaskDetailsView({
                 aria-disabled={readOnly || undefined}
               >
                 <ResetStudySessionButton plannerTaskId={task.id} className="shrink-0" />
-                {!isCompleted ? (
+                {isCompleted && task.studySessionId ? (
+                  <Button asChild size="sm" className="shrink-0">
+                    <Link href={`/study-session/${task.studySessionId}`}>
+                      <Eye aria-hidden="true" />
+                      View study session
+                    </Link>
+                  </Button>
+                ) : !isCompleted ? (
                   <StartStudySessionButton
                     plannerTaskId={task.id}
                     assignmentId={task.assignmentId}
@@ -152,7 +170,12 @@ export function TaskDetailsView({
                 </div>
               </div>
               <p className="mt-4 text-[15px] leading-6 text-slate-700">
-                {getTaskOverview(task.assignment)}
+                {getTaskOverview({
+                  taskTitle: task.title,
+                  primaryFileName: task.assignment?.originalFileName ?? null,
+                  primaryText: task.assignment?.extractedText ?? null,
+                  supportingMaterials: task.assignment?.supportingMaterials ?? [],
+                })}
               </p>
               {task.assignment && task.assignment.title !== task.title ? (
                 <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
@@ -197,7 +220,7 @@ export function TaskDetailsView({
                   {formatEstimate(estimateMinutes)}
                 </p>
                 <p className="mt-2 text-xs leading-5 text-emerald-800">
-                  Based on the readable requirements in the uploaded assignment file.
+                  Based on the readable requirements in the uploaded assignment material.
                 </p>
               </div>
             ) : null}
@@ -214,7 +237,10 @@ export function TaskDetailsView({
                 <div>
                   <dt className="text-slate-500">File status</dt>
                   <dd className="mt-1 font-medium text-slate-900">
-                    {task.assignment?.originalFileName ? "Uploaded" : "Needed"}
+                    {task.assignment?.originalFileName
+                      || task.assignment?.supportingMaterials.length
+                      ? "Uploaded"
+                      : "Needed"}
                   </dd>
                 </div>
               </dl>
@@ -224,33 +250,6 @@ export function TaskDetailsView({
       </div>
     </div>
   );
-}
-
-function getTaskOverview(assignment: TaskDetailsData["assignment"]) {
-  if (!assignment?.originalFileName) {
-    return "There isn’t enough detail to provide an accurate overview yet. Upload the assignment file below so the overview can be based on the actual instructions.";
-  }
-
-  const fileExcerpt = getAssignmentExcerpt(assignment.extractedText);
-  if (fileExcerpt) return `Based on the uploaded assignment brief: ${fileExcerpt}`;
-
-  return "The assignment file is uploaded, but there isn’t enough readable detail to provide an accurate overview yet. Try replacing it with a text-based PDF, DOCX, TXT, or Markdown file.";
-}
-
-function getAssignmentExcerpt(extractedText: string | null) {
-  if (!extractedText?.trim()) return null;
-
-  const normalizedText = extractedText.replace(/\s+/g, " ").trim();
-  const sentences = normalizedText
-    .split(/(?<=[.!?])\s+/)
-    .filter((sentence) => sentence.length >= 30);
-  const excerpt = (sentences.slice(0, 2).join(" ") || normalizedText).trim();
-
-  if (excerpt.length <= 420) return excerpt;
-
-  const shortenedExcerpt = excerpt.slice(0, 417);
-  const lastSpaceIndex = shortenedExcerpt.lastIndexOf(" ");
-  return `${shortenedExcerpt.slice(0, lastSpaceIndex > 300 ? lastSpaceIndex : 417)}…`;
 }
 
 function formatDate(value: string) {

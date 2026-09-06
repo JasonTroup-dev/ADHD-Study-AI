@@ -653,6 +653,7 @@ export type Database = {
           ended_at: string | null
           id: string
           messages: StudySessionMessage[]
+          planner_task_id: string | null
           planned_minutes: number | null
           session_type: StudySessionType
           started_at: string
@@ -670,6 +671,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           messages?: StudySessionMessage[]
+          planner_task_id?: string | null
           planned_minutes?: number | null
           session_type?: StudySessionType
           started_at?: string
@@ -687,6 +689,7 @@ export type Database = {
           ended_at?: string | null
           id?: string
           messages?: StudySessionMessage[]
+          planner_task_id?: string | null
           planned_minutes?: number | null
           session_type?: StudySessionType
           started_at?: string
@@ -709,6 +712,13 @@ export type Database = {
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_sessions_planner_task_id_fkey"
+            columns: ["planner_task_id"]
+            isOneToOne: false
+            referencedRelation: "study_plan_tasks"
             referencedColumns: ["id"]
           },
         ]

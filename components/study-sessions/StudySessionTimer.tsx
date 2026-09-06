@@ -167,7 +167,7 @@ export function StudySessionTimer({
                   : " · Study at your pace"}
               </p>
             </div>
-            {assignmentId ? (
+            {assignmentId && !plannerTaskId ? (
               <label className="mt-1 inline-flex cursor-pointer items-center gap-2 text-xs text-gray-500">
                 <input
                   type="checkbox"

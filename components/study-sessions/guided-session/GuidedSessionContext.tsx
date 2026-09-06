@@ -4,6 +4,7 @@ import { BookOpen, FileUp } from "lucide-react";
 import { useRef, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { getClipboardFiles } from "@/lib/files/clipboardFiles";
 import { ASSIGNMENT_FILE_ACCEPT, STUDY_FILE_ACCEPT } from "@/lib/files/uploadConstraints";
 
 import { formatPlanDate } from "./domain";
@@ -18,10 +19,36 @@ export function MissingContextActions({
   const materialsInputRef = useRef<HTMLInputElement | null>(null);
   return (
     <div className="flex flex-wrap gap-2">
-      <Button type="button" size="sm" variant="outline" disabled={controller.isUploading} onClick={() => assignmentInputRef.current?.click()}>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={controller.isUploading}
+        onClick={() => assignmentInputRef.current?.click()}
+        onPaste={(event) => {
+          const [file] = getClipboardFiles(event.clipboardData);
+          if (!file || controller.isUploading) return;
+          event.preventDefault();
+          void controller.uploadAssignmentFile(file);
+        }}
+        title="Upload or paste an assignment"
+      >
         <FileUp /> Upload assignment
       </Button>
-      <Button type="button" size="sm" variant="outline" disabled={controller.isUploading} onClick={() => materialsInputRef.current?.click()}>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={controller.isUploading}
+        onClick={() => materialsInputRef.current?.click()}
+        onPaste={(event) => {
+          const files = getClipboardFiles(event.clipboardData);
+          if (files.length === 0 || controller.isUploading) return;
+          event.preventDefault();
+          void controller.uploadStudyMaterials(files);
+        }}
+        title="Upload or paste study materials"
+      >
         <BookOpen /> Add materials
       </Button>
       <input ref={assignmentInputRef} type="file" className="sr-only" accept={ASSIGNMENT_FILE_ACCEPT} onChange={(event) => { void controller.uploadAssignmentFile(event.target.files?.[0] ?? null); event.target.value = ""; }} />
@@ -37,18 +64,43 @@ export function GuidedSessionContextHeader({
 }) {
   const materialsInputRef = useRef<HTMLInputElement | null>(null);
   const assignment = controller.assignment;
+  const readableMaterialCount = assignment?.materials.filter(
+    (material) => material.hasExtractedText,
+  ).length ?? 0;
+  const hasReadableAssignmentContext = Boolean(
+    assignment?.hasExtractedText || readableMaterialCount > 0,
+  );
 
   return (
     <>
       {controller.contextError ? <Notice tone="error">{controller.contextError}</Notice> : null}
-      {!controller.isContextLoading && assignment?.hasExtractedText ? (
+      {!controller.isContextLoading && assignment && hasReadableAssignmentContext ? (
         <Notice>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-medium text-gray-900">Grounded in {assignment.originalFileName ?? "the assignment instructions"}</p>
-              <p className="mt-1">{assignment.materials.length} linked study material{assignment.materials.length === 1 ? "" : "s"}.</p>
+              <p className="font-medium text-gray-900">
+                {assignment.hasExtractedText
+                  ? `Grounded in ${assignment.originalFileName ?? "the assignment instructions"}`
+                  : `Grounded in ${readableMaterialCount} readable study material${readableMaterialCount === 1 ? "" : "s"}`}
+              </p>
+              {assignment.hasExtractedText ? (
+                <p className="mt-1">{assignment.materials.length} linked study material{assignment.materials.length === 1 ? "" : "s"}.</p>
+              ) : null}
             </div>
-            <Button type="button" size="sm" variant="outline" disabled={controller.isUploading} onClick={() => materialsInputRef.current?.click()}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={controller.isUploading}
+              onClick={() => materialsInputRef.current?.click()}
+              onPaste={(event) => {
+                const files = getClipboardFiles(event.clipboardData);
+                if (files.length === 0 || controller.isUploading) return;
+                event.preventDefault();
+                void controller.uploadStudyMaterials(files);
+              }}
+              title="Upload or paste study materials"
+            >
               <BookOpen /> Add materials
             </Button>
           </div>

@@ -1,3 +1,4 @@
+import { retainStudyTutorMessages } from "@/lib/ai/studyTutorContext";
 import type {
   AssignmentSessionContext,
   PlanRefinement,
@@ -29,23 +30,28 @@ export async function requestTutorResponse(
   messages: TutorMessage[],
   plannerTaskId: string | null | undefined,
   signal: AbortSignal,
+  onMessage?: (message: string) => void,
 ): Promise<RequiredTutorResponse> {
   const requestController = new AbortController();
   const abortRequest = () => requestController.abort();
   const timeout = window.setTimeout(abortRequest, 70_000);
   signal.addEventListener("abort", abortRequest, { once: true });
+  if (signal.aborted) abortRequest();
 
   try {
     const response = await fetch("/api/study-sessions/tutor", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Accept: "application/x-ndjson" },
       body: JSON.stringify({
         sessionId,
         plannerTaskId: plannerTaskId ?? null,
-        messages: messages.slice(-16).map(({ role, content }) => ({ role, content })),
+        messages: retainStudyTutorMessages(messages).map(({ role, content }) => ({ role, content })),
       }),
       signal: requestController.signal,
     });
+    if (response.ok && response.headers.get("content-type")?.includes("application/x-ndjson")) {
+      return await readTutorStream(response, onMessage);
+    }
     const payload = await readJson<{
       message?: string;
       completionStatus?: "in_progress" | "ready";
@@ -73,6 +79,41 @@ export async function requestTutorResponse(
   } finally {
     window.clearTimeout(timeout);
     signal.removeEventListener("abort", abortRequest);
+  }
+}
+
+export async function readTutorStream(
+  response: Response,
+  onMessage?: (message: string) => void,
+): Promise<RequiredTutorResponse> {
+  if (!response.body) throw new Error("The study tutor returned an empty response.");
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      if (done && buffer.trim()) lines.push(buffer);
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const event = JSON.parse(line);
+        if (event.type === "error") throw new Error(event.error || "The study tutor could not respond.");
+        if (event.type === "message" && typeof event.message === "string") {
+          onMessage?.(event.message);
+        } else if (event.type === "complete" && typeof event.message === "string"
+          && (event.completionStatus === "ready" || event.completionStatus === "in_progress")
+          && typeof event.completionReason === "string") {
+          return { message: event.message, completionStatus: event.completionStatus, completionReason: event.completionReason };
+        }
+      }
+      if (done) throw new Error("The tutor response was interrupted. Please try again.");
+    }
+  } finally {
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
   }
 }
 

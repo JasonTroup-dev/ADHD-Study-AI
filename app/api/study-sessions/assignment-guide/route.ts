@@ -1,4 +1,5 @@
 import { generateAssignmentGuide } from "@/lib/ai/assignmentGuide";
+import { buildAssignmentProblemIndex } from "@/lib/ai/studyTutorContext";
 import { createClient } from "@/lib/supabase/server";
 import { getAssignmentStudySessionGoal } from "@/lib/syllabus/studySessionTitles";
 
@@ -21,6 +22,7 @@ type AssignmentRow = {
 
 type PlannerTaskRow = {
   id: string;
+  title: string;
 };
 
 export async function POST(request: Request) {
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
 
   const { data: session, error: sessionError } = await supabase
     .from("study_sessions")
-    .select("id, assignment_id, session_type")
+    .select("id, assignment_id, planner_task_id, title, session_type")
     .eq("id", body.sessionId)
     .eq("user_id", user.id)
     .eq("status", "active")
@@ -127,9 +129,8 @@ export async function POST(request: Request) {
   }
 
   const assignment = data as AssignmentRow;
-  const plannerTaskId = typeof body.plannerTaskId === "string"
-    ? body.plannerTaskId
-    : null;
+  const plannerTaskId = session.planner_task_id
+    ?? (typeof body.plannerTaskId === "string" ? body.plannerTaskId : null);
   const { data: materialData, error: materialsError } = await supabase
     .from("assignment_materials")
     .select("id, original_file_name, extracted_text")
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
   const className = getClassName(assignment.classes);
   const { data: taskData, error: taskError } = await supabase
     .from("study_plan_tasks")
-    .select("id")
+    .select("id, title")
     .eq("assignment_id", assignment.id)
     .eq("user_id", user.id)
     .order("scheduled_date", { ascending: true })
@@ -164,10 +165,10 @@ export async function POST(request: Request) {
   const assignmentInstructions = assignment.extracted_text
     ? truncateAssignmentText(assignment.extracted_text)
     : null;
-  const studySessionGoal = getAssignmentStudySessionGoal(
-    (taskData ?? []) as PlannerTaskRow[],
-    plannerTaskId,
-  );
+  const tasks = (taskData ?? []) as PlannerTaskRow[];
+  const titleMatches = tasks.filter((task) => task.title === session.title);
+  const studySessionGoal = getAssignmentStudySessionGoal(tasks,
+    plannerTaskId ?? (titleMatches.length === 1 ? titleMatches[0].id : null));
   const assignmentResponse = {
     id: assignment.id,
     title: assignment.title,
@@ -186,6 +187,16 @@ export async function POST(request: Request) {
       originalFileName: material.original_file_name as string,
       hasExtractedText: Boolean(material.extracted_text),
     })),
+    problemIndex: buildAssignmentProblemIndex(
+      (materialData ?? []).flatMap((material) =>
+        material.extracted_text?.trim()
+          ? [{
+              name: material.original_file_name as string,
+              content: material.extracted_text as string,
+            }]
+          : [],
+      ),
+    ),
     studySessionGoal,
   };
 
