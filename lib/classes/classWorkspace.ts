@@ -328,20 +328,17 @@ export function getNextUp({
       eyebrow: dueState.label,
       title: dueSoonAssignment.title,
       description: dueSoonAssignment.hasAssignmentFile
-        ? "The assignment instructions are attached, so the guided session can stay grounded."
-        : "Add instructions when you can, or start with the assignment details already saved.",
+        ? "Review the assignment and work through the task plan built from its instructions."
+        : "Open the assignment to review its details and see the tasks in its study plan.",
       meta: dueSoonAssignment.materialCount > 0
         ? formatMaterialCount(dueSoonAssignment.materialCount)
         : "No materials attached yet",
       icon: dueState.isUrgent ? AlertCircle : CalendarClock,
       tone: dueState.isUrgent ? "amber" : "slate",
       action: {
-        type: "study",
-        label: "Work on It",
-        title: dueSoonAssignment.title,
-        classId,
-        assignmentId: dueSoonAssignment.id,
-        sessionType: "assignment",
+        type: "link",
+        label: "View Assignment",
+        href: `/planner/assignments/${dueSoonAssignment.id}?from=class`,
       },
     };
   }

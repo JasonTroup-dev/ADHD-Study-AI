@@ -1,13 +1,12 @@
 import {
+  ArrowRight,
   BookOpen,
   CalendarClock,
   CheckCircle2,
   FileText,
-  Trash2,
 } from "lucide-react";
+import Link from "next/link";
 
-import { StartStudySessionButton } from "@/components/study-sessions/StartStudySessionButton";
-import { Button } from "@/components/ui/button";
 import { getClassColor } from "@/lib/classColors";
 import type {
   Assignment,
@@ -17,8 +16,6 @@ import type {
 type AssignmentListProps = {
   assignments: Assignment[];
   isLoading: boolean;
-  deletingAssignmentId: string | null;
-  onDelete: (assignment: Assignment) => void;
 };
 
 type AssignmentGroup = {
@@ -151,13 +148,9 @@ function GroupHeader({ group }: { group: AssignmentGroup }) {
 function AssignmentCard({
   assignment,
   groupKind,
-  deletingAssignmentId,
-  onDelete,
 }: {
   assignment: Assignment;
   groupKind: AssignmentGroup["kind"];
-  deletingAssignmentId: string | null;
-  onDelete: (assignment: Assignment) => void;
 }) {
   const assignmentClass = getAssignmentClass(assignment);
   const classColor = assignmentClass
@@ -172,8 +165,10 @@ function AssignmentCard({
         : "border-slate-200 bg-white";
 
   return (
-    <article
-      className={`group relative flex min-h-24 items-start justify-between gap-4 overflow-hidden rounded-2xl border px-5 py-5 transition-colors hover:border-slate-300 sm:px-6 ${cardStyles}`}
+    <Link
+      href={`/planner/assignments/${assignment.id}`}
+      aria-label={`View details for ${assignment.title}`}
+      className={`group relative flex min-h-24 items-start justify-between gap-4 overflow-hidden rounded-2xl border px-5 py-5 transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-slate-300 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:px-6 ${cardStyles}`}
     >
       {classColor ? (
         <span
@@ -231,39 +226,18 @@ function AssignmentCard({
           {assignment.importance}
         </span>
 
-        <div className="flex items-center gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-          {assignment.status !== "completed" ? (
-            <StartStudySessionButton
-              assignmentId={assignment.id}
-              classId={assignment.class_id}
-              title={assignment.title}
-              sessionType="assignment"
-              variant="outline"
-              className="h-7 px-2 text-xs"
-            />
-          ) : null}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            className="text-slate-500 hover:bg-red-50 hover:text-red-700"
-            aria-label={`Delete ${assignment.title}`}
-            disabled={deletingAssignmentId === assignment.id}
-            onClick={() => onDelete(assignment)}
-          >
-            <Trash2 aria-hidden="true" />
-          </Button>
-        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 transition-colors group-hover:border-slate-300 group-hover:text-slate-950">
+          View details
+          <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        </span>
       </div>
-    </article>
+    </Link>
   );
 }
 
 export default function AssignmentList({
   assignments,
   isLoading,
-  deletingAssignmentId,
-  onDelete,
 }: AssignmentListProps) {
   if (isLoading) {
     return (
@@ -310,8 +284,6 @@ export default function AssignmentList({
                 key={assignment.id}
                 assignment={assignment}
                 groupKind={group.kind}
-                deletingAssignmentId={deletingAssignmentId}
-                onDelete={onDelete}
               />
             ))}
           </div>

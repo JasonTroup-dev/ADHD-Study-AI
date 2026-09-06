@@ -8,6 +8,8 @@ import type { Stream } from "openai/streaming";
 
 export type AIWorkflow =
   | "assignment_guide"
+  | "assignment_material_image"
+  | "assignment_task_refinement"
   | "class_material_analysis"
   | "flashcards"
   | "study_guide"
@@ -28,6 +30,18 @@ export const AI_WORKFLOWS: Record<AIWorkflow, WorkflowConfig> = {
   assignment_guide: {
     defaultModel: "gpt-5.4-mini",
     modelEnv: "OPENAI_ASSIGNMENT_GUIDE_MODEL",
+    timeoutMs: 60_000,
+    maxRetries: 0,
+  },
+  assignment_material_image: {
+    defaultModel: "gpt-5.4-mini",
+    modelEnv: "OPENAI_ASSIGNMENT_MATERIAL_MODEL",
+    timeoutMs: 90_000,
+    maxRetries: 2,
+  },
+  assignment_task_refinement: {
+    defaultModel: "gpt-5.4-mini",
+    modelEnv: "OPENAI_ASSIGNMENT_TASK_MODEL",
     timeoutMs: 60_000,
     maxRetries: 0,
   },

@@ -19,6 +19,17 @@ export function getGeneratedFlashcardsSchema(cardCount: number) {
   });
 }
 
+export function getAssignmentTaskRefinementSchema(taskCount: number) {
+  return z.strictObject({
+    tasks: z.array(
+      z.strictObject({
+        taskId: z.string().min(1),
+        title: z.string().min(1).max(120),
+      }),
+    ).length(taskCount),
+  });
+}
+
 export const materialAnalysisSchema = z.strictObject({
   files: z.array(
     z.strictObject({

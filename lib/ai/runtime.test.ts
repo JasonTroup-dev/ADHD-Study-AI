@@ -27,6 +27,7 @@ describe("AI runtime", () => {
 
     process.env.OPENAI_FLASHCARDS_MODEL = "custom-eval-model";
     assert.equal(getAIModel("flashcards"), "custom-eval-model");
+    assert.equal(AI_WORKFLOWS.assignment_material_image.maxRetries, 2);
   });
 
   it("estimates standard and cached token cost", () => {

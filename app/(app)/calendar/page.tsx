@@ -399,7 +399,7 @@ function CalendarItemChip({
   const color = getClassColor(item.classColor);
   const href =
     item.kind === "assignment"
-      ? "/planner/assignments"
+      ? `/planner/assignments/${item.id}?from=calendar`
       : `/planner/tasks/${item.id}?from=calendar`;
 
   const content = (

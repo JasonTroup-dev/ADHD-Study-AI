@@ -65,7 +65,7 @@ export function ClassWorkspaceView({
           <div className="mt-7 grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
             <section className="space-y-7">
               <ClassNextUpCard nextUp={nextUp} />
-              <ClassAssignmentsSection classId={classId} classColor={workspace.course.color} assignments={workspace.assignmentSummaries} />
+              <ClassAssignmentsSection classColor={workspace.course.color} assignments={workspace.assignmentSummaries} />
               <ClassMaterialsPanel classId={classId} className={workspace.course.name} assignments={workspace.assignments} materials={workspace.materials} />
               <div id="flashcards">
                 <ClassFlashcardsSection classId={classId} flashcardSets={workspace.flashcardSets} />

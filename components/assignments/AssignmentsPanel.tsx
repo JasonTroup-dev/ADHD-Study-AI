@@ -96,9 +96,6 @@ export default function AssignmentsPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deletingAssignmentId, setDeletingAssignmentId] = useState<
-    string | null
-  >(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -232,40 +229,6 @@ export default function AssignmentsPanel() {
     }
   }
 
-  async function handleDeleteAssignment(assignment: Assignment) {
-    const confirmed = window.confirm(
-      `Delete "${assignment.title}"? Any attached assignment file and study materials will also be deleted.`,
-    );
-
-    if (!confirmed) return;
-
-    setDeletingAssignmentId(assignment.id);
-    setError(null);
-    setNotice(null);
-
-    try {
-      const response = await fetch(`/api/assignments/${assignment.id}`, {
-        method: "DELETE",
-      });
-      const payload = await readErrorResponse(response);
-
-      if (!response.ok) {
-        setError(payload.error ?? "Could not delete this assignment.");
-        return;
-      }
-
-      setAssignments((currentAssignments) =>
-        currentAssignments.filter((item) => item.id !== assignment.id),
-      );
-      setNotice("Assignment deleted.");
-    } catch (deleteError) {
-      console.error("Error deleting assignment:", deleteError);
-      setError("Could not delete this assignment. Please try again.");
-    } finally {
-      setDeletingAssignmentId(null);
-    }
-  }
-
   return (
     <>
       <main className="min-h-full bg-slate-50 px-5 py-8 text-slate-950 sm:px-8 lg:px-10">
@@ -313,8 +276,6 @@ export default function AssignmentsPanel() {
           <AssignmentList
             assignments={sortedAssignments}
             isLoading={isLoading}
-            deletingAssignmentId={deletingAssignmentId}
-            onDelete={handleDeleteAssignment}
           />
         </div>
       </main>
@@ -349,14 +310,6 @@ async function readCreateAssignmentResponse(
 ): Promise<CreateAssignmentResponse> {
   try {
     return (await response.json()) as CreateAssignmentResponse;
-  } catch {
-    return {};
-  }
-}
-
-async function readErrorResponse(response: Response) {
-  try {
-    return (await response.json()) as { error?: string };
   } catch {
     return {};
   }

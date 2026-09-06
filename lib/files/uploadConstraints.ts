@@ -32,6 +32,27 @@ export const TUTOR_ATTACHMENT_ACCEPT = [
 export type SupportedStudyFileExtension =
   (typeof SUPPORTED_STUDY_FILE_EXTENSIONS)[number];
 
+export const SUPPORTED_ASSIGNMENT_MATERIAL_IMAGE_EXTENSIONS = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".webp",
+  ".gif",
+] as const;
+export const SUPPORTED_ASSIGNMENT_MATERIAL_FILE_EXTENSIONS = [
+  ...SUPPORTED_STUDY_FILE_EXTENSIONS,
+  ...SUPPORTED_ASSIGNMENT_MATERIAL_IMAGE_EXTENSIONS,
+] as const;
+export const ASSIGNMENT_MATERIAL_FILE_ACCEPT = [
+  STUDY_FILE_ACCEPT,
+  ...SUPPORTED_TUTOR_IMAGE_TYPES,
+].join(",");
+export const SUPPORTED_ASSIGNMENT_MATERIAL_FILE_LABEL =
+  `${SUPPORTED_STUDY_FILE_LABEL}, PNG, JPG, WEBP, or GIF`;
+
+export type SupportedAssignmentMaterialFileExtension =
+  (typeof SUPPORTED_ASSIGNMENT_MATERIAL_FILE_EXTENSIONS)[number];
+
 export const SUPPORTED_ASSIGNMENT_FILE_EXTENSIONS = [
   ".txt",
   ".md",

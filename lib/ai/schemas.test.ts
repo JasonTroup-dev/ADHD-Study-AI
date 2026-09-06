@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  getAssignmentTaskRefinementSchema,
   getGeneratedFlashcardsSchema,
   materialAnalysisSchema,
   studyTutorResponseSchema,
@@ -9,6 +10,27 @@ import {
 } from "@/lib/ai/schemas";
 
 describe("AI structured output schemas", () => {
+  it("requires exactly one bounded title per assignment task", () => {
+    const schema = getAssignmentTaskRefinementSchema(2);
+    const validPlan = {
+      tasks: [
+        { taskId: "task-1", title: "Practice Set 2: Problems 1–10" },
+        { taskId: "task-2", title: "Practice Set 2: Problems 11–20" },
+      ],
+    };
+
+    assert.equal(schema.safeParse(validPlan).success, true);
+    assert.equal(
+      schema.safeParse({ ...validPlan, tasks: validPlan.tasks.slice(0, 1) })
+        .success,
+      false,
+    );
+    assert.equal(
+      schema.safeParse({ ...validPlan, extra: true }).success,
+      false,
+    );
+  });
+
   it("requires the requested flashcard count and rejects extra keys", () => {
     const schema = getGeneratedFlashcardsSchema(2);
     const validDeck = {

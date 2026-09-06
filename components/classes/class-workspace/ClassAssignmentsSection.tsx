@@ -1,7 +1,6 @@
-import { AlertCircle, BookOpen, CalendarClock, CheckCircle2, Clock3, FileText, Plus } from "lucide-react";
+import { AlertCircle, ArrowRight, BookOpen, CalendarClock, CheckCircle2, Clock3, FileText, Plus } from "lucide-react";
 import Link from "next/link";
 
-import { StartStudySessionButton } from "@/components/study-sessions/StartStudySessionButton";
 import { Button } from "@/components/ui/button";
 import { getClassColor, type ClassColor } from "@/lib/classColors";
 import {
@@ -11,11 +10,9 @@ import {
 } from "@/lib/classes/classWorkspace";
 
 export function ClassAssignmentsSection({
-  classId,
   classColor,
   assignments,
 }: {
-  classId: string;
   classColor: ClassColor;
   assignments: CourseAssignment[];
 }) {
@@ -33,7 +30,7 @@ export function ClassAssignmentsSection({
       {assignments.length > 0 ? (
         <div className="space-y-3">
           {assignments.map((assignment) => (
-            <CourseAssignmentCard key={assignment.id} classId={classId} classColor={classColor} assignment={assignment} />
+            <CourseAssignmentCard key={assignment.id} classColor={classColor} assignment={assignment} />
           ))}
         </div>
       ) : (
@@ -47,7 +44,7 @@ export function ClassAssignmentsSection({
   );
 }
 
-function CourseAssignmentCard({ classId, classColor, assignment }: { classId: string; classColor: ClassColor; assignment: CourseAssignment }) {
+function CourseAssignmentCard({ classColor, assignment }: { classColor: ClassColor; assignment: CourseAssignment }) {
   const classColorOption = getClassColor(classColor);
   const dueState = getDueState(assignment, classColor);
   const isCompleted = assignment.status === "completed";
@@ -72,11 +69,12 @@ function CourseAssignmentCard({ classId, classColor, assignment }: { classId: st
         </div>
       </div>
       <div className="flex shrink-0 items-center justify-end gap-2 sm:flex-col sm:items-end">
-        {!isCompleted ? (
-          <StartStudySessionButton assignmentId={assignment.id} classId={classId} title={assignment.title} sessionType="assignment" label="Start Block" variant="outline" className="h-8 rounded-lg border-slate-200 bg-white px-3 text-sm font-semibold text-slate-950 shadow-none hover:bg-slate-50" />
-        ) : (
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-700"><CheckCircle2 className="h-4 w-4" aria-hidden="true" />Done</span>
-        )}
+        <Button asChild variant="outline" className="h-8 rounded-lg border-slate-200 bg-white px-3 text-sm font-semibold text-slate-950 shadow-none hover:bg-slate-50">
+          <Link href={`/planner/assignments/${assignment.id}?from=class`}>
+            View details
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </Button>
       </div>
     </article>
   );
