@@ -8,6 +8,7 @@ import {
   STUDY_FILE_ACCEPT,
   SUPPORTED_STUDY_FILE_LABEL,
 } from "@/lib/files/uploadConstraints";
+import { getClipboardFiles } from "@/lib/files/clipboardFiles";
 
 export function MaterialsDropzone({
   fileInputRef,
@@ -48,6 +49,12 @@ export function MaterialsDropzone({
             : "border-blue-200 bg-blue-50/50 hover:border-blue-400 hover:bg-white hover:shadow-md hover:shadow-blue-100/70"
         } disabled:cursor-not-allowed disabled:opacity-70`}
         onClick={() => fileInputRef.current?.click()}
+        onPaste={(event) => {
+          const files = getClipboardFiles(event.clipboardData);
+          if (files.length === 0 || disabled) return;
+          event.preventDefault();
+          onFilesDropped(files);
+        }}
         onDragOver={(event) => {
           event.preventDefault();
           if (!disabled) onDraggingChange(true);
@@ -67,7 +74,7 @@ export function MaterialsDropzone({
           {isAnalyzing ? <Loader2 className="h-7 w-7 animate-spin" /> : <Upload className="h-7 w-7" />}
         </span>
         <span className="mt-4 text-lg font-semibold text-slate-950">
-          {isAnalyzing ? "Analyzing files..." : "Drop files here or click to upload"}
+          {isAnalyzing ? "Analyzing files..." : "Drop, paste, or click to upload"}
         </span>
         <span className="mt-2 text-sm text-slate-600">
           {SUPPORTED_STUDY_FILE_LABEL}, up to {MAX_TUTOR_FILES} files

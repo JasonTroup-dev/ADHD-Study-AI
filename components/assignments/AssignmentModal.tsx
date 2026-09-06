@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { getClipboardFiles } from "@/lib/files/clipboardFiles";
 import {
   ASSIGNMENT_FILE_ACCEPT,
   formatFileSize,
@@ -298,6 +299,13 @@ export default function AssignmentModal({
             />
             <label
               htmlFor="assignment-file"
+              tabIndex={isSubmitting ? -1 : 0}
+              onPaste={(event) => {
+                const [file] = getClipboardFiles(event.clipboardData);
+                if (!file || isSubmitting) return;
+                event.preventDefault();
+                updateSourceFile(file);
+              }}
               onDragOver={(event) => {
                 event.preventDefault();
                 if (!isSubmitting) setIsDragging(true);
@@ -346,7 +354,7 @@ export default function AssignmentModal({
                 <div className="text-center">
                   <Upload className="mx-auto h-6 w-6 text-gray-600" />
                   <p className="mt-2 text-sm font-medium text-gray-800">
-                    Choose a file or drag it here
+                    Choose, drag, or paste a file
                   </p>
                   <p className="mt-1 text-xs text-gray-500">
                     {SUPPORTED_ASSIGNMENT_FILE_LABEL}, up to{" "}
@@ -378,6 +386,13 @@ export default function AssignmentModal({
             />
             <label
               htmlFor="assignment-materials"
+              tabIndex={isSubmitting ? -1 : 0}
+              onPaste={(event) => {
+                const files = getClipboardFiles(event.clipboardData);
+                if (files.length === 0 || isSubmitting) return;
+                event.preventDefault();
+                addMaterialFiles(files);
+              }}
               className={`flex min-h-24 cursor-pointer items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-5 py-4 text-center transition hover:bg-gray-100 ${
                 isSubmitting ? "cursor-not-allowed opacity-60" : ""
               }`}
@@ -385,7 +400,7 @@ export default function AssignmentModal({
               <div>
                 <Upload className="mx-auto h-5 w-5 text-gray-600" />
                 <p className="mt-2 text-sm font-medium text-gray-800">
-                  Add up to {MAX_TUTOR_FILES} study materials
+                  Choose or paste up to {MAX_TUTOR_FILES} study materials
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
                   {SUPPORTED_STUDY_FILE_LABEL}

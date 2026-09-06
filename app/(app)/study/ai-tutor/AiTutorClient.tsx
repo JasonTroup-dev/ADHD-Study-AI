@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import InputBar from "@/components/ai-tutor/InputBar";
 import PromptButtons from "@/components/ai-tutor/PromptButtons";
 import TutorWorkspace from "@/components/ai-tutor/TutorWorkspace";
+import { withTutorQuote } from "@/lib/ai/tutorQuote";
 import {
     formatFileSize,
     MAX_STUDY_FILE_BYTES,
@@ -32,6 +33,7 @@ type Message = {
 
 export default function AiTutor() {
     const [input, setInput] = useState("");
+    const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [files, setFiles] = useState<File[]>([]);
     const [composerError, setComposerError] = useState<string | null>(null);
@@ -102,6 +104,7 @@ export default function AiTutor() {
             if (clearComposer) {
                 setInput("");
                 setFiles([]);
+                setSelectedQuote(null);
             }
             setLoadingStatus("Waiting for AI...");
 
@@ -212,8 +215,9 @@ export default function AiTutor() {
     }
 
     function handleSend() {
+        if (!input.trim() && files.length === 0) return;
         void runTutorTurn({
-            messageContent: input,
+            messageContent: withTutorQuote(input.trim() || "Please help me understand the attached study materials.", selectedQuote),
             sourceFiles: files,
             clearComposer: true,
         });
@@ -272,6 +276,7 @@ export default function AiTutor() {
         <TutorWorkspace
             messages={messages}
             isLoading={isLoading}
+            onAskTutor={setSelectedQuote}
             messageActions={(message, index) =>
                 message.role === "assistant" && message.deliveryState ? (
                     <button
@@ -290,6 +295,8 @@ export default function AiTutor() {
                     handleSend={handleSend}
                     onStopResponse={isLoading ? handleCancelResponse : undefined}
                     textareaRef={textareaRef}
+                    selectedQuote={selectedQuote}
+                    onRemoveQuote={() => setSelectedQuote(null)}
                     files={files}
                     onFilesSelected={handleFilesSelected}
                     onRemoveFile={handleRemoveFile}

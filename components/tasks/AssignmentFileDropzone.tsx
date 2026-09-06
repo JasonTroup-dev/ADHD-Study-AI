@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FileProcessingStatus } from "@/components/ui/file-processing-status";
+import { getClipboardFiles } from "@/lib/files/clipboardFiles";
 import {
   ASSIGNMENT_FILE_ACCEPT,
   formatFileSize,
@@ -156,6 +157,13 @@ export function AssignmentFileDropzone({
       />
 
       <div
+        tabIndex={isUploading ? -1 : 0}
+        onPaste={(event) => {
+          const [file] = getClipboardFiles(event.clipboardData);
+          if (!file || isUploading) return;
+          event.preventDefault();
+          void uploadFile(file);
+        }}
         onDragEnter={(event) => {
           event.preventDefault();
           if (!isUploading) setIsDragging(true);
@@ -186,7 +194,7 @@ export function AssignmentFileDropzone({
               ? "Uploading assignment brief..."
               : currentFileName
                 ? "Replace the assignment file"
-                : "Drop the assignment file here"}
+                : "Drop or paste the assignment file here"}
           </h3>
           <p className="mt-0.5 truncate text-xs text-slate-500">
             {currentFileName

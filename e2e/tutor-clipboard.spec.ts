@@ -3,6 +3,9 @@ import { expect, test } from "@playwright/test";
 test("pastes clipboard images into the AI Tutor composer", async ({ page }) => {
   let uploadedClipboardImage = false;
   let chatRequest: Record<string, unknown> | null = null;
+  const pageErrors: string[] = [];
+
+  page.on("pageerror", (error) => pageErrors.push(error.message));
 
   await page.route("**/api/chat/files", async (route) => {
     const body = route.request().postDataBuffer()?.toString("utf8") ?? "";
@@ -33,26 +36,33 @@ test("pastes clipboard images into the AI Tutor composer", async ({ page }) => {
   });
 
   await page.goto("/demo/study/ai-tutor");
-  await page.locator("[inert]").evaluate((element) => {
-    element.removeAttribute("inert");
-    element.removeAttribute("aria-disabled");
+  await page.locator("[inert]").evaluateAll((elements) => {
+    elements.forEach((element) => {
+      element.removeAttribute("inert");
+      element.removeAttribute("aria-disabled");
+    });
   });
   const composer = page.getByLabel("Message the AI Tutor");
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
 
-  await composer.evaluate((element) => {
-    const clipboardData = new DataTransfer();
-    clipboardData.items.add(new File(
-      [new Uint8Array([1, 2, 3])],
-      "clipboard.png",
-      { type: "image/png" },
-    ));
-    element.dispatchEvent(new ClipboardEvent("paste", {
-      bubbles: true,
-      cancelable: true,
-      clipboardData,
-    }));
+  await page.evaluate(async () => {
+    const pngBytes = Uint8Array.from(
+      atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="),
+      (character) => character.charCodeAt(0),
+    );
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        "image/png": new Blob([pngBytes], {
+          type: "image/png",
+        }),
+      }),
+    ]);
   });
+  await composer.focus();
+  await expect(composer).toBeFocused();
+  await composer.press("Control+V");
 
+  expect(pageErrors).toEqual([]);
   await expect(page.getByText(/clipboard-image-\d+-1\.png/)).toBeVisible();
 
   await composer.fill("Explain this diagram.");

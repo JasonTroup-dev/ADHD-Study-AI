@@ -14,6 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { FileProcessingStatus } from "@/components/ui/file-processing-status";
+import { getClipboardFiles } from "@/lib/files/clipboardFiles";
 import {
   formatFileSize,
   MAX_STUDY_FILE_BYTES,
@@ -92,6 +93,13 @@ export function UploadStep({
           />
           <label
             htmlFor="study-plan-source-file"
+            tabIndex={isAnalyzing ? -1 : 0}
+            onPaste={(event) => {
+              const [file] = getClipboardFiles(event.clipboardData);
+              if (!file || isAnalyzing) return;
+              event.preventDefault();
+              onFileChange(file);
+            }}
             onDragOver={(event) => {
               event.preventDefault();
               if (!isAnalyzing) onDraggingChange(true);
@@ -123,7 +131,7 @@ export function UploadStep({
               </>
             ) : (
               <>
-                <p className="mt-4 text-sm font-semibold text-slate-900">Drop your syllabus here</p>
+                <p className="mt-4 text-sm font-semibold text-slate-900">Drop or paste your syllabus here</p>
                 <p className="mt-1 text-xs text-slate-500">or click to browse your files</p>
                 <p className="mt-4 text-[11px] text-slate-400">{SUPPORTED_SYLLABUS_FILE_LABEL} · Max {formatFileSize(MAX_STUDY_FILE_BYTES)}</p>
               </>

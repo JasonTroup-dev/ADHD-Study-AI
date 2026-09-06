@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { FileProcessingStatus } from "@/components/ui/file-processing-status";
 import type { SavedStudyGuide } from "./types";
+import { getClipboardFiles } from "@/lib/files/clipboardFiles";
 import {
   formatFileSize,
   MAX_STUDY_FILE_BYTES,
@@ -342,6 +343,13 @@ export default function StudyMaterialUploadModal({
               <p className="mb-3 text-sm font-semibold text-slate-900">Choose your source</p>
               <label
                 htmlFor="study-guide-source-file"
+                tabIndex={isLoading ? -1 : 0}
+                onPaste={(event) => {
+                  const [file] = getClipboardFiles(event.clipboardData);
+                  if (!file || isLoading) return;
+                  event.preventDefault();
+                  updateSourceFile(file);
+                }}
                 onDragOver={(event) => {
                   event.preventDefault();
                   if (!isLoading) setIsDragging(true);
@@ -394,7 +402,7 @@ export default function StudyMaterialUploadModal({
                     <span className="flex size-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
                       <Upload className="size-6" aria-hidden="true" />
                     </span>
-                    <p className="mt-4 font-semibold text-slate-900">Drop your study material here</p>
+                    <p className="mt-4 font-semibold text-slate-900">Drop or paste your study material here</p>
                     <p className="mt-1 text-sm text-slate-500">or click to browse your files</p>
                     <p className="mt-5 text-xs leading-5 text-slate-400">
                       {SUPPORTED_STUDY_FILE_LABEL}<br />Up to {formatFileSize(MAX_STUDY_FILE_BYTES)}

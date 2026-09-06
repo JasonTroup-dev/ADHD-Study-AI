@@ -7,8 +7,10 @@ import {
   Square,
   X,
 } from "lucide-react";
-import { useRef, type ClipboardEvent, type RefObject } from "react";
+import { useLayoutEffect, useRef, type ClipboardEvent, type RefObject } from "react";
 
+import AiMarkdown from "@/components/AiMarkdown";
+import { getClipboardFiles } from "@/lib/files/clipboardFiles";
 import { STUDY_FILE_ACCEPT } from "@/lib/files/uploadConstraints";
 
 export default function InputBar({
@@ -17,6 +19,8 @@ export default function InputBar({
   handleSend,
   onStopResponse,
   textareaRef,
+  selectedQuote,
+  onRemoveQuote,
   files,
   onFilesSelected,
   onRemoveFile,
@@ -35,6 +39,8 @@ export default function InputBar({
   handleSend: () => void;
   onStopResponse?: () => void;
   textareaRef?: RefObject<HTMLTextAreaElement | null>;
+  selectedQuote?: string | null;
+  onRemoveQuote?: () => void;
   files: File[];
   onFilesSelected: (files: File[]) => void;
   onRemoveFile: (index: number) => void;
@@ -49,35 +55,61 @@ export default function InputBar({
   disabled?: boolean;
 }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const internalTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputRef = textareaRef ?? internalTextareaRef;
   const canSend = input.trim().length > 0 || files.length > 0;
   const canStopResponse = disabled && Boolean(onStopResponse);
 
+  useLayoutEffect(() => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+
+    const resize = () => {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    };
+
+    resize();
+    let previousWidth = textarea.getBoundingClientRect().width;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = entry.target.getBoundingClientRect().width;
+      if (width !== previousWidth) {
+        previousWidth = width;
+        resize();
+      }
+    });
+    observer.observe(textarea);
+    return () => observer.disconnect();
+  }, [input, inputRef, disabled, status, placeholder]);
+
   function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
-    if (disabled || attachmentDisabled || !accept.includes("image/")) return;
+    if (disabled || attachmentDisabled) return;
 
-    const pastedImages = Array.from(event.clipboardData.items)
-      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
-      .map((item, index) => {
-        const image = item.getAsFile();
-        if (!image) return null;
+    const pastedFiles = getClipboardFiles(event.clipboardData);
+    if (pastedFiles.length === 0) return;
 
-        const extension = image.type.split("/")[1]?.replace("jpeg", "jpg") || "png";
-        return new File(
-          [image],
-          `clipboard-image-${Date.now()}-${index + 1}.${extension}`,
-          { type: image.type, lastModified: Date.now() },
-        );
-      })
-      .filter((image): image is File => image !== null);
-
-    if (pastedImages.length > 0) {
-      onFilesSelected(pastedImages);
-    }
+    event.preventDefault();
+    onFilesSelected(multiple ? pastedFiles : pastedFiles.slice(0, 1));
   }
 
   return (
     <div className="mt-12 mb-8 w-full max-w-2xl lg:max-w-xl xl:max-w-4xl">
       <div className="rounded-[2rem] border border-gray-200 bg-white px-4 py-3 shadow-sm">
+        {selectedQuote ? (
+          <div className="mb-3 flex items-start gap-3 rounded-xl border-l-4 border-blue-500 bg-blue-50 px-3 py-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-blue-700">Referencing tutor response</p>
+              <blockquote className="mt-1 break-words text-sm text-gray-700">
+                <AiMarkdown className="[&_p]:mb-0 [&_p]:leading-6" variant="tutor">
+                  {selectedQuote}
+                </AiMarkdown>
+              </blockquote>
+            </div>
+            <button type="button" onClick={onRemoveQuote} disabled={disabled} aria-label="Remove quoted passage" className="rounded-full p-1 text-gray-500 hover:bg-blue-100 disabled:opacity-50">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : null}
         {files.length > 0 ? (
           <div className="mb-3 flex flex-wrap gap-2 px-1">
             {files.map((file, index) => (
@@ -131,7 +163,7 @@ export default function InputBar({
           </button>
 
           <textarea
-            ref={textareaRef}
+            ref={inputRef}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onPaste={handlePaste}
@@ -148,7 +180,7 @@ export default function InputBar({
             }}
             placeholder={disabled ? status ?? "Waiting for AI..." : placeholder}
             rows={1}
-            className="flex-1 resize-none bg-transparent text-gray-900 outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
+            className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-gray-900 outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
             disabled={disabled}
             aria-label="Message the AI Tutor"
           />

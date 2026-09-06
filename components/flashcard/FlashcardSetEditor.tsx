@@ -13,6 +13,7 @@ import { FileProcessingStatus } from "@/components/ui/file-processing-status";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { getClipboardFiles } from "@/lib/files/clipboardFiles";
 import {
   formatFileSize,
   MAX_STUDY_FILE_BYTES,
@@ -562,6 +563,13 @@ function FlashcardSetEditorContent({ initialSet, demo }: FlashcardSetEditorProps
                 />
                 <label
                   htmlFor="flashcard-source-file"
+                  tabIndex={isGenerating ? -1 : 0}
+                  onPaste={(event) => {
+                    const [file] = getClipboardFiles(event.clipboardData);
+                    if (!file || isGenerating) return;
+                    event.preventDefault();
+                    updateSourceFile(file);
+                  }}
                   className={cn(
                     "mt-2 flex min-h-24 cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 transition hover:border-blue-400 hover:bg-blue-50/60",
                     isGenerating && "pointer-events-none opacity-60",
@@ -581,7 +589,7 @@ function FlashcardSetEditorContent({ initialSet, demo }: FlashcardSetEditorProps
                     <span className="mt-0.5 block text-xs leading-5 text-slate-500">
                       {sourceFile
                         ? formatFileSize(sourceFile.size)
-                        : SUPPORTED_STUDY_FILE_LABEL}
+                        : `${SUPPORTED_STUDY_FILE_LABEL} · paste supported`}
                     </span>
                   </span>
                 </label>

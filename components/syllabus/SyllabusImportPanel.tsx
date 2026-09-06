@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { getClipboardFiles } from "@/lib/files/clipboardFiles";
 import {
   formatFileSize,
   MAX_STUDY_FILE_BYTES,
@@ -387,6 +388,13 @@ export default function SyllabusImportPanel({
           />
           <label
             htmlFor={fileInputId}
+            tabIndex={isBusy ? -1 : 0}
+            onPaste={(event) => {
+              const [file] = getClipboardFiles(event.clipboardData);
+              if (!file || isBusy) return;
+              event.preventDefault();
+              updateSourceFile(file);
+            }}
             onDragOver={(event: DragEvent<HTMLLabelElement>) => {
               event.preventDefault();
               if (!isBusy) setIsDragging(true);
@@ -420,7 +428,7 @@ export default function SyllabusImportPanel({
               <div className="text-center">
                 <Upload className="mx-auto h-6 w-6 text-gray-600" />
                 <p className="mt-2 text-sm font-semibold text-gray-800">
-                  Choose a syllabus or drag it here
+                  Choose, drag, or paste a syllabus
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
                   {SUPPORTED_SYLLABUS_FILE_LABEL}, up to{" "}

@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 import AiMarkdown from "@/components/AiMarkdown";
+import ResponseSelection from "./ResponseSelection";
 
 export type TutorWorkspaceMessage = {
   id: string;
@@ -19,6 +20,7 @@ type TutorWorkspaceProps = {
   messages: TutorWorkspaceMessage[];
   isLoading: boolean;
   composer: ReactNode;
+  onAskTutor?: (quote: string) => void;
   emptyTitle?: string;
   emptyActions?: ReactNode;
   messageActions?: (message: TutorWorkspaceMessage, index: number) => ReactNode;
@@ -32,6 +34,7 @@ export default function TutorWorkspace({
   messages,
   isLoading,
   composer,
+  onAskTutor,
   emptyTitle = "What are you working on?",
   emptyActions,
   messageActions,
@@ -56,6 +59,7 @@ export default function TutorWorkspace({
   }, [lastMessageId, lastMessageRole]);
 
   return (
+    <ResponseSelection onAskTutor={isLoading ? undefined : onAskTutor}>
     <div className="ai-tutor-scroll-scope flex min-h-screen w-full justify-center bg-gray-100">
       <div className="min-h-screen min-w-4xl border-b-blue-500">
         <div className="relative min-h-screen">
@@ -94,7 +98,7 @@ export default function TutorWorkspace({
                     >
                       {message.role === "user" ? (
                         <>
-                          <p>{message.content}</p>
+                          <p className="whitespace-pre-wrap">{message.content}</p>
                           {message.attachments?.length ? (
                             <div className="mt-3 flex flex-wrap gap-2">
                               {message.attachments.map((attachment) => (
@@ -113,9 +117,11 @@ export default function TutorWorkspace({
                           Thinking...
                         </p>
                       ) : (
-                        <AiMarkdown variant="tutor">
-                          {message.content}
-                        </AiMarkdown>
+                        <div data-tutor-response={message.id}>
+                          <AiMarkdown variant="tutor">
+                            {message.content}
+                          </AiMarkdown>
+                        </div>
                       )}
 
                       {actions ? <div className="mt-4">{actions}</div> : null}
@@ -136,5 +142,6 @@ export default function TutorWorkspace({
         </div>
       </div>
     </div>
+    </ResponseSelection>
   );
 }
