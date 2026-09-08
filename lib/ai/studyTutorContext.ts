@@ -55,47 +55,35 @@ export function applyAssignmentProblemLabels(
         === entry.textbookProblem.toLocaleLowerCase()
     ).length === 1
   );
-  let labeledMessage = replaceTextbookProblemRanges(message, unambiguousIndex);
+  const byTextbookProblem = new Map(unambiguousIndex.map((entry) => [
+    entry.textbookProblem.toLowerCase().replace(/\s+/g, " "), entry,
+  ]));
+  const usedSecondaryLabels = new Set<number>();
 
-  for (const entry of unambiguousIndex) {
-    const problem = escapeRegExp(entry.textbookProblem);
-    const combinedOrProblem = new RegExp(
-      `assignment\\s+(?:position|item)\\s*${entry.assignmentPosition}\\s*(?:\\/|[-–—:])\\s*(?:textbook\\s+)?${problem}|(?:textbook\\s+)?${problem}`,
-      "gi",
-    );
-    let usedSecondaryLabel = false;
+  // Match complete identifiers in one pass. Replacing each index entry in turn
+  // let Problem 3.3 corrupt Problem 3.34 and could rewrite our own replacements.
+  return replaceTextbookProblemRanges(message, unambiguousIndex).replace(
+    /\b(?:assignment\s+(?:position|item)\s*(\d+)\s*(?:\/|[-–—:])\s*)?(?:textbook\s+)?(Problem\s+\d+(?:\.\d+)*)(?![\w]|\.\d)|\bassignment\s+(?:position|item)\s*(\d+)\b/gi,
+    (match, combinedPosition: string | undefined, textbookProblem: string | undefined, position: string | undefined, offset: number, source: string) => {
+      if (position) {
+        return unambiguousIndex.find((entry) => entry.assignmentPosition === Number(position))?.primaryLabel ?? match;
+      }
+      if (!textbookProblem) return match;
+      const entry = byTextbookProblem.get(textbookProblem.toLowerCase().replace(/\s+/g, " "));
+      if (!entry || (combinedPosition && Number(combinedPosition) !== entry.assignmentPosition)) return match;
 
-    labeledMessage = labeledMessage.replace(
-      combinedOrProblem,
-      (match, offset: number, source: string) => {
-        const isSecondaryAlready = /^textbook\s+/i.test(match);
-        const followsPrimaryLabel = source.slice(
-          Math.max(0, offset - entry.primaryLabel.length - 2),
-          offset,
-        ).includes(`${entry.primaryLabel} (`);
-
-        if (isSecondaryAlready && followsPrimaryLabel) {
-          usedSecondaryLabel = true;
-          return match;
-        }
-        if (!usedSecondaryLabel) {
-          usedSecondaryLabel = true;
-          return `${entry.primaryLabel} (${entry.secondaryLabel})`;
-        }
-        return entry.primaryLabel;
-      },
-    );
-
-    labeledMessage = labeledMessage.replace(
-      new RegExp(
-        `\\bassignment\\s+(?:position|item)\\s*${entry.assignmentPosition}\\b`,
-        "gi",
-      ),
-      entry.primaryLabel,
-    );
-  }
-
-  return labeledMessage;
+      const followsPrimaryLabel = new RegExp(
+        `\\b${escapeRegExp(entry.primaryLabel)}\\s*\\(\\s*$`, "i",
+      ).test(source.slice(0, offset));
+      if (followsPrimaryLabel) {
+        usedSecondaryLabels.add(entry.assignmentPosition);
+        return entry.secondaryLabel;
+      }
+      if (usedSecondaryLabels.has(entry.assignmentPosition)) return entry.primaryLabel;
+      usedSecondaryLabels.add(entry.assignmentPosition);
+      return `${entry.primaryLabel} (${entry.secondaryLabel})`;
+    },
+  );
 }
 
 function replaceTextbookProblemRanges(
@@ -108,7 +96,7 @@ function replaceTextbookProblemRanges(
   ]));
 
   return message.replace(
-    /\bProblems?\s+(\d+(?:\.\d+)+)\s*[-–—]\s*(\d+(?:\.\d+)+)\b/gi,
+    /\bProblems?\s+(\d+(?:\.\d+)+)\s*[-–—]\s*(\d+(?:\.\d+)+)(?![\w]|\.\d)/gi,
     (match, first: string, last: string) => {
       const firstPosition = positions.get(first);
       const lastPosition = positions.get(last);

@@ -23,6 +23,7 @@ export default function InputBar({
   onRemoveQuote,
   files,
   onFilesSelected,
+  onFilesPasted,
   onRemoveFile,
   status,
   error,
@@ -43,6 +44,7 @@ export default function InputBar({
   onRemoveQuote?: () => void;
   files: File[];
   onFilesSelected: (files: File[]) => void;
+  onFilesPasted?: (files: File[]) => void;
   onRemoveFile: (index: number) => void;
   status?: string;
   error?: string | null;
@@ -89,7 +91,8 @@ export default function InputBar({
     if (pastedFiles.length === 0) return;
 
     event.preventDefault();
-    onFilesSelected(multiple ? pastedFiles : pastedFiles.slice(0, 1));
+    const files = multiple ? pastedFiles : pastedFiles.slice(0, 1);
+    (onFilesPasted ?? onFilesSelected)(files);
   }
 
   return (

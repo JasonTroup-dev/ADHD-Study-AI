@@ -132,6 +132,14 @@ type AssignmentMaterialRow = {
   created_at: string | null;
 };
 
+type ClassMaterialRow = {
+  id: string;
+  file_name: string | null;
+  file_type: string | null;
+  file_size: number | null;
+  created_at: string | null;
+};
+
 export type StudySessionRow = {
   id?: string;
   title?: string | null;
@@ -185,6 +193,7 @@ export async function getClassWorkspaceData(
       courseResult,
       flashcardResult,
       notesResult,
+      classMaterialsResult,
       assignmentsResult,
       studySessionsResult,
       activeSessionResult,
@@ -193,6 +202,7 @@ export async function getClassWorkspaceData(
       supabase.from("classes").select("name, class_code, prof_name, color").eq("id", classId).maybeSingle(),
       supabase.from("flashcard_sets").select("id, title, created_at, flashcards(mastery_level)").eq("class_id", classId).order("created_at", { ascending: false }),
       supabase.from("notes").select("id, title, source_type, created_at").eq("class_id", classId).order("created_at", { ascending: false }).limit(3),
+      supabase.from("assignment_files").select("id, file_name, file_type, file_size, created_at").eq("class_id", classId).is("assignment_id", null).order("created_at", { ascending: false }),
       supabase.from("assignments").select("id, title, due_date, status, importance, original_file_name, file_type, file_size_bytes, context_status, created_at, updated_at").eq("class_id", classId).order("due_date", { ascending: true, nullsFirst: false }).order("created_at", { ascending: false }),
       supabase.from("study_sessions").select("id, title, assignment_id, class_id, planned_minutes, actual_minutes, session_type, started_at, ended_at").eq("class_id", classId).eq("status", "completed").not("ended_at", "is", null).order("ended_at", { ascending: false }),
       supabase.from("study_sessions").select("id, title, assignment_id, class_id, planned_minutes, actual_minutes, session_type, started_at, ended_at").eq("class_id", classId).eq("status", "active").order("started_at", { ascending: false }).limit(1).maybeSingle(),
@@ -211,6 +221,7 @@ export async function getClassWorkspaceData(
     const dbFlashcardSets = (flashcardResult.data ?? []) as FlashcardSetRow[];
     const flashcardSets = dbFlashcardSets.slice(0, 3).map(toFlashcardSet);
     const dbNotes = (notesResult.data ?? []) as NoteRow[];
+    const dbClassMaterials = (classMaterialsResult.data ?? []) as ClassMaterialRow[];
     const dbAssignments = (assignmentsResult.data ?? []) as AssignmentRow[];
     const dbStudySessions = (studySessionsResult.data ?? []) as StudySessionRow[];
     const dbPlannerTasks = (plannerTasksResult.data ?? []) as PlannerTaskRow[];
@@ -243,6 +254,7 @@ export async function getClassWorkspaceData(
       dbAssignments,
       dbAssignmentMaterials,
       dbNotes,
+      dbClassMaterials,
       assignmentTitleById,
     );
 
@@ -468,28 +480,49 @@ function buildMaterials(
   assignments: AssignmentRow[],
   assignmentMaterials: AssignmentMaterialRow[],
   notes: NoteRow[],
+  classMaterials: ClassMaterialRow[],
   assignmentTitleById: Map<string, string>,
 ): ClassMaterial[] {
   return [
+    ...classMaterials.map((material) => ({
+      id: material.id,
+      title: material.file_name ?? "Untitled Material",
+      meta: `Class material - Uploaded ${formatShortDate(material.created_at)}`,
+      kind: "study_material" as const,
+      previewUrl: getMaterialPreviewUrl("class", material.id, material.file_type),
+    })),
     ...assignments.filter((assignment) => assignment.original_file_name).map((assignment) => ({
       id: `assignment-file-${assignment.id}`,
       title: assignment.original_file_name ?? `${assignment.title ?? "Assignment"} instructions`,
       meta: `${assignment.title ?? "Assignment"} - Instructions - Updated ${formatShortDate(assignment.updated_at ?? assignment.created_at)}`,
       kind: "assignment_file" as const,
+      previewUrl: getMaterialPreviewUrl("assignment", assignment.id, assignment.file_type),
     })),
     ...assignmentMaterials.map((material) => ({
       id: material.id,
       title: material.original_file_name ?? "Untitled Material",
       meta: `${assignmentTitleById.get(material.assignment_id) ?? "Assignment"} - Uploaded ${formatShortDate(material.created_at)}`,
       kind: "study_material" as const,
+      previewUrl: getMaterialPreviewUrl("assignment-material", material.id, material.file_type),
     })),
     ...notes.map((note) => ({
       id: note.id,
       title: note.title ?? "Untitled Material",
       meta: `${(note.source_type ?? "File").toUpperCase()} - Uploaded ${formatShortDate(note.created_at)}`,
       kind: "note" as const,
+      previewUrl: null,
     })),
   ];
+}
+
+function getMaterialPreviewUrl(
+  source: "class" | "assignment" | "assignment-material",
+  id: string,
+  fileType: string | null,
+) {
+  return fileType?.startsWith("image/")
+    ? `/api/material-previews/${source}/${id}`
+    : null;
 }
 
 function sortCourseAssignments(first: CourseAssignment, second: CourseAssignment) {

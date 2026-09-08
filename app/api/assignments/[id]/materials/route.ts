@@ -387,14 +387,16 @@ async function refreshAssignmentTasks(input: {
       supabase: input.supabase,
       userId: input.userId,
       assignmentId: input.assignmentId,
+      automatic: true,
       signal: input.signal,
     });
     if (refinement.tasks.length === 0) return 0;
 
-    return applyAssignmentTaskRefinement({
+    return await applyAssignmentTaskRefinement({
       supabase: input.supabase,
       userId: input.userId,
       assignmentId: input.assignmentId,
+      automatic: true,
       contextVersion: refinement.contextVersion,
       tasks: refinement.tasks.map(({ id, proposedTitle }) => ({
         id,

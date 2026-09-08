@@ -48,6 +48,7 @@ export async function previewAssignmentTaskRefinement(input: {
   userId: string;
   assignmentId: string;
   protectedTaskId?: string | null;
+  automatic?: boolean;
   signal?: AbortSignal;
 }): Promise<AssignmentTaskRefinement> {
   const [assignmentResult, materialsResult, tasksResult] = await Promise.all([
@@ -83,9 +84,23 @@ export async function previewAssignmentTaskRefinement(input: {
   }
 
   const assignment = assignmentResult.data;
+  const allTasks = tasksResult.data ?? [];
+  const startedTaskIds = await loadStartedTaskIds(input, allTasks);
+  // Uploads may populate a new plan once, but must not silently redistribute
+  // established work or the remaining slots of a plan already in progress.
+  if (input.automatic && (startedTaskIds.size > 0 || allTasks.some((task) =>
+    task.status !== "todo" || task.user_edited || task.source !== "generic_generated"
+  ))) {
+    return {
+      contextVersion: assignment.context_version,
+      summary: "Materials saved. Your existing task plan and progress are unchanged.",
+      tasks: [],
+    };
+  }
   const tasks = selectRefinableAssignmentTasks(
-    tasksResult.data ?? [],
+    allTasks,
     input.protectedTaskId,
+    startedTaskIds,
   );
 
   if (tasks.length === 0) {
@@ -128,6 +143,8 @@ export async function previewAssignmentTaskRefinement(input: {
         title: task.title,
         scheduledDate: task.scheduled_date,
       })),
+      fixedTasks: allTasks.filter((task) => !tasks.some((candidate) => candidate.id === task.id))
+        .map((task) => ({ id: task.id, title: task.title, scheduledDate: task.scheduled_date })),
       sources,
       safetyIdentifier: input.userId,
       signal: input.signal,
@@ -167,13 +184,35 @@ export async function previewAssignmentTaskRefinement(input: {
 export function selectRefinableAssignmentTasks(
   tasks: RefinableTask[],
   protectedTaskId?: string | null,
+  startedTaskIds: ReadonlySet<string> = new Set(),
 ) {
   return tasks.filter((task) =>
     task.id !== protectedTaskId
+    && !startedTaskIds.has(task.id)
     && task.status === "todo"
     && !task.user_edited
     && refinableTaskSources.has(task.source)
   );
+}
+
+async function loadStartedTaskIds(
+  input: { supabase: SupabaseServerClient; userId: string; assignmentId: string },
+  tasks: Array<{ id: string }>,
+) {
+  const { data: sessions, error } = await input.supabase
+    .from("study_sessions")
+    .select("planner_task_id")
+    .eq("assignment_id", input.assignmentId)
+    .eq("user_id", input.userId);
+
+  if (error) {
+    throw new TaskRefinementError("Study progress could not be verified. The task plan was not changed.", 500);
+  }
+  // Older sessions have no durable task link. Preserve the whole plan rather
+  // than guessing which renamed task owns that conversation.
+  return new Set(sessions?.some((session) => !session.planner_task_id)
+    ? tasks.map((task) => task.id)
+    : (sessions ?? []).flatMap((session) => session.planner_task_id ? [session.planner_task_id] : []));
 }
 
 export async function applyAssignmentTaskRefinement(input: {
@@ -182,6 +221,7 @@ export async function applyAssignmentTaskRefinement(input: {
   assignmentId: string;
   contextVersion: number;
   tasks: ProposedTask[];
+  automatic?: boolean;
 }) {
   if (input.tasks.length === 0) return 0;
 
@@ -208,19 +248,23 @@ export async function applyAssignmentTaskRefinement(input: {
   const taskIds = input.tasks.map((task) => task.id);
   const { data: eligibleData, error: eligibleError } = await input.supabase
     .from("study_plan_tasks")
-    .select("id")
+    .select("id, title, scheduled_date, status, source, user_edited")
     .eq("assignment_id", input.assignmentId)
-    .eq("user_id", input.userId)
-    .eq("status", "todo")
-    .eq("user_edited", false)
-    .in("source", ["generic_generated", "context_generated"])
-    .in("id", taskIds);
+    .eq("user_id", input.userId);
 
   if (eligibleError) {
     throw new TaskRefinementError("The planner tasks could not be verified.", 500);
   }
 
-  const eligibleIds = new Set((eligibleData ?? []).map((task) => task.id));
+  const allTasks = eligibleData ?? [];
+  const startedTaskIds = await loadStartedTaskIds(input, allTasks);
+  if (input.automatic && (startedTaskIds.size > 0 || allTasks.some((task) =>
+    task.status !== "todo" || task.user_edited || task.source !== "generic_generated"
+  ))) {
+    return 0;
+  }
+  const eligibleIds = new Set(selectRefinableAssignmentTasks(allTasks, null, startedTaskIds)
+    .filter((task) => taskIds.includes(task.id)).map((task) => task.id));
   if (eligibleIds.size !== taskIds.length) {
     throw new TaskRefinementError(
       "One or more planner tasks changed. Generate the task update again.",
@@ -229,7 +273,7 @@ export async function applyAssignmentTaskRefinement(input: {
   }
 
   for (const task of input.tasks) {
-    const { error } = await input.supabase
+    const { data, error } = await input.supabase
       .from("study_plan_tasks")
       .update({
         title: task.proposedTitle.trim(),
@@ -237,7 +281,14 @@ export async function applyAssignmentTaskRefinement(input: {
         context_version: input.contextVersion,
       })
       .eq("id", task.id)
-      .eq("user_id", input.userId);
+      .eq("user_id", input.userId)
+      .eq("assignment_id", input.assignmentId)
+      .eq("status", "todo")
+      .eq("user_edited", false)
+      .eq("title", allTasks.find((candidate) => candidate.id === task.id)!.title)
+      .in("source", input.automatic ? ["generic_generated"] : ["generic_generated", "context_generated"])
+      .select("id")
+      .maybeSingle();
 
     if (error) {
       console.error("Planner task refinement update error:", error);
@@ -245,6 +296,9 @@ export async function applyAssignmentTaskRefinement(input: {
         "Some planner tasks could not be updated. Refresh before trying again.",
         500,
       );
+    }
+    if (!data) {
+      throw new TaskRefinementError("A planner task changed. Refresh before trying again.", 409);
     }
   }
 

@@ -24,7 +24,12 @@ describe("study tutor streaming", () => {
     for (const byte of first) controller.enqueue(new Uint8Array([byte]));
     await vi.waitFor(() => expect(onMessage).toHaveBeenCalledWith("Hello 🧠"));
     expect(completed).toBe(false);
-    const final = { message: "Hello 🧠!", completionStatus: "ready", completionReason: "Finished" };
+    const final = {
+      message: "Hello 🧠!",
+      completionStatus: "ready",
+      completionReason: "Finished",
+      flashcardAction: "none",
+    };
     controller.enqueue(encoder.encode(JSON.stringify({ type: "complete", ...final }) + "\n"));
     controller.close();
     await expect(result).resolves.toEqual(final);

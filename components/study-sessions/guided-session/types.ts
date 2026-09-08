@@ -1,5 +1,6 @@
 import type { StudySession, StudySessionMessage } from "@/types/database";
 import type { AssignmentProblemIndexEntry } from "@/lib/ai/studyTutorContext";
+import type { TutorImageAttachment } from "@/lib/ai/tutor";
 
 export type GuidedStudySessionProps = {
   session: StudySession;
@@ -32,12 +33,15 @@ export type AssignmentSessionContext = {
   } | null;
 };
 
-export type TutorMessage = StudySessionMessage;
+export type TutorMessage = StudySessionMessage & {
+  attachments?: TutorImageAttachment[];
+};
 
 export type RequiredTutorResponse = {
   message: string;
   completionStatus: "in_progress" | "ready";
   completionReason: string;
+  flashcardAction: "none" | "offer" | "create";
 };
 
 export type PlanRefinement = {
@@ -55,6 +59,7 @@ export type GuidedSessionController = {
   assignment: AssignmentSessionContext | null;
   messages: TutorMessage[];
   input: string;
+  files: File[];
   selectedQuote: string | null;
   setSelectedQuote: (quote: string | null) => void;
   contextError: string | null;
@@ -70,6 +75,8 @@ export type GuidedSessionController = {
   completionUnlocked: boolean;
   completionReason: string;
   setInput: (value: string) => void;
+  attachPastedImages: (files: File[]) => void;
+  removeAttachedImage: (index: number) => void;
   dismissPlanRefinement: () => void;
   sendMessage: () => Promise<void>;
   uploadAssignmentFile: (file: File | null) => Promise<void>;

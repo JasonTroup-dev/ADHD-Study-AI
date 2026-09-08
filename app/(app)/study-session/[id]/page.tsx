@@ -22,10 +22,9 @@ export default function StudySessionPage() {
     let isMounted = true;
 
     async function loadSession() {
+      setIsLoading(true);
+      setError(null);
       try {
-        setPlannerTaskId(
-          window.localStorage.getItem(`study-session-task:${params.id}`),
-        );
         const studySession = await getStudySessionById(params.id);
 
         if (!isMounted) return;
@@ -33,6 +32,10 @@ export default function StudySessionPage() {
         if (!studySession) {
           setError("Study session not found or unavailable.");
         } else {
+          setPlannerTaskId(
+            studySession.planner_task_id
+              ?? window.localStorage.getItem(`study-session-task:${params.id}`),
+          );
           setSession(studySession);
         }
       } catch (loadError) {
@@ -78,6 +81,7 @@ export default function StudySessionPage() {
   if (session?.status === "active") {
     return (
       <GuidedStudySession
+        key={session.id}
         session={session}
         plannerTaskId={plannerTaskId}
       />

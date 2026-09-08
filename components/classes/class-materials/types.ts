@@ -5,6 +5,7 @@ export type ClassMaterial = {
   title: string;
   meta: string;
   kind: "assignment_file" | "study_material" | "note";
+  previewUrl: string | null;
 };
 
 export type ClassAssignmentOption = {
@@ -22,7 +23,10 @@ export type ClassMaterialsPanelProps = {
 };
 
 export type AnalysisKind = "assignment_file" | "study_material";
-export type AnalysisTarget = "existing_assignment" | "new_assignment";
+export type AnalysisTarget =
+  | "class_material"
+  | "existing_assignment"
+  | "new_assignment";
 
 export type AnalysisSuggestion = {
   fileIndex: number;

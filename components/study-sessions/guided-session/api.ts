@@ -45,7 +45,11 @@ export async function requestTutorResponse(
       body: JSON.stringify({
         sessionId,
         plannerTaskId: plannerTaskId ?? null,
-        messages: retainStudyTutorMessages(messages).map(({ role, content }) => ({ role, content })),
+        messages: retainStudyTutorMessages(messages).map(({ role, content, attachments }) => ({
+          role,
+          content,
+          ...(attachments?.length ? { attachments } : {}),
+        })),
       }),
       signal: requestController.signal,
     });
@@ -56,13 +60,15 @@ export async function requestTutorResponse(
       message?: string;
       completionStatus?: "in_progress" | "ready";
       completionReason?: string;
+      flashcardAction?: "none" | "offer" | "create";
       error?: string;
     }>(response);
     if (
       !response.ok ||
       typeof payload.message !== "string" ||
       (payload.completionStatus !== "in_progress" && payload.completionStatus !== "ready") ||
-      typeof payload.completionReason !== "string"
+      typeof payload.completionReason !== "string" ||
+      !["none", "offer", "create"].includes(payload.flashcardAction ?? "")
     ) {
       throw new Error(payload.error ?? "The study tutor could not respond.");
     }
@@ -70,6 +76,7 @@ export async function requestTutorResponse(
       message: payload.message,
       completionStatus: payload.completionStatus,
       completionReason: payload.completionReason,
+      flashcardAction: payload.flashcardAction as RequiredTutorResponse["flashcardAction"],
     };
   } catch (error) {
     if (!signal.aborted && requestController.signal.aborted) {
@@ -105,8 +112,14 @@ export async function readTutorStream(
           onMessage?.(event.message);
         } else if (event.type === "complete" && typeof event.message === "string"
           && (event.completionStatus === "ready" || event.completionStatus === "in_progress")
-          && typeof event.completionReason === "string") {
-          return { message: event.message, completionStatus: event.completionStatus, completionReason: event.completionReason };
+          && typeof event.completionReason === "string"
+          && ["none", "offer", "create"].includes(event.flashcardAction)) {
+          return {
+            message: event.message,
+            completionStatus: event.completionStatus,
+            completionReason: event.completionReason,
+            flashcardAction: event.flashcardAction,
+          };
         }
       }
       if (done) throw new Error("The tutor response was interrupted. Please try again.");

@@ -8,6 +8,10 @@ import type {
 } from "@/types/database";
 
 const MAX_STORED_SESSION_MESSAGE_CHARS = 12_000;
+const HIGH_SURROGATE_START = 0xd800;
+const HIGH_SURROGATE_END = 0xdbff;
+const LOW_SURROGATE_START = 0xdc00;
+const LOW_SURROGATE_END = 0xdfff;
 
 type CreateStudySessionInput = {
   plannerTaskId?: string | null;
@@ -44,7 +48,7 @@ async function getCurrentUserId() {
 export async function createStudySession(
   input: CreateStudySessionInput,
 ): Promise<CreateStudySessionResult> {
-  const activeSession = await getActiveStudySession();
+  const activeSession = await getActiveStudySession(input);
 
   if (activeSession) {
     return { session: activeSession, isExisting: true };
@@ -75,13 +79,33 @@ export async function createStudySession(
   return { session: data, isExisting: false };
 }
 
-export async function getActiveStudySession(): Promise<StudySession | null> {
+export async function getActiveStudySession(
+  input?: CreateStudySessionInput,
+): Promise<StudySession | null> {
   const userId = await getCurrentUserId();
-  const { data, error } = await supabase
+  let query = supabase
     .from("study_sessions")
     .select("*")
     .eq("user_id", userId)
-    .eq("status", "active")
+    .eq("status", "active");
+
+  if (input?.plannerTaskId) {
+    // A different task's active conversation must never capture this click.
+    query = query.eq("planner_task_id", input.plannerTaskId);
+  } else if (input) {
+    query = query
+      .is("planner_task_id", null)
+      .eq("session_type", input.sessionType ?? "general_study")
+      .eq("title", input.title.trim() || "Study Session");
+    query = input.assignmentId
+      ? query.eq("assignment_id", input.assignmentId)
+      : query.is("assignment_id", null);
+    query = input.classId
+      ? query.eq("class_id", input.classId)
+      : query.is("class_id", null);
+  }
+
+  const { data, error } = await query
     .order("started_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -175,11 +199,12 @@ export async function completeStudySession(
   let taskCompletionError: string | null = null;
   let assignmentCompletionError: string | null = null;
 
-  if (plannerTaskId) {
+  const linkedTaskId = session.planner_task_id ?? plannerTaskId;
+  if (linkedTaskId) {
     const { error: taskError } = await supabase
       .from("study_plan_tasks")
       .update({ status: "completed" })
-      .eq("id", plannerTaskId)
+      .eq("id", linkedTaskId)
       .eq("user_id", userId);
 
     taskCompletionError = taskError?.message ?? null;
@@ -187,7 +212,7 @@ export async function completeStudySession(
 
   // Linked task sessions derive their assignment status from all sibling tasks.
   // Only assignment-level sessions may explicitly complete the whole assignment.
-  if (assignmentIdToComplete && !plannerTaskId) {
+  if (assignmentIdToComplete && !linkedTaskId) {
     const { error: assignmentError } = await supabase
       .from("assignments")
       .update({ status: "completed" })
@@ -253,6 +278,7 @@ export async function resetStudySessionTask(
         updated_at: now,
       })
       .eq("user_id", userId)
+      .eq("planner_task_id", plannerTaskId)
       .eq("status", "active")
       .select("id");
 
@@ -329,7 +355,10 @@ export function normalizeStudySessionMessages(
           : null;
       const content =
         typeof message.content === "string"
-          ? message.content.slice(0, MAX_STORED_SESSION_MESSAGE_CHARS)
+          ? normalizePostgresText(
+              message.content,
+              MAX_STORED_SESSION_MESSAGE_CHARS,
+            )
           : "";
       const completionStatus =
         message.completionStatus === "in_progress"
@@ -338,7 +367,10 @@ export function normalizeStudySessionMessages(
           : undefined;
       const completionReason =
         typeof message.completionReason === "string"
-          ? message.completionReason.slice(0, MAX_STORED_SESSION_MESSAGE_CHARS)
+          ? normalizePostgresText(
+              message.completionReason,
+              MAX_STORED_SESSION_MESSAGE_CHARS,
+            )
           : undefined;
 
       if (!role || !content.trim()) return [];
@@ -347,7 +379,7 @@ export function normalizeStudySessionMessages(
         {
           id:
             typeof message.id === "string" && message.id
-              ? message.id
+              ? normalizePostgresText(message.id) || `study-session-message-${index}`
               : `study-session-message-${index}`,
           role,
           content,
@@ -356,6 +388,40 @@ export function normalizeStudySessionMessages(
         },
       ];
     }));
+}
+
+function normalizePostgresText(value: string, maxLength = value.length) {
+  let normalized = "";
+
+  for (let index = 0; index < value.length && normalized.length < maxLength; index += 1) {
+    const codeUnit = value.charCodeAt(index);
+
+    // PostgreSQL text/jsonb cannot store U+0000.
+    if (codeUnit === 0) continue;
+
+    if (codeUnit >= HIGH_SURROGATE_START && codeUnit <= HIGH_SURROGATE_END) {
+      const nextCodeUnit = value.charCodeAt(index + 1);
+      const hasLowSurrogate =
+        nextCodeUnit >= LOW_SURROGATE_START
+        && nextCodeUnit <= LOW_SURROGATE_END;
+
+      if (hasLowSurrogate) {
+        if (normalized.length + 2 > maxLength) break;
+        normalized += value[index] + value[index + 1];
+        index += 1;
+      } else {
+        normalized += "\uFFFD";
+      }
+      continue;
+    }
+
+    normalized +=
+      codeUnit >= LOW_SURROGATE_START && codeUnit <= LOW_SURROGATE_END
+        ? "\uFFFD"
+        : value[index];
+  }
+
+  return normalized;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

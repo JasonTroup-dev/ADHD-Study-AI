@@ -4,7 +4,17 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { withTutorQuote } from "@/lib/ai/tutorQuote";
 
-import { formatFileSize, MAX_STUDY_FILE_BYTES } from "@/lib/files/uploadConstraints";
+import {
+  formatFileSize,
+  MAX_STUDY_FILE_BYTES,
+  MAX_TUTOR_FILES,
+  SUPPORTED_TUTOR_IMAGE_TYPES,
+  type SupportedTutorImageType,
+} from "@/lib/files/uploadConstraints";
+import {
+  TutorFileUploadError,
+  uploadTutorFiles,
+} from "@/lib/files/tutorAttachments";
 import {
   completeStudySession,
   normalizeStudySessionMessages,
@@ -42,6 +52,7 @@ export function useGuidedStudySession({
   const [assignment, setAssignment] = useState<AssignmentSessionContext | null>(null);
   const [messages, setMessages] = useState<TutorMessage[]>(savedMessages);
   const [input, setInput] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
   const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
   const [contextError, setContextError] = useState<string | null>(null);
   const [tutorError, setTutorError] = useState<string | null>(null);
@@ -179,24 +190,48 @@ export function useGuidedStudySession({
   }
 
   async function sendMessage() {
-    if (!input.trim() || isTutorLoading) return;
-    const content = withTutorQuote(input, selectedQuote);
-    const userMessage: TutorMessage = { id: crypto.randomUUID(), role: "user", content };
-    const nextMessages = [...messages, userMessage];
+    if ((!input.trim() && files.length === 0) || isTutorLoading) return;
     const abortController = new AbortController();
     const assistantMessageId = `${crypto.randomUUID()}-assistant`;
 
     abortControllerRef.current?.abort();
     abortControllerRef.current = abortController;
-    hasSavedMessagesRef.current = true;
-    setMessages([...nextMessages, { id: assistantMessageId, role: "assistant", content: "" }]);
-    setInput("");
-    setSelectedQuote(null);
     setTutorError(null);
     setIsTutorLoading(true);
-    void persistMessages(nextMessages, { quiet: true });
 
     try {
+      const uploadedAttachments = files.length > 0
+        ? await uploadTutorFiles(files, abortController.signal)
+        : [];
+      if (abortController.signal.aborted) return;
+      const attachments = uploadedAttachments.flatMap((attachment) => (
+        attachment.kind === "image" && attachment.mediaType
+          ? [{
+              ...attachment,
+              id: crypto.randomUUID(),
+              kind: "image" as const,
+              mediaType: attachment.mediaType,
+            }]
+          : []
+      ));
+      const content = withTutorQuote(
+        input.trim() || "Please help me understand the attached image.",
+        selectedQuote,
+      );
+      const userMessage: TutorMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content,
+        ...(attachments.length ? { attachments } : {}),
+      };
+      const nextMessages = [...messages, userMessage];
+      hasSavedMessagesRef.current = true;
+      setMessages([...nextMessages, { id: assistantMessageId, role: "assistant", content: "" }]);
+      setInput("");
+      setFiles([]);
+      setSelectedQuote(null);
+      void persistMessages(nextMessages, { quiet: true });
+
       const payload = await requestTutorResponse(
         session.id,
         nextMessages,
@@ -225,9 +260,14 @@ export function useGuidedStudySession({
       applyCompletionState(payload);
     } catch (error) {
       if (!abortController.signal.aborted) {
-        setMessages(nextMessages);
-        void persistMessages(nextMessages);
-        setTutorError(error instanceof Error ? error.message : "The study tutor could not respond.");
+        setMessages((current) => current.filter((message) => message.id !== assistantMessageId));
+        setTutorError(
+          error instanceof TutorFileUploadError
+            ? error.message
+            : error instanceof Error
+              ? error.message
+              : "The study tutor could not respond.",
+        );
       }
     } finally {
       if (!abortController.signal.aborted) {
@@ -235,6 +275,34 @@ export function useGuidedStudySession({
         if (abortControllerRef.current === abortController) abortControllerRef.current = null;
       }
     }
+  }
+
+  function attachPastedImages(nextFiles: File[]) {
+    if (nextFiles.length === 0 || isTutorLoading) return;
+    const unsupportedFile = nextFiles.find((file) => !SUPPORTED_TUTOR_IMAGE_TYPES.includes(
+      file.type as SupportedTutorImageType,
+    ));
+    if (unsupportedFile) {
+      setTutorError("Paste a PNG, JPG, WEBP, or GIF image.");
+      return;
+    }
+    const combinedFiles = [...files, ...nextFiles];
+    if (combinedFiles.length > MAX_TUTOR_FILES) {
+      setTutorError(`Attach no more than ${MAX_TUTOR_FILES} images at a time.`);
+      return;
+    }
+    if (combinedFiles.reduce((total, file) => total + file.size, 0) > MAX_STUDY_FILE_BYTES) {
+      setTutorError(`Attachments can be up to ${formatFileSize(MAX_STUDY_FILE_BYTES)} total.`);
+      return;
+    }
+    setTutorError(null);
+    setUploadNotice(null);
+    setFiles(combinedFiles);
+  }
+
+  function removeAttachedImage(index: number) {
+    setTutorError(null);
+    setFiles((current) => current.filter((_, fileIndex) => fileIndex !== index));
   }
 
   function stopTutorResponse() {
@@ -353,6 +421,7 @@ export function useGuidedStudySession({
     assignment,
     messages,
     input,
+    files,
     contextError,
     tutorError,
     uploadNotice,
@@ -366,6 +435,8 @@ export function useGuidedStudySession({
     completionUnlocked,
     completionReason,
     setInput,
+    attachPastedImages,
+    removeAttachedImage,
     selectedQuote,
     setSelectedQuote,
     dismissPlanRefinement: () => setPlanRefinement(null),

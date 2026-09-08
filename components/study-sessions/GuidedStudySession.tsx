@@ -49,7 +49,7 @@ export function GuidedStudySession(props: GuidedStudySessionProps) {
           onStopResponse={controller.isTutorLoading && !controller.isContextLoading
             ? controller.stopTutorResponse
             : undefined}
-          files={[]}
+          files={controller.files}
           onFilesSelected={(files) => {
             if (hasReadableAssignmentContext) {
               void controller.uploadStudyMaterials(files);
@@ -57,7 +57,18 @@ export function GuidedStudySession(props: GuidedStudySessionProps) {
               void controller.uploadAssignmentFile(files[0] ?? null);
             }
           }}
-          onRemoveFile={() => undefined}
+          onFilesPasted={(files) => {
+            const images = files.filter((file) => file.type.startsWith("image/"));
+            const materials = files.filter((file) => !file.type.startsWith("image/"));
+            if (images.length > 0) controller.attachPastedImages(images);
+            if (materials.length === 0) return;
+            if (hasReadableAssignmentContext) {
+              void controller.uploadStudyMaterials(materials);
+            } else {
+              void controller.uploadAssignmentFile(materials[0] ?? null);
+            }
+          }}
+          onRemoveFile={controller.removeAttachedImage}
           accept={hasReadableAssignmentContext ? STUDY_FILE_ACCEPT : ASSIGNMENT_FILE_ACCEPT}
           multiple={hasReadableAssignmentContext}
           attachmentDisabled={!assignment || controller.isContextLoading}

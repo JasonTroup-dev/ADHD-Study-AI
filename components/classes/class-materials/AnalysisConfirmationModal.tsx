@@ -17,6 +17,7 @@ import {
 } from "./validation";
 
 const NEW_ASSIGNMENT_VALUE = "__new_assignment__";
+const CLASS_MATERIAL_VALUE = "__class_material__";
 
 export function AnalysisConfirmationModal({
   isOpen,
@@ -107,11 +108,20 @@ export function AnalysisConfirmationModal({
                     <select
                       value={item.kind}
                       disabled={isSaving}
-                      onChange={(event) =>
+                      onChange={(event) => {
+                        const kind = event.target.value as AnalysisKind;
                         onItemChange(item.clientId, {
-                          kind: event.target.value as AnalysisKind,
-                        })
-                      }
+                          kind,
+                          ...(kind === "assignment_file" && item.target === "class_material"
+                            ? {
+                                target: "new_assignment" as const,
+                                newAssignmentTitle:
+                                  item.newAssignmentTitle ??
+                                  deriveTitleFromFileName(item.originalFileName),
+                              }
+                            : {}),
+                        });
+                      }}
                       className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-blue-400 focus:ring-3 focus:ring-blue-100"
                     >
                       <option value="study_material">Notes or material</option>
@@ -127,7 +137,9 @@ export function AnalysisConfirmationModal({
                       value={
                         item.target === "new_assignment"
                           ? NEW_ASSIGNMENT_VALUE
-                          : item.assignmentId ?? ""
+                          : item.target === "class_material"
+                            ? CLASS_MATERIAL_VALUE
+                            : item.assignmentId ?? ""
                       }
                       disabled={isSaving}
                       onChange={(event) => {
@@ -141,6 +153,14 @@ export function AnalysisConfirmationModal({
                           });
                           return;
                         }
+                        if (event.target.value === CLASS_MATERIAL_VALUE) {
+                          onItemChange(item.clientId, {
+                            target: "class_material",
+                            assignmentId: null,
+                            dueDate: null,
+                          });
+                          return;
+                        }
                         onItemChange(item.clientId, {
                           target: "existing_assignment",
                           assignmentId: event.target.value,
@@ -148,6 +168,11 @@ export function AnalysisConfirmationModal({
                       }}
                       className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-blue-400 focus:ring-3 focus:ring-blue-100"
                     >
+                      {item.kind === "study_material" ? (
+                        <option value={CLASS_MATERIAL_VALUE}>
+                          No assignment - applies to whole class
+                        </option>
+                      ) : null}
                       {assignments.map((assignment) => (
                         <option key={assignment.id} value={assignment.id}>
                           {assignment.title}

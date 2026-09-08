@@ -25,27 +25,54 @@ function query(data: unknown, error: unknown = null) {
   return chain;
 }
 
-function setup({ linkedId = null, previousError = null, taskRows = tasks }: {
-  linkedId?: string | null; previousError?: unknown; taskRows?: typeof tasks;
+function querySequence(data: unknown[]) {
+  let callIndex = 0;
+  const chain = {
+    select: vi.fn(), eq: vi.fn(), is: vi.fn(), order: vi.fn(),
+    then: (resolve: (value: { data: unknown; error: null }) => unknown) => {
+      const result = {
+        data: data[Math.min(callIndex, data.length - 1)],
+        error: null,
+      };
+      callIndex += 1;
+      return Promise.resolve(result).then(resolve);
+    },
+  };
+  for (const method of [chain.select, chain.eq, chain.is, chain.order]) method.mockReturnValue(chain);
+  return chain;
+}
+
+function setup({
+  linkedId = null,
+  previousError = null,
+  taskRows = tasks,
+  classMaterialRows = [[]],
+}: {
+  linkedId?: string | null;
+  previousError?: unknown;
+  taskRows?: typeof tasks;
+  classMaterialRows?: unknown[];
 } = {}) {
   const active = query({ id: "session-2", assignment_id: "assignment", planner_task_id: linkedId, title: taskTitle, session_type: "assignment" });
-  const assignment = query({ title: "Problem Set 2", description: "Due tomorrow", due_date: null, extracted_text: null, classes: null });
+  const assignment = query({ class_id: "class-1", title: "Problem Set 2", description: "Due tomorrow", due_date: null, extracted_text: null, classes: null });
   const materials = query([{ original_file_name: "second.png", extracted_text: "Assignment position: 2 of 13\nDisplayed problem identifier: Problem 2.34\nA particle has velocity 2t^2." }]);
+  const classMaterials = querySequence(classMaterialRows);
   const planner = query(taskRows);
   const previous = query([{ title: tasks[0].title, ended_at: "2026-09-05T04:00:00Z", messages: [{ role: "user", content: "I finished problem 1, both parts." }] }], previousError);
   let sessionCalls = 0;
   const from = vi.fn((table: string) => {
-    if (table === "study_sessions") return sessionCalls++ === 0 ? active : previous;
+    if (table === "study_sessions") return sessionCalls++ % 2 === 0 ? active : previous;
     if (table === "assignments") return assignment;
     if (table === "assignment_materials") return materials;
+    if (table === "assignment_files") return classMaterials;
     if (table === "study_plan_tasks") return planner;
     throw new Error(`Unexpected table: ${table}`);
   });
   createClient.mockResolvedValue({ auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner" } }, error: null }) }, from });
-  return { active, assignment, materials, planner, previous };
+  return { active, assignment, materials, classMaterials, planner, previous };
 }
 
-function request(plannerTaskId?: string, messages: Array<{ role: string; content: string }> = []) {
+function request(plannerTaskId?: string, messages: Array<Record<string, unknown>> = []) {
   return new Request("http://localhost/api/study-sessions/tutor", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sessionId: "session-2", plannerTaskId, messages }),
@@ -80,6 +107,32 @@ describe("study tutor context loading", () => {
     expect(queries.previous.limit).toHaveBeenCalledWith(8);
   });
 
+  it("refreshes class-wide materials on every tutor request", async () => {
+    const equationSheet = {
+      file_name: "PHY 121 equation sheet.pdf",
+      extracted_text: "Constant acceleration: x = x0 + v0 t + 1/2 a t^2.",
+    };
+    const queries = setup({ classMaterialRows: [[], [equationSheet]] });
+
+    expect((await POST(request(undefined, [{ role: "user", content: "Which formula should I use?" }]))).status).toBe(200);
+    expect(getStudyTutorResponse.mock.calls.at(-1)?.[0].assignment.materials).not.toContainEqual(
+      expect.objectContaining({ name: equationSheet.file_name }),
+    );
+
+    expect((await POST(request(undefined, [{ role: "user", content: "Use the equation sheet I just added." }]))).status).toBe(200);
+    expect(getStudyTutorResponse.mock.calls.at(-1)?.[0].assignment.materials).toEqual([
+      {
+        name: equationSheet.file_name,
+        content: equationSheet.extracted_text,
+        scope: "class",
+      },
+      expect.objectContaining({ name: "second.png", scope: "assignment" }),
+    ]);
+    expect(queries.classMaterials.eq).toHaveBeenCalledWith("class_id", "class-1");
+    expect(queries.classMaterials.eq).toHaveBeenCalledWith("user_id", "owner");
+    expect(queries.classMaterials.is).toHaveBeenCalledWith("assignment_id", null);
+  });
+
   it("uses the saved task link over a conflicting client task id", async () => {
     setup({ linkedId: "task-2" });
     expect((await POST(request("task-1"))).status).toBe(200);
@@ -111,5 +164,23 @@ describe("study tutor context loading", () => {
     expect((await POST(request(undefined, messages))).status).toBe(200);
     expect(getStudyTutorResponse.mock.calls[0][1]).toEqual(messages);
     expect((await POST(request(undefined, [...messages, messages[0]]))).status).toBe(400);
+  });
+
+  it("passes a validated image attachment to the study tutor without storing it as material", async () => {
+    setup();
+    const imageMessage = {
+      role: "user",
+      content: "Explain this diagram.",
+      attachments: [{
+        id: "image-1",
+        name: "clipboard-image.png",
+        kind: "image",
+        mediaType: "image/png",
+        content: "data:image/png;base64,AQID",
+      }],
+    };
+
+    expect((await POST(request(undefined, [imageMessage]))).status).toBe(200);
+    expect(getStudyTutorResponse.mock.calls[0][1]).toEqual([imageMessage]);
   });
 });

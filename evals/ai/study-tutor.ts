@@ -4,6 +4,8 @@ import { buildAssignmentProblemIndex } from "@/lib/ai/studyTutorContext";
 
 // Synthetic reproductions of the observed failures. Run with:
 // node --env-file=.env.local --import tsx evals/ai/study-tutor.ts
+// Offline: node --import tsx evals/ai/study-tutor.ts --validate-only
+// Single live case: append --case=<id> to the live command above.
 const materials = [
   { name: "item-1.png", content: "Assignment position: 1 of 13\nDisplayed problem identifier: Problem 2.21\nA rock is tossed upward at 16 m/s, then falls into a 10 m hole. A: Find its impact speed. B: Find total time in the air." },
   { name: "item-2.png", content: "Assignment position: 2 of 13\nDisplayed problem identifier: Problem 2.34\nA particle moving along x has velocity v_x = 2t^2 m/s, t in seconds. Initial position x_0=1.7 m at t=0. Find position, velocity, acceleration at t=1 s." },
@@ -18,7 +20,7 @@ const context: StudyTutorContext = {
   assignment: { title: "Problem Set 2", description: "Physics problem set.", className: "PHY 121", dueDate: null, instructions: null, materials, problemIndex: buildAssignmentProblemIndex(materials), studySessionGoal: { sessionNumber: 2, totalSessions: 3, percentage: 33 } },
 };
 
-const cases: Array<{ id: string; context: StudyTutorContext; messages: StudyTutorMessage[]; check: (text: string) => void }> = [
+const cases: Array<{ id: string; context: StudyTutorContext; messages: StudyTutorMessage[]; expectedStatus?: "in_progress" | "ready"; check: (text: string) => void }> = [
   { id: "start-with-readable-screenshots-and-prior-progress", context, messages: [], check: (text) => {
     assert.match(text, /Problem 2(?:\s|\(|:|—|-)/);
     assert.match(text, /2\.34/);
@@ -62,16 +64,94 @@ const cases: Array<{ id: string; context: StudyTutorContext; messages: StudyTuto
     assert.match(text, /text|screenshot|paste|share|upload/i);
     assert.doesNotMatch(text, /2\.21|2\.34|rock|particle/);
   } },
+  { id: "explain-multiplication-before-continuing", context, messages: [
+    { role: "user", content: "Let's review problem 1 part B." },
+    { role: "assistant", content: "Use Delta y = v_0 t + (1/2) a t^2." },
+    { role: "user", content: "Is t an exponent on the initial v?" },
+  ], check: (text) => {
+    assert.match(text, /multipl|times|\\times|×/i);
+    assert.match(text, /squar|exponent|power/i);
+    assert.doesNotMatch(text, /3\.8\d*\s*(?:s|seconds)|quadratic formula|Problem 2\b/i);
+  } },
+  { id: "use-equation-sheet-to-explain-special-case", context: {
+    ...context,
+    assignment: { ...context.assignment!, materials: [...materials, {
+      name: "PHY 121 equation sheet.pdf", scope: "class",
+      content: "Constant acceleration: x = x_0 + v_0x t + (1/2) a_x t^2.",
+    }] },
+  }, messages: [
+    { role: "user", content: "For horizontal projectile motion, you used x = vt. Where is that on my equation sheet?" },
+  ], check: (text) => {
+    assert.match(text, /equation sheet/i);
+    assert.match(text, /acceleration/i);
+    assert.match(text, /zero|=\s*0|vanish|drop.*out/i);
+    assert.match(text, /t\^\{?2|t²/);
+    assert.doesNotMatch(text, /page\s+\d|equation\s+(?:number\s+)?\d/i);
+  } },
+  { id: "do-not-agree-with-wrong-component-sign", context: {
+    ...context,
+    assignment: { ...context.assignment!, materials: [{
+      name: "vector-question.txt",
+      content: "A vector E lies in quadrant IV. Theta is measured from the negative y-axis. Part A asks for E_x.",
+    }] },
+  }, messages: [
+    { role: "assistant", content: "For the vector in quadrant IV, what sign does E_x have?" },
+    { role: "user", content: "E comes out negative." },
+  ], check: (text) => {
+    assert.match(text, /positive|right/i);
+    assert.doesNotMatch(text, /^(?:yes|exactly|correct|that'?s right|nice work)\b/i);
+  } },
+  { id: "name-phi-without-restarting-the-problem", context, messages: [
+    { role: "assistant", content: "The other angle is $\\phi$. Use it for the next part." },
+    { role: "user", content: "What is the name of the symbol that isn't theta?" },
+  ], check: (text) => {
+    assert.match(text, /phi/i);
+    assert.ok(text.split(/\s+/).length < 100, "A symbol name should not trigger another lesson.");
+    assert.doesNotMatch(text, /Problem\s+\d|roadmap/i);
+  } },
+  { id: "finish-concrete-chunk-without-pushing-next-item", context, expectedStatus: "ready", messages: [
+    { role: "user", content: "I finished all parts of Problems 2 and 3 outside chat." },
+    { role: "assistant", content: "We are on the final part of Problem 4. What are D's components?" },
+    { role: "user", content: "D = (5.01, 3.21) m. I finished Problem 4 and all the planned work for this session." },
+  ], check: (text) => {
+    assert.doesNotMatch(text, /(?:move|start|continue|ready|next|onto|on to)[^.!?\n]*Problem\s*5/i);
+  } },
+  { id: "skipped-items-are-not-verified-complete", context, messages: [
+    { role: "user", content: "Skip problems 2 and 3 for now. I only did problem 4, and I finished it." },
+    { role: "user", content: "Have I finished the planned problems for this session?" },
+  ], check: (text) => {
+    assert.match(text, /2/);
+    assert.match(text, /3/);
+    assert.match(text, /skip|remain|still|not|haven.t/i);
+  } },
+  { id: "explain-integration-when-student-asks-how", context, messages: [
+    { role: "assistant", content: "For Problem 2, find displacement from 0 to 1 second using the integral of 2t^2." },
+    { role: "user", content: "How do I calculate that? I haven't learned how to integrate yet." },
+  ], check: (text) => {
+    assert.match(text, /power|exponent|area|antiderivative/i);
+    assert.match(text, /t\^\{?3|t³/);
+    assert.doesNotMatch(text, /sine|calculator.*mode|Problem 3\b/i);
+  } },
 ];
 
 async function main() {
+  const requestedCaseId = process.argv.find((value) => value.startsWith("--case="))?.slice(7);
+  const selectedCases = requestedCaseId ? cases.filter(({ id }) => id === requestedCaseId) : cases;
+  assert.ok(selectedCases.length > 0, `Unknown tutor evaluation case: ${requestedCaseId}`);
+  if (process.argv.includes("--validate-only")) {
+    assert.equal(new Set(cases.map(({ id }) => id)).size, cases.length, "Case IDs must be unique.");
+    console.log(`Validated ${cases.length} tutor evaluation cases.`);
+    return;
+  }
   let failed = false;
-  for (const testCase of cases) {
+  for (const testCase of selectedCases) {
     try {
       const result = await getStudyTutorResponse(testCase.context, testCase.messages);
       console.log(JSON.stringify({ id: testCase.id, ...result }));
       testCase.check(result.message);
-      assert.equal(result.completionStatus, "in_progress");
+      assert.equal(result.completionStatus, testCase.expectedStatus ?? "in_progress");
+      // JSON-escaped LaTeX must not leak backspace/form-feed/terminal controls.
+      assert.doesNotMatch(result.message, /[\x00-\x08\x0b\x0c\x0e-\x1f]/);
       console.log(`PASS ${testCase.id}`);
     } catch (error) {
       failed = true;

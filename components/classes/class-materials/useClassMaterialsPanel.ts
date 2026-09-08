@@ -14,6 +14,7 @@ import {
   analyzeClassMaterials,
   createAssignment,
   uploadAssignmentFile,
+  uploadClassMaterials,
   uploadStudyMaterials,
 } from "./api";
 import type {
@@ -118,6 +119,13 @@ export function useClassMaterialsPanel({
       for (const item of confirmationItems) {
         const file = selectedFiles[item.fileIndex];
         if (!file) continue;
+
+        if (item.target === "class_material") {
+          const payload = await uploadClassMaterials(classId, [file]);
+          if (payload.warnings?.length) notices.push(payload.warnings.join(" "));
+          savedCount += 1;
+          continue;
+        }
 
         const resolved = await resolveAssignmentForItem(item, file);
         if (item.kind === "assignment_file") {

@@ -20,6 +20,12 @@ export type StudySessionMessage = {
   content: string
   completionStatus?: "in_progress" | "ready"
   completionReason?: string
+  flashcardAction?: "none" | "offer" | "create"
+  flashcardSet?: {
+    id: string
+    title: string
+    cardCount: number
+  }
 }
 
 export type Database = {

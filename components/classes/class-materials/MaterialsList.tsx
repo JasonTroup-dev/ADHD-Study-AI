@@ -1,4 +1,5 @@
 import { BookOpen, FileText } from "lucide-react";
+import Image from "next/image";
 
 import type { ClassMaterial } from "./types";
 
@@ -20,8 +21,19 @@ export function MaterialsList({ materials }: { materials: ClassMaterial[] }) {
   return materials.map((material) => (
     <article key={material.id} className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
-          <FileText className="h-5 w-5" aria-hidden="true" />
+        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100 text-slate-600">
+          {material.previewUrl ? (
+            <Image
+              src={material.previewUrl}
+              alt=""
+              fill
+              sizes="40px"
+              className="object-cover"
+              unoptimized
+            />
+          ) : (
+            <FileText className="h-5 w-5" aria-hidden="true" />
+          )}
         </div>
         <div className="min-w-0">
           <h3 className="truncate text-base font-semibold text-slate-950">{material.title}</h3>

@@ -15,6 +15,7 @@ import {
   AssignmentMaterialsPanel,
   type AssignmentMaterialSummary,
 } from "@/components/assignments/AssignmentMaterialsPanel";
+import { CompleteAssignmentButton } from "@/components/assignments/CompleteAssignmentButton";
 import { DeleteAssignmentButton } from "@/components/assignments/DeleteAssignmentButton";
 import { Button } from "@/components/ui/button";
 import { getClassColor } from "@/lib/classColors";
@@ -139,25 +140,31 @@ export function AssignmentDetailsView({
                 </div>
               </div>
 
-              <div className="min-w-40 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="font-semibold text-slate-900">Task progress</span>
-                  <span className="text-slate-600">
-                    {completedTasks}/{assignment.tasks.length}
-                  </span>
-                </div>
-                <div
-                  className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200"
-                  role="progressbar"
-                  aria-label="Assignment task progress"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={progress}
-                >
+              <div className="flex shrink-0 flex-col items-end gap-3">
+                <CompleteAssignmentButton
+                  assignmentId={assignment.id}
+                  isCompleted={assignment.status === "completed"}
+                />
+                <div className="min-w-40 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="font-semibold text-slate-900">Task progress</span>
+                    <span className="text-slate-600">
+                      {completedTasks}/{assignment.tasks.length}
+                    </span>
+                  </div>
                   <div
-                    className="h-full rounded-full bg-emerald-500 transition-[width]"
-                    style={{ width: `${progress}%` }}
-                  />
+                    className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200"
+                    role="progressbar"
+                    aria-label="Assignment task progress"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={progress}
+                  >
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-[width]"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

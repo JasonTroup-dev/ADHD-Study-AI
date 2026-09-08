@@ -35,7 +35,11 @@ export const materialAnalysisSchema = z.strictObject({
     z.strictObject({
       fileIndex: z.number().int().min(0),
       kind: z.enum(["assignment_file", "study_material"]),
-      target: z.enum(["existing_assignment", "new_assignment"]),
+      target: z.enum([
+        "class_material",
+        "existing_assignment",
+        "new_assignment",
+      ]),
       assignmentId: z.string().nullable(),
       newAssignmentTitle: z.string().nullable(),
       dueDate: z.string().nullable(),

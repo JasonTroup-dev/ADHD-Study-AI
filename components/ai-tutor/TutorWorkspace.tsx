@@ -61,7 +61,7 @@ export default function TutorWorkspace({
   return (
     <ResponseSelection onAskTutor={isLoading ? undefined : onAskTutor}>
     <div className="ai-tutor-scroll-scope flex min-h-screen w-full justify-center bg-gray-100">
-      <div className="min-h-screen min-w-4xl border-b-blue-500">
+      <div className="min-h-screen w-full min-w-0 max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="relative min-h-screen">
           {!hasMessages ? (
             <div className="flex min-h-screen items-center">

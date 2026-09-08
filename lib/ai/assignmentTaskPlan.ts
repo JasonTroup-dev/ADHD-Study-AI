@@ -11,6 +11,7 @@ Return exactly one concise title for every supplied task ID. Do not create or re
 
 Rules:
 - Divide the actual work in the source material into concrete, non-overlapping chunks across all tasks.
+- Fixed tasks are already completed, started, or otherwise protected. Keep their scope reserved: never redistribute their problems or deliverables into the editable tasks. Return titles only for the editable task IDs.
 - Begin every task title with the exact assignment name followed by a colon so the task remains identifiable outside the assignment page.
 - Example: for an assignment named "Problem Set 2", use "Problem Set 2: Problems 1–4 — Kinematics", not just "Problems 1–4: Kinematics".
 - When screenshots show an assignment position counter such as "1 of 13", use that ordinal position for user-facing task ranges. For example, a header may say "Problem 2.21" while the navigation says "1 of 13"; title that item as Problem 1, not Problem 2.21.
@@ -43,6 +44,7 @@ export async function generateAssignmentTaskRefinement(input: {
   description: string | null;
   dueDate: string | null;
   tasks: AssignmentTaskForRefinement[];
+  fixedTasks?: AssignmentTaskForRefinement[];
   sources: AssignmentSourceForRefinement[];
   safetyIdentifier: string;
   signal?: AbortSignal;
@@ -84,6 +86,11 @@ export async function generateAssignmentTaskRefinement(input: {
             input.tasks.map((task) =>
               `- id=${task.id}; scheduled=${task.scheduledDate}; currentTitle=${task.title}`,
             ).join("\n"),
+            "",
+            "Fixed tasks (preserve their scope; do not include these IDs in the output):",
+            (input.fixedTasks ?? []).map((task) =>
+              `- id=${task.id}; title=${task.title}`,
+            ).join("\n") || "None",
             "",
             ...(positionCounters.length
               ? [

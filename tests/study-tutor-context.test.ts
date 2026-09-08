@@ -81,6 +81,41 @@ describe("study tutor continuity", () => {
     )).toBe("Which assignment item is Problem 2.34?");
   });
 
+  it("keeps overlapping textbook identifiers distinct and is safe to reapply", () => {
+    const problemIndex = buildAssignmentProblemIndex([
+      { name: "five", content: "Assignment position: 5 of 13\nDisplayed problem identifier: Problem 3.3" },
+      { name: "six", content: "Assignment position: 6 of 13\nDisplayed problem identifier: Problem 3.34" },
+    ]);
+    const input = "Problem 6 (textbook Problem 3.34). Review Problem 3.3. Then Problem 3.34.";
+    const expected = "Problem 6 (textbook Problem 3.34). Review Problem 5 (textbook Problem 3.3). Then Problem 6.";
+    expect(applyAssignmentProblemLabels(input, problemIndex)).toBe(expected);
+    expect(applyAssignmentProblemLabels(expected, problemIndex)).toBe(expected);
+    expect(applyAssignmentProblemLabels("Problems 3.3–3.34", problemIndex)).toBe("Problems 5–6");
+  });
+
+  it("never substitutes the prefix of an unknown or conflicting identifier", () => {
+    const problemIndex = buildAssignmentProblemIndex([
+      { name: "five", content: "Assignment position: 5 of 13\nDisplayed problem identifier: Problem 3.3" },
+      { name: "six", content: "Assignment position: 6 of 13\nDisplayed problem identifier: Problem 3.34" },
+      { name: "conflict", content: "Assignment position: 7 of 13\nDisplayed problem identifier: Problem 3.34" },
+    ]);
+    for (const input of ["Problem 3.34", "Problem 3.30", "Problem 3.3.1", "Problem 3.3a"]) {
+      expect(applyAssignmentProblemLabels(input, problemIndex)).toBe(input);
+    }
+    expect(applyAssignmentProblemLabels("Problem 3.3.", problemIndex))
+      .toBe("Problem 5 (textbook Problem 3.3).");
+  });
+
+  it("preserves conflicting explicit positions and normalizes matching legacy labels", () => {
+    const problemIndex = buildAssignmentProblemIndex([
+      { name: "six", content: "Assignment position: 6 of 13\nDisplayed problem identifier: Problem 3.34" },
+    ]);
+    expect(applyAssignmentProblemLabels("assignment item 5 / Problem 3.34", problemIndex))
+      .toBe("assignment item 5 / Problem 3.34");
+    expect(applyAssignmentProblemLabels("assignment item 6 / problem 3.34; assignment position 6", problemIndex))
+      .toBe("Problem 6 (textbook Problem 3.34); Problem 6");
+  });
+
   it("preserves scope and the latest calculation across long conversations and resume", () => {
     const messages = Array.from({ length: 60 }, (_, i) => ({ content: `message ${i}` }));
     messages[1].content = "Our goal is problems 2 through 4.";

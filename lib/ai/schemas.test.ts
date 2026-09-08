@@ -72,6 +72,19 @@ describe("AI structured output schemas", () => {
     };
     assert.equal(materialAnalysisSchema.safeParse(material).success, true);
     assert.equal(
+      materialAnalysisSchema.safeParse({
+        files: [{
+          ...material.files[0],
+          kind: "study_material",
+          target: "class_material",
+          assignmentId: null,
+          newAssignmentTitle: null,
+          reason: "Reusable equation sheet for the whole course.",
+        }],
+      }).success,
+      true,
+    );
+    assert.equal(
       materialAnalysisSchema.safeParse({ ...material, extra: true }).success,
       false,
     );

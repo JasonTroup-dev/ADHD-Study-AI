@@ -38,8 +38,12 @@ const mathCommandNames = [
   "alpha",
   "approx",
   "beta",
+  "circ",
   "cdot",
   "chi",
+  "cos",
+  "cot",
+  "csc",
   "delta",
   "div",
   "epsilon",
@@ -61,8 +65,11 @@ const mathCommandNames = [
   "rho",
   "right",
   "rightarrow",
+  "sec",
   "sigma",
+  "sin",
   "tau",
+  "tan",
   "theta",
   "times",
   "to",
@@ -90,23 +97,105 @@ export function normalizeMathDelimiters(content: string) {
         .replace(
           /\\\[([\s\S]*?)\\\]/g,
           (_match, expression: string) =>
-            `\n\n$$\n${expression.trim()}\n$$\n\n`,
+            `\n\n$$\n${unwrapRedundantMathDelimiters(expression)}\n$$\n\n`,
         )
         .replace(
           /\\\(([\s\S]*?)\\\)/g,
-          (_match, expression: string) => `$${expression.trim()}$`,
+          (_match, expression: string) =>
+            `$${unwrapRedundantMathDelimiters(expression)}$`,
         )
         .replace(
           /(^|\n)[ \t]*\$\$[ \t]*(?:\n)?([\s\S]*?)[ \t]*\$\$(?=[ \t]*(?:\n|$))/g,
           (_match, prefix: string, expression: string) =>
-            `${prefix}$$\n${expression.trim()}\n$$`,
+            `${prefix}$$\n${unwrapRedundantMathDelimiters(expression)}\n$$`,
         );
 
       return wrapBareLatexCommands(
-        restoreDelimitedLatexCommands(normalizedDelimiters),
+        restoreDelimitedLatexCommands(
+          wrapStandaloneTrigEquations(normalizedDelimiters),
+        ),
       );
     })
     .join("");
+}
+
+/**
+ * Models occasionally omit dollar delimiters around a whole equation even
+ * though the equation itself contains valid LaTeX. Limit this recovery to the
+ * standalone trig-component shape seen in tutor responses so unrelated math
+ * and prose cannot be reinterpreted.
+ */
+function wrapStandaloneTrigEquations(content: string) {
+  let isInsideDisplayMath = false;
+
+  return content
+    .split("\n")
+    .map((line) => {
+      if (line.trim() === "$$") {
+        isInsideDisplayMath = !isInsideDisplayMath;
+        return line;
+      }
+
+      if (
+        isInsideDisplayMath
+        || line.includes("$")
+        || /^\s*(?:#{1,6}\s|>|```|~~~)/.test(line)
+      ) {
+        return line;
+      }
+
+      const lineMatch = /^(\s*(?:(?:[-+*]|\d+[.)])\s+)?)(.*?)(\s*)$/.exec(line);
+      if (!lineMatch) return line;
+
+      const [, prefix, expressionWithPunctuation, suffix] = lineMatch;
+      const punctuationMatch = /^(.*?)([.,;:]?)$/.exec(expressionWithPunctuation);
+      if (!punctuationMatch) return line;
+
+      const [, expression, punctuation] = punctuationMatch;
+      const equationMatch = /^(.*?)=(.*)$/.exec(expression);
+      if (!equationMatch) return line;
+
+      const [, rawLeftHandSide, rightHandSide] = equationMatch;
+      const leftHandSide = rawLeftHandSide.trim();
+      if (
+        !/^(?:(?:\\Delta|[Δ∆\uFFFD□☐☒])\s*)?[A-Za-z](?:_[A-Za-z0-9{}]+)?$/.test(leftHandSide)
+        || !/\\(?:cos|sin|tan)\b/.test(rightHandSide)
+        || !/(?:\\circ\b|°)/.test(rightHandSide)
+      ) {
+        return line;
+      }
+
+      const repairedLeftHandSide = leftHandSide.replace(
+        /^[\uFFFD□☐☒]\s*([A-Za-z])$/,
+        "\\Delta $1",
+      );
+      const repairedExpression = `${repairedLeftHandSide} =${rightHandSide}`;
+
+      return `${prefix}$${repairedExpression}$${punctuation}${suffix}`;
+    })
+    .join("\n");
+}
+
+function unwrapRedundantMathDelimiters(expression: string) {
+  const trimmedExpression = expression.trim();
+
+  if (
+    trimmedExpression.startsWith("$$")
+    && trimmedExpression.endsWith("$$")
+    && trimmedExpression.length >= 4
+  ) {
+    return trimmedExpression.slice(2, -2).trim();
+  }
+
+  if (
+    trimmedExpression.startsWith("$")
+    && trimmedExpression.endsWith("$")
+    && trimmedExpression.length >= 2
+  ) {
+    return trimmedExpression.slice(1, -1).trim();
+  }
+
+  return trimmedExpression;
 }
 
 function restoreJsonEscapedLatexCommands(content: string) {

@@ -4,6 +4,88 @@ import { createClient } from "@/lib/supabase/server";
 
 const ASSIGNMENT_FILES_BUCKET = "assignment-files";
 
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const { id } = await context.params;
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json(
+      { error: "You must be logged in to update an assignment." },
+      { status: 401 },
+    );
+  }
+
+  const body = await readJson(request);
+  if (body?.status !== "completed") {
+    return NextResponse.json(
+      { error: "The requested assignment status is not supported." },
+      { status: 400 },
+    );
+  }
+
+  const { data: assignment, error: loadError } = await supabase
+    .from("assignments")
+    .select("id, status")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (loadError) {
+    console.error("Error loading assignment for update:", loadError);
+    return NextResponse.json(
+      { error: "The assignment could not be completed." },
+      { status: 500 },
+    );
+  }
+
+  if (!assignment) {
+    return NextResponse.json(
+      { error: "Assignment not found." },
+      { status: 404 },
+    );
+  }
+
+  if (assignment.status !== "completed") {
+    const { error: tasksError } = await supabase
+      .from("study_plan_tasks")
+      .update({ status: "completed", completed_at: new Date().toISOString() })
+      .eq("assignment_id", assignment.id)
+      .eq("user_id", user.id)
+      .neq("status", "completed");
+
+    if (tasksError) {
+      console.error("Error completing assignment tasks:", tasksError);
+      return NextResponse.json(
+        { error: "The assignment tasks could not be completed." },
+        { status: 500 },
+      );
+    }
+
+    const { error: assignmentError } = await supabase
+      .from("assignments")
+      .update({ status: "completed" })
+      .eq("id", assignment.id)
+      .eq("user_id", user.id);
+
+    if (assignmentError) {
+      console.error("Error completing assignment:", assignmentError);
+      return NextResponse.json(
+        { error: "The assignment could not be completed." },
+        { status: 500 },
+      );
+    }
+  }
+
+  return NextResponse.json({ assignment: { id, status: "completed" } });
+}
+
 export async function DELETE(
   _request: Request,
   context: { params: Promise<{ id: string }> },
@@ -95,4 +177,17 @@ export async function DELETE(
   }
 
   return NextResponse.json({ deletedId: id });
+}
+
+async function readJson(request: Request): Promise<{ status?: unknown } | null> {
+  try {
+    const body: unknown = await request.json();
+    return isRecord(body) ? body : null;
+  } catch {
+    return null;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

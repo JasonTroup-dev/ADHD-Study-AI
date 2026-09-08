@@ -84,6 +84,23 @@ export async function uploadStudyMaterials(
   return payload;
 }
 
+export async function uploadClassMaterials(classId: string, files: File[]) {
+  const formData = new FormData();
+  files.forEach((file) => formData.append("files", file));
+
+  const response = await fetch(`/api/classes/${classId}/materials`, {
+    method: "POST",
+    body: formData,
+  });
+  const payload = await readJson<MaterialsResponse>(response);
+
+  if (!response.ok || !payload.materials) {
+    throw new Error(payload.error ?? "The class materials could not be uploaded.");
+  }
+
+  return payload;
+}
+
 async function readJson<T>(response: Response): Promise<T> {
   try {
     return (await response.json()) as T;
