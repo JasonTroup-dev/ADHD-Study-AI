@@ -20,12 +20,12 @@ export default function AppError({
 
   return (
     <div className="page-shell flex items-center justify-center">
-      <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 text-center shadow-sm sm:p-10">
-        <span className="mx-auto flex size-12 items-center justify-center rounded-xl bg-red-100 text-red-700">
+      <div className="w-full max-w-lg rounded-[2rem] border border-[#19241f]/10 bg-[#fffdf8] p-6 text-center shadow-[0_32px_80px_-46px_rgba(25,36,31,0.65)] sm:p-10">
+        <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-[#f3d7c9] text-[#9e3f28]">
           <CircleAlert className="size-6" aria-hidden="true" />
         </span>
         <h1 className="mt-5 text-2xl font-semibold tracking-tight">This page hit a snag</h1>
-        <p className="mt-2 text-sm leading-6 text-gray-600">
+        <p className="mt-2 text-sm leading-6 text-[#66736c]">
           Your work is still safe. Try loading this view again, or return to the dashboard.
         </p>
         {error.digest ? <p className="mt-3 font-mono text-xs text-gray-400">Reference: {error.digest}</p> : null}

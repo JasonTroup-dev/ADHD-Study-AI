@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/api/requireUser";
 import { reportServerError } from "@/lib/monitoring/server";
+import { getPaddleClient } from "@/lib/paddle/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const ASSIGNMENT_FILES_BUCKET = "assignment-files";
@@ -34,6 +35,20 @@ export async function DELETE(request: Request) {
 
   try {
     const admin = createAdminClient();
+    const { data: billingSubscription, error: billingError } = await admin
+      .from("billing_subscriptions")
+      .select("paddle_subscription_id,status")
+      .eq("user_id", auth.user.id)
+      .maybeSingle();
+
+    if (billingError) throw billingError;
+    if (billingSubscription && billingSubscription.status !== "canceled") {
+      await getPaddleClient().subscriptions.cancel(
+        billingSubscription.paddle_subscription_id,
+        { effectiveFrom: "immediately" },
+      );
+    }
+
     const storagePaths = await listStoragePaths(admin, auth.user.id);
 
     for (let index = 0; index < storagePaths.length; index += STORAGE_PAGE_SIZE) {
@@ -53,6 +68,8 @@ export async function DELETE(request: Request) {
       JSON.stringify({
         event: "account.deleted",
         timestamp: new Date().toISOString(),
+        paddleSubscriptionCanceled:
+          Boolean(billingSubscription) && billingSubscription?.status !== "canceled",
         storageObjectsDeleted: storagePaths.length,
       }),
     );

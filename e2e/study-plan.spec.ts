@@ -2,6 +2,8 @@ import path from "node:path";
 
 import { expect, test } from "@playwright/test";
 
+import { waitForHydration } from "./helpers/hydration";
+
 test("signup to syllabus import to study plan to study session", async ({
   page,
 }) => {
@@ -39,12 +41,14 @@ test("signup to syllabus import to study plan to study session", async ({
   });
 
   await page.goto("/signup");
+  await waitForHydration(page, "/signup");
   await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password", { exact: true }).fill("PlaywrightPass123!");
   await page.getByRole("button", { name: "Create my account" }).click();
   await expect(page.getByRole("status")).toContainText("Account created");
 
   await page.goto("/planner");
+  await waitForHydration(page, "/planner");
   await expect(page.getByRole("heading", { name: "Study Planner" })).toBeVisible();
   await page.getByRole("button", { name: "Generate Study Plan" }).click();
 

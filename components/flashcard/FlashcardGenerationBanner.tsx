@@ -8,20 +8,22 @@ type FlashcardGenerationBannerProps = {
 
 export default function FlashcardGenerationBanner({ onGenerateClick, }: FlashcardGenerationBannerProps) {
     return (
-        <div className="my-8 bg-linear-to-r from-blue-200 to-purple-200 rounded-2xl flex flex-row border border-purple-400">
-            <div className="flex flex-1 flex-row m-8">
+        <div className="workspace-card workspace-card-dark relative my-8 flex overflow-hidden p-6 sm:p-8">
+            <div aria-hidden="true" className="absolute -right-10 -top-14 size-40 rounded-full bg-[#d76543]" />
+            <div aria-hidden="true" className="absolute right-24 top-20 size-20 rounded-full bg-[#ddc56f]" />
+            <div className="relative flex flex-1 flex-row">
                 <div>
-                    <Astroid className="mt-1 mr-2 text-purple-900 font-semibold"/>
+                    <Astroid className="mr-3 mt-1 shrink-0 text-[#ed9b79]"/>
                 </div>
 
                 <div>
-                    <h1 className="text-2xl font-semibold text-purple-900">
+                    <h2 className="text-2xl font-semibold tracking-[-0.03em] text-[#fffaf0]">
                         AI-Powered Flashcard Generation
-                    </h1>
-                    <h2 className="my-1 mb-2 text-lg text-purple-800">
-                        Upload a study document and AI will automatically create flashcards for you!
                     </h2>
-                    <Button variant="default" size="default" onClick={onGenerateClick} className="flex items-center text-lg bg-linear-to-br from-purple-500 to-blue-500">
+                    <p className="mb-3 mt-1 text-base text-[#c4cec8] sm:text-lg">
+                        Upload a study document and AI will automatically create flashcards for you!
+                    </p>
+                    <Button variant="secondary" size="default" onClick={onGenerateClick} className="flex items-center bg-[#fffaf0] text-[#19241f] hover:bg-[#f3d7c9]">
                             <Astroid className="mr-2"/>
                             <p>Generate from File</p>
                     </Button>

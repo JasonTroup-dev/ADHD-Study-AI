@@ -217,6 +217,45 @@ export type Database = {
           },
         ]
       }
+      billing_subscriptions: {
+        Row: {
+          created_at: string
+          last_event_occurred_at: string
+          next_billed_at: string | null
+          paddle_customer_id: string
+          paddle_subscription_id: string
+          price_id: string | null
+          scheduled_change: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_event_occurred_at: string
+          next_billed_at?: string | null
+          paddle_customer_id: string
+          paddle_subscription_id: string
+          price_id?: string | null
+          scheduled_change?: string | null
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_event_occurred_at?: string
+          next_billed_at?: string | null
+          paddle_customer_id?: string
+          paddle_subscription_id?: string
+          price_id?: string | null
+          scheduled_change?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       classes: {
         Row: {
           class_code: string | null
@@ -348,6 +387,97 @@ export type Database = {
             columns: ["set_id"]
             isOneToOne: false
             referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_quiz_sets: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          id: string
+          is_shared: boolean
+          share_token: string
+          source_name: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          is_shared?: boolean
+          share_token?: string
+          source_name?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          id?: string
+          is_shared?: boolean
+          share_token?: string
+          source_name?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_quiz_sets_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      practice_quiz_questions: {
+        Row: {
+          choices: Json
+          correct_choice_index: number
+          created_at: string
+          difficulty: string
+          explanation: string
+          id: string
+          question: string
+          question_order: number
+          quiz_set_id: string
+          topic: string
+        }
+        Insert: {
+          choices: Json
+          correct_choice_index: number
+          created_at?: string
+          difficulty: string
+          explanation: string
+          id?: string
+          question: string
+          question_order: number
+          quiz_set_id: string
+          topic: string
+        }
+        Update: {
+          choices?: Json
+          correct_choice_index?: number
+          created_at?: string
+          difficulty?: string
+          explanation?: string
+          id?: string
+          question?: string
+          question_order?: number
+          quiz_set_id?: string
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "practice_quiz_questions_quiz_set_id_fkey"
+            columns: ["quiz_set_id"]
+            isOneToOne: false
+            referencedRelation: "practice_quiz_sets"
             referencedColumns: ["id"]
           },
         ]
@@ -535,7 +665,7 @@ export type Database = {
             foreignKeyName: "study_guides_source_file_id_fkey"
             columns: ["source_file_id"]
             isOneToOne: false
-            referencedRelation: "assignment_files"
+            referencedRelation: "assignment_materials"
             referencedColumns: ["id"]
           },
         ]
@@ -737,6 +867,21 @@ export type Database = {
       consume_ai_quota: {
         Args: { requested_quota: string }
         Returns: Json
+      }
+      process_paddle_subscription_event: {
+        Args: {
+          p_customer_id: string
+          p_event_id: string
+          p_event_type: string
+          p_next_billed_at: string | null
+          p_occurred_at: string
+          p_price_id: string | null
+          p_scheduled_change: string | null
+          p_status: string
+          p_subscription_id: string
+          p_user_id: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

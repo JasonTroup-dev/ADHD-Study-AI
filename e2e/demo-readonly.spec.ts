@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { waitForHydration } from "./helpers/hydration";
+
 test("public demo follows the real workspace workflow without authentication or writes", async ({
   page,
 }) => {
@@ -11,6 +13,7 @@ test("public demo follows the real workspace workflow without authentication or 
   });
 
   await page.goto("/demo");
+  await waitForHydration(page, "/demo");
   await expect(page).toHaveURL(/\/demo$/);
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
   await expect(page.getByRole("status")).toContainText("Sample workspace · read only");
@@ -103,6 +106,10 @@ test("public demo follows the real workspace workflow without authentication or 
     { timeout: 20_000 },
   );
   await expect(page.getByRole("heading", { name: "Make this set sharper" })).toBeVisible();
+  await waitForHydration(
+    page,
+    "/demo/study/flashcards/demo-flashcards-membranes/edit",
+  );
   await page.getByLabel(/^Title/).fill("Cell Membranes: Demo Edit");
   await page.getByRole("button", { name: "Apply demo changes" }).first().click();
   await expect(
@@ -140,6 +147,7 @@ test("public demo keeps the shared mobile navigation inside the demo", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/demo");
+  await waitForHydration(page, "/demo");
 
   await page.getByRole("button", { name: "Open navigation" }).click();
   const navigation = page.getByRole("navigation", { name: "Workspace navigation" });

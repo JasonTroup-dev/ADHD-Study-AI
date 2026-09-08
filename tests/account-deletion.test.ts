@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  cancelSubscription: vi.fn(),
   deleteUser: vi.fn(),
+  findBillingSubscription: vi.fn(),
   list: vi.fn(),
   remove: vi.fn(),
   reportServerError: vi.fn(),
@@ -12,9 +14,19 @@ vi.mock("@/lib/api/requireUser", () => ({ requireUser: mocks.requireUser }));
 vi.mock("@/lib/monitoring/server", () => ({
   reportServerError: mocks.reportServerError,
 }));
+vi.mock("@/lib/paddle/server", () => ({
+  getPaddleClient: () => ({
+    subscriptions: { cancel: mocks.cancelSubscription },
+  }),
+}));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     auth: { admin: { deleteUser: mocks.deleteUser } },
+    from: () => ({
+      select: () => ({
+        eq: () => ({ maybeSingle: mocks.findBillingSubscription }),
+      }),
+    }),
     storage: {
       from: () => ({ list: mocks.list, remove: mocks.remove }),
     },
@@ -42,6 +54,8 @@ describe("account deletion", () => {
     });
     mocks.remove.mockResolvedValue({ error: null });
     mocks.deleteUser.mockResolvedValue({ error: null });
+    mocks.findBillingSubscription.mockResolvedValue({ data: null, error: null });
+    mocks.cancelSubscription.mockResolvedValue({ status: "canceled" });
   });
 
   it("removes private storage objects before deleting the auth user", async () => {
@@ -78,5 +92,31 @@ describe("account deletion", () => {
     expect(response.status).toBe(400);
     expect(mocks.remove).not.toHaveBeenCalled();
     expect(mocks.deleteUser).not.toHaveBeenCalled();
+  });
+
+  it("cancels an active Paddle subscription before deleting the account", async () => {
+    mocks.findBillingSubscription.mockResolvedValue({
+      data: {
+        paddle_subscription_id: "sub_123",
+        status: "active",
+      },
+      error: null,
+    });
+
+    const response = await DELETE(
+      new Request("https://adhdstudyai.com/api/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: "DELETE" }),
+      }),
+    );
+
+    expect(response.status).toBe(204);
+    expect(mocks.cancelSubscription).toHaveBeenCalledWith("sub_123", {
+      effectiveFrom: "immediately",
+    });
+    expect(mocks.cancelSubscription.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.deleteUser.mock.invocationCallOrder[0],
+    );
   });
 });

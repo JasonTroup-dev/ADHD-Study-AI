@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ClassAssignmentsSection } from "@/components/classes/class-workspace/ClassAssignmentsSection";
 import { ClassFlashcardsSection } from "@/components/classes/class-workspace/ClassFlashcardsSection";
 import { ClassNextUpCard } from "@/components/classes/class-workspace/ClassNextUpCard";
+import { ClassPracticeQuizzesSection } from "@/components/classes/class-workspace/ClassPracticeQuizzesSection";
 import { ClassWorkspaceSidebar } from "@/components/classes/class-workspace/ClassWorkspaceSidebar";
 import ClassMaterialsPanel from "@/components/classes/ClassMaterialsPanel";
 import DeleteClassButton from "@/components/classes/DeleteClassButton";
@@ -37,7 +38,7 @@ export function ClassWorkspaceView({
   });
 
   return (
-    <main className="min-h-full w-full bg-[#f7f8fb] text-slate-950">
+    <main className="min-h-full w-full bg-transparent text-slate-950">
       <div className="mx-auto w-full max-w-7xl px-6 py-8 lg:px-8">
         <header className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>
@@ -70,6 +71,7 @@ export function ClassWorkspaceView({
               <div id="flashcards">
                 <ClassFlashcardsSection classId={classId} flashcardSets={workspace.flashcardSets} />
               </div>
+              <ClassPracticeQuizzesSection classId={classId} quizzes={workspace.practiceQuizzes} />
             </section>
             <ClassWorkspaceSidebar
               courseProgress={workspace.courseProgress}

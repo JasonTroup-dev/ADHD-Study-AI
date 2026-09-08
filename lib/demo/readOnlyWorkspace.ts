@@ -248,6 +248,15 @@ export function getDemoClassWorkspaceData(
         href: "#flashcards",
       },
     ],
+    practiceQuizzes: [
+      {
+        id: `${classId}-quiz-1`,
+        title: `${classItem.classCode} Practice Quiz`,
+        createdAt: "Yesterday",
+        questionCount: 10,
+        href: "#practice-quizzes",
+      },
+    ],
     materials: [
       {
         id: `${classId}-material-1`,

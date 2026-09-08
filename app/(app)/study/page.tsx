@@ -13,18 +13,18 @@ export default function StudyTools() {
     const readOnly = useDemoWorkspace() !== null;
     return (
         <div className={readOnly ? "pointer-events-none min-h-screen w-full select-none bg-gray-100" : "min-h-screen w-full bg-gray-100"} aria-disabled={readOnly || undefined}>
-            <div className="mx-auto w-full max-w-screen-xl px-6 py-8 lg:px-8">
+            <div className="mx-auto w-full max-w-screen-xl px-5 py-7 sm:px-6 sm:py-8 lg:px-8">
                 <div className="flex items-start justify-between">
                     <div>
-                        <h1 className="text-4xl font-semibold">Study Tools</h1>
-                        <h2 className="text-xl py-2 text-gray-600">Tools to help you learn, practice, and stay organized</h2>
+                        <h1 className="text-4xl font-semibold sm:text-5xl">Study Tools</h1>
+                        <h2 className="max-w-2xl py-2 text-lg leading-7 text-gray-600 sm:text-xl">Tools to help you learn, practice, and stay organized</h2>
                     </div>
                 </div>
 
-                <div className="flex justify-between items-center w-full my-8">
-                    <div className="my-6 h-px w-5/12 bg-gray-300" />
-                    <p className="text-gray-400 font-semibold">FEATURED TOOLS</p>
-                    <div className="my-6 h-px w-5/12 bg-gray-300" />
+                <div className="my-8 flex w-full items-center gap-4">
+                    <div className="h-px flex-1 bg-gray-300" />
+                    <p className="whitespace-nowrap text-xs font-bold uppercase tracking-[0.14em] text-[#78847d]">Featured tools</p>
+                    <div className="h-px flex-1 bg-gray-300" />
                 </div>
 
                 <AIStudyGuideGenBanner />
@@ -37,10 +37,10 @@ export default function StudyTools() {
                 </div>
 
 
-                <div className="flex justify-between items-center w-full my-8">
-                    <div className="my-6 h-px w-5/12 bg-gray-300" />
-                    <p className="text-gray-400 font-semibold">Utility Tools</p>
-                    <div className="my-6 h-px w-5/12 bg-gray-300" />
+                <div className="my-8 flex w-full items-center gap-4">
+                    <div className="h-px flex-1 bg-gray-300" />
+                    <p className="whitespace-nowrap text-xs font-bold uppercase tracking-[0.14em] text-[#78847d]">Utility tools</p>
+                    <div className="h-px flex-1 bg-gray-300" />
                 </div>
 
 
@@ -48,7 +48,7 @@ export default function StudyTools() {
                     <AssignmentBreakdownCard />
 
                     <div
-                        className="relative isolate cursor-not-allowed overflow-hidden rounded-2xl border border-gray-300 bg-gray-50 p-6 min-h-60 flex flex-col justify-between shadow-sm grayscale lg:col-span-4"
+                        className="workspace-card workspace-card-soft relative isolate flex min-h-60 cursor-not-allowed flex-col justify-between overflow-hidden p-6 grayscale lg:col-span-4"
                         aria-disabled="true"
                     >
                         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100">
@@ -59,7 +59,7 @@ export default function StudyTools() {
                             <p className="text-gray-600">Estimate reading difficulty and suggested study time</p>
                         </div>
 
-                        <div className="rounded-2xl border border-gray-200 bg-gray-100 p-2 px-4 my-4">
+                        <div className="workspace-inset my-4 px-4 py-2">
                             <div className="flex justify-between items-center">
                                 <p className="text-gray-600">Estimated time</p>
                                 <p className="font-semibold">~45 min</p>
@@ -85,7 +85,7 @@ export default function StudyTools() {
                     </div>
 
                     <div
-                        className="relative isolate cursor-not-allowed overflow-hidden rounded-2xl border border-gray-300 bg-gray-50 p-6 min-h-60 flex flex-col justify-between shadow-sm grayscale lg:col-span-4"
+                        className="workspace-card workspace-card-soft relative isolate flex min-h-60 cursor-not-allowed flex-col justify-between overflow-hidden p-6 grayscale lg:col-span-4"
                         aria-disabled="true"
                     >
                         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100">
@@ -96,7 +96,7 @@ export default function StudyTools() {
                             <p className="text-gray-600">Simplify your workspace for deep, distraction-free studying</p>
                         </div>
 
-                        <div className="rounded-2xl border border-dashed border-gray-400 bg-gray-100 p-2 my-4 flex justify-center items-center h-15">
+                        <div className="workspace-inset my-4 flex h-15 items-center justify-center border-dashed p-2">
                             <p>Minimal distraction view</p>
                             
                         </div>

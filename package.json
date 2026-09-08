@@ -19,6 +19,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@paddle/paddle-js": "^1.6.5",
+    "@paddle/paddle-node-sdk": "^3.10.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.100.0",
     "@vercel/analytics": "^2.0.1",

@@ -36,10 +36,10 @@ export default function GuidedStudySessionCard() {
     }, []);
 
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 min-h-60 flex flex-col justify-between shadow-sm hover:shadow-xl lg:col-span-6">
+        <div className="workspace-card workspace-card-gold workspace-card-interactive flex min-h-60 flex-col justify-between p-6 lg:col-span-6">
             <div className="flex">
-                <div className="flex items-center justify-center w-15 h-15 rounded-xl bg-green-100">
-                    <Timer className="text-green-700"/>
+                <div className="flex size-15 items-center justify-center rounded-2xl bg-[#fffaf0]">
+                    <Timer className="text-[#4d765f]"/>
                 </div>
                 <div className="ml-4">
                     <header className="text-2xl font-semibold">Guided Study Session</header>
@@ -48,7 +48,7 @@ export default function GuidedStudySessionCard() {
             </div>
 
             <div>
-                <div className="rounded-2xl border border-green-300 bg-white my-4">
+                <div className="workspace-inset my-4">
                     <div className="min-h-25 flex flex-col justify-center items-center">
                         <header className="text-4xl font-semibold">
                             {preferences.focusMinutes}:00

@@ -4,20 +4,47 @@ import { fileURLToPath } from "node:url";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 
+function getConfiguredSupabaseConnectSources() {
+  const configuredUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!configuredUrl) return [];
+
+  try {
+    const url = new URL(configuredUrl);
+
+    if (url.protocol !== "http:" && url.protocol !== "https:") return [];
+
+    const websocketProtocol = url.protocol === "https:" ? "wss:" : "ws:";
+    return [url.origin, `${websocketProtocol}//${url.host}`];
+  } catch {
+    return [];
+  }
+}
+
+const supabaseConnectSources = getConfiguredSupabaseConnectSources();
+const connectSources = [
+  "'self'",
+  "https://*.supabase.co",
+  "wss://*.supabase.co",
+  ...supabaseConnectSources,
+  "https://*.vercel-insights.com",
+  "https://*.paddle.com",
+].join(" ");
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://cdn.paddle.com${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://*.paddle.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.vercel-insights.com",
+  `connect-src ${connectSources}`,
   "media-src 'self' blob:",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-src 'none'",
+  "frame-src https://*.paddle.com",
   "frame-ancestors 'none'",
   ...(process.env.NODE_ENV === "production" ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
@@ -30,7 +57,7 @@ const securityHeaders = [
   {
     key: "Permissions-Policy",
     value:
-      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
+      'camera=(), microphone=(), geolocation=(), payment=(self "https://*.paddle.com"), usb=(), browsing-topics=()',
   },
   {
     key: "Strict-Transport-Security",

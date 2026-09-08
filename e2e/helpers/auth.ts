@@ -1,5 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
+import { waitForHydration } from "./hydration";
+
 export const E2E_PASSWORD = "PlaywrightPass123!";
 
 export function uniqueEmail(prefix: string) {
@@ -10,6 +12,7 @@ export async function signUp(page: Page, prefix: string) {
   const email = uniqueEmail(prefix);
 
   await page.goto("/signup");
+  await waitForHydration(page, "/signup");
   await page.getByLabel("Email address").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(E2E_PASSWORD);
   await page.getByRole("button", { name: "Create my account" }).click();
@@ -22,6 +25,7 @@ export async function signUpAndOpen(page: Page, path: string, prefix: string) {
   const credentials = await signUp(page, prefix);
   await page.goto(path);
   await expect(page).toHaveURL(new RegExp(`${escapeRegExp(path)}$`));
+  await waitForHydration(page, path);
   return credentials;
 }
 

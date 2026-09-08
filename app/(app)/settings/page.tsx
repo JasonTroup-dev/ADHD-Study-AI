@@ -5,6 +5,7 @@ import {
   BellRing,
   Check,
   Clock3,
+  CreditCard,
   LoaderCircle,
   RotateCcw,
   ShieldAlert,
@@ -246,7 +247,7 @@ export default function SettingsPage() {
         <div className="mt-8 grid gap-6">
           <section
             aria-labelledby="profile-heading"
-            className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+            className="workspace-card overflow-hidden"
           >
             <div className="border-b border-gray-100 px-6 py-5">
               <div className="flex items-center gap-3">
@@ -270,7 +271,7 @@ export default function SettingsPage() {
             <div className="grid gap-6 p-6 md:grid-cols-[auto_1fr] md:items-start">
               <div
                 aria-hidden="true"
-                className="flex size-20 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-purple-700 text-2xl font-semibold text-white shadow-sm"
+                className="flex size-20 items-center justify-center rounded-[1.75rem] bg-[#19241f] text-2xl font-semibold text-[#fffaf0] shadow-[5px_6px_0_#d7c9ab]"
               >
                 {isLoading ? "…" : initials}
               </div>
@@ -313,7 +314,7 @@ export default function SettingsPage() {
 
           <section
             aria-labelledby="focus-heading"
-            className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+            className="workspace-card workspace-card-soft overflow-hidden"
           >
             <div className="border-b border-gray-100 px-6 py-5">
               <div className="flex items-center gap-3">
@@ -423,8 +424,35 @@ export default function SettingsPage() {
           </section>
 
           <section
+            aria-labelledby="billing-heading"
+            className="workspace-card workspace-card-gold p-6"
+          >
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                  <CreditCard className="size-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2
+                    id="billing-heading"
+                    className="text-lg font-semibold text-gray-950"
+                  >
+                    Plan and billing
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-gray-500">
+                    Choose a plan, update payment details, or manage your subscription.
+                  </p>
+                </div>
+              </div>
+              <Button asChild variant="outline">
+                <Link href="/billing">Open billing</Link>
+              </Button>
+            </div>
+          </section>
+
+          <section
             aria-labelledby="session-heading"
-            className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+            className="workspace-card p-6"
           >
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -444,7 +472,7 @@ export default function SettingsPage() {
 
           <section
             aria-labelledby="privacy-heading"
-            className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+            className="workspace-card workspace-card-gold p-6"
           >
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -467,7 +495,7 @@ export default function SettingsPage() {
 
           <section
             aria-labelledby="delete-heading"
-            className="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm"
+            className="workspace-card overflow-hidden border-red-200"
           >
             <div className="border-b border-red-100 bg-red-50 px-6 py-5">
               <div className="flex items-center gap-3">

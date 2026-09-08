@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = extensions, public, auth;
 
-select plan(8);
+select plan(9);
 
 select ok(
   (select relrowsecurity from pg_class where oid = 'private.ai_quota_usage'::regclass),
@@ -65,6 +65,12 @@ select is(
   (public.consume_ai_quota('study_guides')->>'allowed')::boolean,
   true,
   'quotas are isolated per user'
+);
+
+select is(
+  (public.consume_ai_quota('practice_quiz')->>'allowed')::boolean,
+  true,
+  'practice quiz requests have their own quota'
 );
 
 select throws_ok(

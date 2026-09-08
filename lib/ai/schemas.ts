@@ -30,6 +30,37 @@ export function getAssignmentTaskRefinementSchema(taskCount: number) {
   });
 }
 
+export const practiceQuizConceptsSchema = z.strictObject({
+  sectionTitle: z.string().min(1).max(160),
+  concepts: z
+    .array(
+      z.strictObject({
+        topic: z.string().min(1).max(160),
+        fact: z.string().min(1).max(700),
+        evidence: z.string().min(1).max(500),
+        importance: z.number().int().min(1).max(3),
+      }),
+    )
+    .min(1)
+    .max(18),
+});
+
+const practiceQuizQuestionSchema = z.strictObject({
+  question: z.string().min(1).max(700),
+  choices: z.array(z.string().min(1).max(300)).length(4),
+  correctChoiceIndex: z.number().int().min(0).max(3),
+  explanation: z.string().min(1).max(700),
+  topic: z.string().min(1).max(160),
+  difficulty: z.enum(["foundational", "application", "challenge"]),
+});
+
+export function getPracticeQuizSchema(questionCount: number) {
+  return z.strictObject({
+    title: z.string().min(1).max(120),
+    questions: z.array(practiceQuizQuestionSchema).length(questionCount),
+  });
+}
+
 export const materialAnalysisSchema = z.strictObject({
   files: z.array(
     z.strictObject({

@@ -322,7 +322,7 @@ export default function PlannerPage() {
 
                     <div className="pt-2">
                         <Button
-                            className="text-base bg-linear-to-br from-purple-500 to-blue-500"
+                            className="bg-[#19241f] text-base text-white hover:bg-[#2d4037]"
                             variant="default"
                             size="lg"
                             onClick={() => setIsGenerateModalOpen(true)}
@@ -358,8 +358,9 @@ export default function PlannerPage() {
 
 
                         {/* Progress Card */}
-                        <div className="mt-8 rounded-2xl border bg-linear-to-r from-blue-100 to-indigo-200 p-8">
-                            <h2 className="text-xl font-semibold">Today’s Progress</h2>
+                        <div className="relative mt-8 overflow-hidden rounded-[2rem] border border-[#19241f]/10 bg-[#e9dfc7] p-6 sm:p-8">
+                            <div aria-hidden="true" className="absolute -right-8 -top-12 size-36 rounded-full bg-[#ddc56f]/60" />
+                            <h2 className="relative text-xl font-semibold">Today’s Progress</h2>
 
                             <div className="flex justify-between mt-8">
                                 <p className="text-lg text-gray-600">
@@ -373,16 +374,16 @@ export default function PlannerPage() {
                                 <CompletionProgress
                                     value={progressPercent}
                                     label={`${completedTasks} of ${totalTasks} tasks completed`}
-                                    className="h-4 bg-white/75 p-1 shadow-inner ring-1 ring-indigo-300/50"
-                                    indicatorClassName="bg-linear-to-r from-blue-500 via-indigo-500 to-violet-500 shadow-sm after:absolute after:inset-y-0 after:right-0 after:w-1 after:rounded-full after:bg-white/80"
+                                    className="h-4 bg-[#fffaf0]/85 p-1 shadow-inner ring-1 ring-[#19241f]/10"
+                                    indicatorClassName="bg-linear-to-r from-[#d76543] to-[#9e3f28] shadow-sm after:absolute after:inset-y-0 after:right-0 after:w-1 after:rounded-full after:bg-white/80"
                                 />
                                 <div
                                     aria-hidden="true"
                                     className="pointer-events-none absolute inset-x-1 inset-y-1"
                                 >
-                                    <span className="absolute inset-y-0 left-1/4 w-px bg-indigo-950/10" />
-                                    <span className="absolute inset-y-0 left-1/2 w-px bg-indigo-950/10" />
-                                    <span className="absolute inset-y-0 left-3/4 w-px bg-indigo-950/10" />
+                                    <span className="absolute inset-y-0 left-1/4 w-px bg-[#19241f]/10" />
+                                    <span className="absolute inset-y-0 left-1/2 w-px bg-[#19241f]/10" />
+                                    <span className="absolute inset-y-0 left-3/4 w-px bg-[#19241f]/10" />
                                 </div>
                             </div>
                         </div>
@@ -392,7 +393,7 @@ export default function PlannerPage() {
                         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-12">
 
                     {/* Calendar Card */}
-                    <div className="rounded-2xl bg-white p-6 lg:col-span-4">
+                    <div className="workspace-card p-6 lg:col-span-4">
                         <div>
                             <h2 className="text-xl font-semibold">Calendar</h2>
                             <p className="text-gray-600">Select a date to view tasks</p>
@@ -411,7 +412,7 @@ export default function PlannerPage() {
 
 
                     {/* Daily TODO Card */}
-                    <div className="flex max-h-[55vh] flex-col rounded-2xl border border-gray-200 bg-white p-6 lg:col-span-8">
+                    <div className="workspace-card flex max-h-[55vh] flex-col p-6 lg:col-span-8">
                         <div className="flex flex-wrap items-start justify-between gap-4">
                             <div>
                                 <h2 className="text-xl font-semibold" aria-live="polite">{ formattedDate }</h2>
@@ -488,7 +489,7 @@ export default function PlannerPage() {
             {/* Pop-Up Section */}
             {!readOnly && isTaskModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                    <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-lg">
+                    <div className="workspace-card w-full max-w-3xl p-6">
 
 
 
@@ -587,7 +588,7 @@ export default function PlannerPage() {
                                                         }}
                                                         className={`rounded-lg py-2 text-sm bg-white border transition ${
                                                             isSameDay(date.date, modalSelectedDate)
-                                                                ? "bg-blue-600 text-white border-blue-600"
+                                                                ? "border-[#19241f] bg-[#19241f] text-white"
                                                                 : date.isCurrentMonth
                                                             ? "text-gray-900 hover:bg-gray-100"
                                                             : "text-gray-400 hover:bg-gray-100"

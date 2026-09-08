@@ -40,14 +40,14 @@ export default function StudyGuideCard({
   }
 
   return (
-    <article className="relative flex min-h-64 cursor-pointer flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-lg">
+    <article className="workspace-card workspace-card-interactive relative flex min-h-64 cursor-pointer flex-col overflow-hidden p-6">
       <Link href={href} className="absolute inset-0 rounded-2xl" aria-label={`Open ${guide.title}`} />
 
       <div className="pointer-events-none relative z-10 flex items-start justify-between gap-4">
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#e5eddf] text-[#4d765f]">
           <BookOpenText className="size-6" aria-hidden="true" />
         </span>
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+        <span className="rounded-full bg-[#f3d7c9] px-3 py-1 text-xs font-semibold text-[#9e3f28]">
           Study guide
         </span>
       </div>

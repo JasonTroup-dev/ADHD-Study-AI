@@ -65,7 +65,7 @@ export default function FlashcardSetCard({
   }, [cardCount, id]);
 
   return (
-    <div className="relative flex min-h-60 cursor-pointer flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-lg">
+    <div className="workspace-card workspace-card-interactive relative flex min-h-60 cursor-pointer flex-col justify-between overflow-hidden p-6">
       <Link
         href={resolvedReviewHref}
         className="absolute inset-0 z-0 rounded-2xl"
@@ -135,8 +135,8 @@ export default function FlashcardSetCard({
           <span>Progress</span>
           <span className="font-medium text-gray-900">0%</span>
         </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200">
-          <div className="h-full w-0 rounded-full bg-black" />
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[#e9dfc7]">
+          <div className="h-full w-0 rounded-full bg-[#d76543]" />
         </div>
         <p className="mt-3 text-sm text-gray-500">
           0 mastered · 0 to review
