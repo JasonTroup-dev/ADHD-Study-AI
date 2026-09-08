@@ -54,7 +54,7 @@ export default async function SharedPracticeQuizPage({
     <main className="min-h-screen bg-slate-100 px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-3xl">
         <header className="mb-8">
-          <div className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.16em] text-[#4d765f]">
+          <div className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
             <BookOpen className="size-5" aria-hidden="true" />
             Shared practice quiz
           </div>

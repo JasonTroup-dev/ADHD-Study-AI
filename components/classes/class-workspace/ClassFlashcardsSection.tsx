@@ -21,7 +21,7 @@ export function ClassFlashcardsSection({ classId, flashcardSets }: { classId: st
         {flashcardSets.length > 0 ? flashcardSets.map((set) => (
           <FlashcardSetCard key={set.id} classId={classId} set={set} />
         )) : (
-          <Link href={`/study/flashcards/create?classId=${classId}`} className="workspace-empty-state flex h-[68px] items-center justify-center gap-3 text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-[#fffaf0] hover:text-slate-950">
+          <Link href={`/study/flashcards/create?classId=${classId}`} className="flex h-[68px] items-center justify-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-950">
             <Plus className="h-5 w-5" aria-hidden="true" />Create Flashcard Set
           </Link>
         )}
@@ -32,7 +32,7 @@ export function ClassFlashcardsSection({ classId, flashcardSets }: { classId: st
 
 function FlashcardSetCard({ classId, set }: { classId: string; set: FlashcardSet }) {
   return (
-    <article className="workspace-card p-4">
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="truncate text-lg font-semibold text-slate-950">{set.title}</h3>
@@ -54,7 +54,7 @@ function FlashcardSetCard({ classId, set }: { classId: string; set: FlashcardSet
 export function ProgressBar({ value, className = "" }: { value: number; className?: string }) {
   return (
     <div className={`h-1.5 overflow-hidden rounded-full bg-slate-300 ${className}`} aria-label={`${value}% complete`} role="progressbar" aria-valuenow={value} aria-valuemin={0} aria-valuemax={100}>
-      <div className="h-full rounded-full bg-[#d76543]" style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }} />
+      <div className="h-full rounded-full bg-slate-950" style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }} />
     </div>
   );
 }

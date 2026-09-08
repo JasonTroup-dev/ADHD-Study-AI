@@ -43,14 +43,14 @@ export default function StudyGuideEmptyState({
 }: StudyGuideEmptyStateProps) {
   return (
     <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-4 overflow-hidden">
-      <section className="workspace-card workspace-card-dark relative min-h-0 overflow-hidden text-white">
+      <section className="relative min-h-0 overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-xl shadow-slate-950/10">
         <div
-          className="pointer-events-none absolute -right-16 -top-28 size-64 rounded-full bg-[#d76543]"
+          className="pointer-events-none absolute -right-32 -top-40 size-96 rounded-full bg-blue-500/20 blur-3xl"
           aria-hidden="true"
         />
         <div className="relative grid h-full lg:grid-cols-[1.05fr_0.95fr]">
           <div className="flex min-h-0 flex-col justify-center px-6 py-6 sm:px-9 lg:px-11 lg:py-8">
-            <div className="mb-3 flex size-10 items-center justify-center rounded-2xl bg-[#fffaf0] text-[#9e3f28]">
+            <div className="mb-3 flex size-10 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-blue-200">
               <Sparkles className="size-5" aria-hidden="true" />
             </div>
             <p className="text-sm font-semibold tracking-wide text-blue-200">
@@ -83,7 +83,7 @@ export default function StudyGuideEmptyState({
             <div className="w-full rounded-[1.5rem] border border-white/10 bg-white p-5 text-slate-950 shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-3">
-                  <span className="flex size-10 items-center justify-center rounded-xl bg-[#e5eddf] text-[#4d765f]">
+                  <span className="flex size-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
                     <ListChecks className="size-5" aria-hidden="true" />
                   </span>
                   <div>
@@ -116,7 +116,7 @@ export default function StudyGuideEmptyState({
         </div>
       </section>
 
-      <section aria-labelledby="how-it-works-title" className="workspace-card p-4">
+      <section aria-labelledby="how-it-works-title" className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3">
           <h2 id="how-it-works-title" className="text-base font-semibold tracking-tight text-slate-950">
             From upload to study-ready in three steps
@@ -127,8 +127,8 @@ export default function StudyGuideEmptyState({
             const Icon = step.icon;
 
             return (
-              <li key={step.label} className="workspace-inset flex gap-3 p-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#f3d7c9] text-[#9e3f28]">
+              <li key={step.label} className="flex gap-3 rounded-2xl bg-slate-50 p-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm">
                   <Icon className="size-5" aria-hidden="true" />
                 </span>
                 <div>

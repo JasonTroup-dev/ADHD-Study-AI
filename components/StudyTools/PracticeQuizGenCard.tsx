@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 
 export default function PracticeQuizGenCard() {
     return (
-        <div className="workspace-card workspace-card-coral workspace-card-interactive flex min-h-60 flex-col justify-between p-6 lg:col-span-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 min-h-60 flex flex-col justify-between shadow-sm hover:shadow-xl lg:col-span-6">
             <div className="flex">
-                <div className="flex size-15 items-center justify-center rounded-2xl bg-[#fffaf0] text-[#9e3f28]">
-                    <FileQuestionMark />
+                <div className="flex items-center justify-center w-15 h-15 rounded-xl bg-blue-100">
+                    <FileQuestionMark className="text-blue-700"/>
                 </div>
                 <div className="ml-4">
                     <header className="text-2xl font-semibold">Practice Quiz Generator</header>
-                    <p>Turn study material into interactive quizzes with instant feedback</p>
+                    <p>Turn study material into interactive quizzes with isntant feedback</p>
                 </div>
             </div>
 

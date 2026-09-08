@@ -28,7 +28,7 @@ export default function StudyGuideReader({
   const content = removeDuplicateTitle(guide.content, guide.title);
 
   return (
-    <section aria-labelledby="active-guide-title" className="workspace-card min-w-0 overflow-hidden">
+    <section aria-labelledby="active-guide-title" className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <header className="shrink-0 border-b border-slate-200 bg-slate-50/70 px-4 py-3 sm:px-6">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">

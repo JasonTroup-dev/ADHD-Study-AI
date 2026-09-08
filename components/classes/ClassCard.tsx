@@ -49,7 +49,7 @@ export default function ClassCard({
             {professorName}
         </div>
 
-        <div className={`workspace-inset my-6 ${colorOption.bg} px-4 py-4`}>
+        <div className={`my-6 rounded-2xl ${colorOption.bg} px-4 py-4`}>
 
             {nextAssignment ? (
               <>
@@ -97,7 +97,7 @@ export default function ClassCard({
               aria-valuenow={progressPercent}
             >
             <div
-                className="h-full rounded-full bg-[#d76543]"
+                className="h-full rounded-full bg-black"
                 style={{
                   width: `${Math.min(Math.max(progressPercent, 0), 100)}%`,
                 }}>
@@ -126,7 +126,7 @@ export default function ClassCard({
       </>
     );
 
-    const className = "workspace-card workspace-card-interactive relative flex h-full cursor-pointer flex-col overflow-hidden p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4d765f] focus-visible:ring-offset-2 lg:col-span-4";
+    const className = "relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 lg:col-span-4";
 
     return (
       <Link

@@ -119,21 +119,16 @@ function Brand({ compact = false, demo = false }: { compact?: boolean; demo?: bo
       href={getWorkspaceHref("/dashboard", demo)}
       aria-label="ADHD Study AI dashboard"
       className={cn(
-        "flex min-w-0 items-center gap-3 rounded-2xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#4d765f]/25",
+        "flex min-w-0 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500/30",
         compact && "justify-center",
       )}
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#19241f] text-[#fffaf0] shadow-[0_8px_20px_-12px_rgba(25,36,31,0.8)]">
-        <Brain className="size-5" strokeWidth={1.8} aria-hidden="true" />
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-purple-700 text-gray-100">
+        <Brain aria-hidden="true" />
       </span>
       {compact ? null : (
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold tracking-[-0.02em] text-[#19241f]">
-            ADHD Study AI
-          </span>
-          <span className="mt-0.5 block truncate text-[10px] font-bold uppercase tracking-[0.13em] text-[#78847d]">
-            Your study space
-          </span>
+        <span className="flex min-w-0 flex-1 items-center justify-center">
+          <span className="truncate text-2xl font-semibold">ADHD Study AI</span>
         </span>
       )}
     </Link>
@@ -165,15 +160,18 @@ function NavLink({
       aria-current={pathname === href ? "page" : undefined}
       onClick={onNavigate}
       className={cn(
-        "group flex min-h-10 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-[background-color,color,transform] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d765f]",
-        isActivePath(pathname, href)
-          ? "bg-[#19241f] text-[#fffaf0] shadow-[0_8px_18px_-14px_rgba(25,36,31,0.8)]"
-          : "text-[#526159] hover:translate-x-0.5 hover:bg-[#19241f]/6 hover:text-[#19241f]",
-        compact && "justify-center px-0",
+        "flex items-center text-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600",
+        compact && "min-h-10 justify-center rounded-lg px-0 hover:bg-gray-200",
       )}
     >
-      <Icon className="size-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
-      <span className={compact ? "sr-only" : "truncate"}>{label}</span>
+      {compact ? (
+        <>
+          <Icon className="size-5 shrink-0" aria-hidden="true" />
+          <span className="sr-only">{label}</span>
+        </>
+      ) : (
+        <span>{label}</span>
+      )}
     </Link>
   );
 }
@@ -217,23 +215,15 @@ function NavGroup({
   }
 
   return (
-    <div className="space-y-1">
-      <div
-        className={cn(
-          "flex items-center justify-between rounded-xl transition-colors",
-          isActivePath(pathname, href)
-            ? "bg-[#19241f]/7 text-[#19241f]"
-            : "text-[#526159] hover:bg-[#19241f]/5 hover:text-[#19241f]",
-        )}
-      >
+    <div>
+      <div className="flex items-center justify-between">
         <Link
           href={getWorkspaceHref(href, demo)}
           aria-current={pathname === href ? "page" : undefined}
           onClick={onNavigate}
-          className="flex min-h-10 min-w-0 flex-1 items-center gap-3 rounded-xl px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d765f]"
+          className="text-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         >
-          <Icon className="size-[18px] shrink-0" strokeWidth={1.8} aria-hidden="true" />
-          <span className="truncate">{label}</span>
+          {label}
         </Link>
         <Button
           type="button"
@@ -243,7 +233,7 @@ function NavGroup({
           aria-controls={contentId}
           aria-expanded={open}
           aria-label={`${open ? "Collapse" : "Expand"} ${label}`}
-          className="mr-1 rounded-lg p-1 text-[#78847d] hover:bg-[#19241f]/8 hover:text-[#19241f]"
+          className="rounded-md p-1 text-gray-600 hover:bg-gray-200 hover:text-gray-950"
         >
           <ChevronRight
             className={cn(
@@ -267,7 +257,7 @@ function NavGroup({
         <div className="min-h-0 overflow-hidden">
           <div
             className={cn(
-              "flex flex-col gap-1 pl-9 pr-1 pt-1 transition-transform duration-200 ease-out motion-reduce:transition-none",
+              "flex flex-col gap-2 pl-6 pt-2 transition-transform duration-200 ease-out motion-reduce:transition-none",
               open ? "translate-y-0" : "-translate-y-1",
             )}
           >
@@ -291,12 +281,7 @@ function ChildLink({
       href={getWorkspaceHref(href, demo)}
       aria-current={pathname === href ? "page" : undefined}
       onClick={onNavigate}
-      className={cn(
-        "rounded-lg px-3 py-2 text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d765f]",
-        isActivePath(pathname, href)
-          ? "bg-[#fffaf0] text-[#9e3f28] shadow-[inset_3px_0_0_#d76543]"
-          : "text-[#66736c] hover:bg-[#19241f]/5 hover:text-[#19241f]",
-      )}
+      className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
     >
       {label}
     </Link>
@@ -317,7 +302,7 @@ function Navigation({
   demo?: boolean;
 }) {
   return (
-    <nav aria-label="Workspace navigation" className="flex flex-col gap-2">
+    <nav aria-label="Workspace navigation" className="flex flex-col gap-4">
       <NavLink
         compact={compact}
         href="/dashboard"
@@ -339,8 +324,8 @@ function Navigation({
       >
         {classes === null ? (
           <div className="space-y-2 py-2" aria-label="Loading classes">
-            <div className="h-7 animate-pulse rounded-lg bg-[#19241f]/6 motion-reduce:animate-none" />
-            <div className="h-7 w-4/5 animate-pulse rounded-lg bg-[#19241f]/6 motion-reduce:animate-none" />
+            <div className="h-7 animate-pulse rounded-md bg-slate-100 motion-reduce:animate-none" />
+            <div className="h-7 w-4/5 animate-pulse rounded-md bg-slate-100 motion-reduce:animate-none" />
           </div>
         ) : classes.length ? (
           classes.map((classItem) => {
@@ -355,7 +340,7 @@ function Navigation({
                 aria-current={active ? "page" : undefined}
                 onClick={onNavigate}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4d765f]",
+                  "flex items-center gap-2 rounded-md px-2 py-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600",
                   color.bg,
                   color.text,
                 )}
@@ -371,7 +356,7 @@ function Navigation({
           <Link
             href={getWorkspaceHref("/classes", demo)}
             onClick={onNavigate}
-            className="block rounded-lg px-2.5 py-2 text-xs leading-5 text-[#66736c] hover:bg-[#19241f]/5 hover:text-[#19241f]"
+            className="block rounded-lg px-2.5 py-2 text-xs leading-5 text-slate-500 hover:bg-slate-100"
           >
             Add your first class
           </Link>
@@ -479,35 +464,32 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div
       className={cn(
-        "workspace-shell flex min-h-svh bg-[#f7f3ea] text-[#19241f]",
+        "flex min-h-svh bg-slate-50 text-slate-950",
         readOnlyDemo && "h-svh overflow-hidden",
       )}
     >
       <a
         href="#main-content"
-        className="sr-only z-[100] rounded-full bg-[#19241f] px-5 py-2.5 text-sm font-semibold text-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+        className="sr-only z-[100] rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
       >
         Skip to main content
       </a>
 
       <aside
         className={cn(
-          "sticky top-0 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-[#19241f]/10 bg-[#eee9dc] transition-[width] duration-200 motion-reduce:transition-none md:flex",
-          desktopExpanded ? "w-64" : "w-[4.75rem]",
+          "sticky top-0 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-gray-300 bg-gray-100 transition-[width] duration-200 motion-reduce:transition-none md:flex",
+          desktopExpanded ? "w-64" : "w-20",
         )}
       >
-        <div className="px-4 pb-3 pt-5">
+        <div className="p-4">
           <Brand compact={!desktopExpanded} demo={readOnlyDemo} />
         </div>
-        <div className="mx-4 h-px bg-[#19241f]/10" />
+        <div className="my-2 h-px w-full bg-gray-300" />
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
-          <Navigation
-            classes={classes}
-            compact={!desktopExpanded}
-            pathname={pathname}
-            demo={readOnlyDemo}
-          />
+        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          {desktopExpanded ? (
+            <Navigation classes={classes} compact={false} pathname={pathname} demo={readOnlyDemo} />
+          ) : null}
         </div>
 
         <div
@@ -522,9 +504,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <Link
               href="/report-bug"
               aria-label="Report a bug"
-              className="flex min-h-9 items-center rounded-xl px-2.5 text-sm font-medium text-[#66736c] transition-colors hover:bg-[#19241f]/6 hover:text-[#19241f]"
+              className="flex items-center rounded-full p-2 hover:bg-gray-200"
             >
-              <Bug className={cn("size-[17px]", desktopExpanded ? "mr-2" : "")} />
+              <Bug className={desktopExpanded ? "mr-2" : ""} />
               <span className={desktopExpanded ? "" : "hidden"}>Report a bug</span>
             </Link>
             <Link
@@ -532,13 +514,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               aria-label="Settings"
               aria-current={pathname === "/settings" ? "page" : undefined}
               className={cn(
-                "flex min-h-9 items-center rounded-xl px-2.5 text-sm font-medium transition-colors",
+                "flex items-center rounded-full p-2 transition-colors",
                 pathname === "/settings"
-                  ? "bg-[#19241f] text-white"
-                  : "text-[#66736c] hover:bg-[#19241f]/6 hover:text-[#19241f]",
+                  ? "bg-gray-900 text-white"
+                  : "hover:bg-gray-200",
               )}
             >
-              <Settings className={cn("size-[17px]", desktopExpanded ? "mr-2" : "")} />
+              <Settings className={desktopExpanded ? "mr-2" : ""} />
               <span className={desktopExpanded ? "" : "hidden"}>Settings</span>
             </Link>
           </div> : null}
@@ -547,7 +529,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             onClick={toggleDesktopSidebar}
             aria-label={desktopExpanded ? "Collapse sidebar" : "Expand sidebar"}
             aria-expanded={desktopExpanded}
-            className="rounded-xl p-2 text-[#78847d] transition-colors hover:bg-[#19241f]/7 hover:text-[#19241f]"
+            className="rounded-lg p-2 hover:bg-gray-200"
           >
             {desktopExpanded ? (
               <PanelLeftClose className="opacity-25" aria-hidden="true" />
@@ -559,32 +541,32 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-[#19241f]/10 bg-[#f7f3ea]/90 px-4 backdrop-blur md:hidden">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-white/95 px-4 backdrop-blur md:hidden">
           <Button
             type="button"
             size="icon"
             variant="ghost"
             onClick={() => setMobileOpen(true)}
             aria-label="Open navigation"
-            className="rounded-full border border-[#19241f]/10 bg-[#fffaf0]"
+            className="rounded-xl"
           >
             <Menu aria-hidden="true" />
           </Button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{pageLabel}</p>
-            <p className="truncate text-xs text-[#78847d]">ADHD Study AI</p>
+            <p className="truncate text-xs text-slate-500">ADHD Study AI</p>
           </div>
         </header>
 
         <main
           id="main-content"
           tabIndex={-1}
-          className="workspace-content relative flex min-h-0 flex-1 flex-col overflow-x-clip focus:outline-none"
+          className="flex min-h-0 flex-1 flex-col overflow-x-clip focus:outline-none"
         >
           {readOnlyDemo ? (
             <div
               role="status"
-              className="shrink-0 border-b border-[#ddc56f]/45 bg-[#fbf1c9] px-4 py-2 text-center text-xs font-medium text-[#6e5816]"
+              className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-xs font-medium text-amber-900"
             >
               Sample workspace · read only. Account changes, uploads, and AI requests are disabled.{" "}
               <Link
@@ -606,8 +588,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </div>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-[min(90vw,20rem)] border-[#19241f]/10 bg-[#eee9dc] p-0">
-          <SheetHeader className="border-b border-[#19241f]/10 pr-14">
+        <SheetContent side="left" className="w-[min(90vw,20rem)] bg-gray-100 p-0">
+          <SheetHeader className="border-b border-gray-300 pr-14">
             <SheetTitle asChild>
               <div><Brand demo={readOnlyDemo} /></div>
             </SheetTitle>
@@ -616,11 +598,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             <Navigation classes={classes} compact={false} pathname={pathname} onNavigate={() => setMobileOpen(false)} demo={readOnlyDemo} />
           </div>
-          {!readOnlyDemo ? <div className="flex flex-col gap-2 border-t border-[#19241f]/10 p-4">
+          {!readOnlyDemo ? <div className="flex flex-col gap-2 border-t border-gray-300 p-4">
             <Link
               href="/report-bug"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center rounded-xl p-2 text-[#66736c] hover:bg-[#19241f]/6 hover:text-[#19241f]"
+              className="flex items-center rounded-full p-2 hover:bg-gray-200"
             >
               <Bug className="mr-2" aria-hidden="true" />
               Report a bug
@@ -630,10 +612,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               onClick={() => setMobileOpen(false)}
               aria-current={pathname === "/settings" ? "page" : undefined}
               className={cn(
-                "flex items-center rounded-xl p-2 transition-colors",
+                "flex items-center rounded-full p-2 transition-colors",
                 pathname === "/settings"
-                  ? "bg-[#19241f] text-white"
-                  : "text-[#66736c] hover:bg-[#19241f]/6 hover:text-[#19241f]",
+                  ? "bg-gray-900 text-white"
+                  : "hover:bg-gray-200",
               )}
             >
               <Settings className="mr-2" aria-hidden="true" />

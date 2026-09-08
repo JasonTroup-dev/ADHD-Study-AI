@@ -52,7 +52,7 @@ export default function PracticeQuizLibrary({
       <div className="mx-auto w-full max-w-7xl">
         <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#4d765f]">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">
               Study tools
             </p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
@@ -71,8 +71,8 @@ export default function PracticeQuizLibrary({
         </header>
 
         {quizzes.length === 0 ? (
-          <section className="workspace-card mt-8 px-6 py-14 text-center">
-            <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#e5eddf] text-[#365543]">
+          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm mt-8 px-6 py-14 text-center">
+            <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
               <BookOpenCheck className="size-7" aria-hidden="true" />
             </span>
             <h2 className="mt-5 text-xl font-semibold text-slate-950">Create your first quiz</h2>
@@ -86,7 +86,7 @@ export default function PracticeQuizLibrary({
         ) : (
           <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {quizzes.map((quiz) => (
-              <article key={quiz.id} className="workspace-card workspace-card-interactive relative min-h-56 p-6">
+              <article key={quiz.id} className="rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-slate-300 hover:shadow-md relative min-h-56 p-6">
                 <Link
                   href={`/study/practice-quiz/${quiz.id}`}
                   className="absolute inset-0 rounded-2xl"
@@ -95,7 +95,7 @@ export default function PracticeQuizLibrary({
                 <div className="pointer-events-none relative flex items-start justify-between gap-4">
                   <span
                     className="flex size-12 items-center justify-center rounded-xl text-white"
-                    style={{ backgroundColor: quiz.classColor || "#4d765f" }}
+                    style={{ backgroundColor: quiz.classColor || "#2563eb" }}
                   >
                     <BookOpenCheck className="size-6" aria-hidden="true" />
                   </span>

@@ -30,8 +30,8 @@ export function ClassPracticeQuizzesSection({
 
       <div className="space-y-3">
         {quizzes.length > 0 ? quizzes.map((quiz) => (
-          <article key={quiz.id} className="workspace-card flex items-center gap-4 p-4">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#e5eddf] text-[#365543]">
+          <article key={quiz.id} className="rounded-2xl border border-slate-200 bg-white shadow-sm flex items-center gap-4 p-4">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
               <FileQuestion className="size-5" aria-hidden="true" />
             </span>
             <div className="min-w-0 flex-1">
@@ -47,7 +47,7 @@ export function ClassPracticeQuizzesSection({
         )) : (
           <Link
             href={`/study/practice-quiz/create?classId=${classId}`}
-            className="workspace-empty-state flex h-[68px] items-center justify-center gap-3 text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-[#fffaf0] hover:text-slate-950"
+            className="rounded-xl border border-dashed border-slate-300 bg-white flex h-[68px] items-center justify-center gap-3 text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-950"
           >
             <Plus className="size-5" aria-hidden="true" />
             Create a practice quiz

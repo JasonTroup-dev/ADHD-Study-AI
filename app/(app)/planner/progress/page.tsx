@@ -166,7 +166,7 @@ export default function ProgressPage() {
         </section>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(17rem,0.55fr)]">
-          <section aria-labelledby="weekly-activity-heading" className="workspace-card p-6">
+          <section aria-labelledby="weekly-activity-heading" className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 id="weekly-activity-heading" className="text-lg font-semibold">Weekly activity</h2>
@@ -191,7 +191,7 @@ export default function ProgressPage() {
             )}
           </section>
 
-          <section aria-labelledby="recent-sessions-heading" className="workspace-card workspace-card-soft p-6">
+          <section aria-labelledby="recent-sessions-heading" className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <h2 id="recent-sessions-heading" className="text-lg font-semibold">Recent focus</h2>
             <p className="mt-1 text-sm text-gray-500">Your latest completed sessions.</p>
 
@@ -252,7 +252,7 @@ function MetricCard({
   };
 
   return (
-    <div className="workspace-card workspace-card-interactive p-6">
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
       <div className="flex items-center gap-3">
         <span className={`flex size-10 items-center justify-center rounded-xl ${tones[tone]}`}>
           <Icon className="size-5" aria-hidden="true" />
@@ -280,7 +280,7 @@ function WeeklyChart({ days }: { days: DayProgress[] }) {
             <div key={day.dateKey} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2" aria-label={fullLabel}>
               <div className="flex min-h-0 w-full flex-1 items-end rounded-xl bg-gray-100 p-1.5">
                 <div
-                  className={`w-full rounded-lg ${score ? "bg-linear-to-t from-[#9e3f28] to-[#ed9b79]" : "bg-gray-200"}`}
+                  className={`w-full rounded-lg ${score ? "bg-linear-to-t from-purple-500 to-blue-500" : "bg-gray-200"}`}
                   style={{ height: `${height}%` }}
                   aria-hidden="true"
                 />
@@ -300,7 +300,7 @@ function WeeklyChart({ days }: { days: DayProgress[] }) {
 
 function EmptyProgress() {
   return (
-    <div className="workspace-empty-state mt-7 flex min-h-64 flex-col items-center justify-center px-6 text-center">
+    <div className="mt-7 flex min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-6 text-center">
       <Target className="size-7 text-gray-400" aria-hidden="true" />
       <h3 className="mt-4 font-semibold text-gray-950">Your week starts with one small step</h3>
       <p className="mt-2 max-w-sm text-sm leading-6 text-gray-500">Add a task or finish a focus session. Your progress will build here automatically.</p>

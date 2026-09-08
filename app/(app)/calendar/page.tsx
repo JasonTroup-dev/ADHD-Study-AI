@@ -236,17 +236,17 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="h-[calc(100svh-4rem)] min-h-0 w-full overflow-hidden bg-[#f7f3ea] md:h-svh">
-      <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#fffdf8]">
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-[#1c2b24] px-3 py-3 text-[#fffaf0] shadow-[0_16px_38px_-30px_rgba(25,36,31,0.9)] sm:px-5 sm:py-4">
+    <div className="h-[calc(100svh-4rem)] min-h-0 w-full overflow-hidden bg-white md:h-svh">
+      <section className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-white">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-3 py-2 sm:px-5">
           <div className="min-w-0">
             <h1
-              className="calendar-month-title truncate text-lg font-semibold tracking-[-0.03em] sm:text-2xl"
+              className="truncate text-lg font-semibold text-gray-950"
               aria-live="polite"
             >
               {monthTitle}
             </h1>
-            <p className="text-xs text-[#c4cec8] sm:text-sm">
+            <p className="text-xs text-gray-500 sm:text-sm">
               {isLoading
                   ? "Loading your schedule…"
                 : `${currentMonthItems.length} ${
@@ -256,37 +256,31 @@ export default function CalendarPage() {
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <div className="hidden items-center gap-x-2 text-xs font-medium text-[#e9dfc7] lg:flex">
-              <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#ed9b79]" />
+            <div className="hidden items-center gap-x-4 text-xs font-medium text-slate-600 lg:flex">
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
                 Study task
               </span>
-              <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5">
-                <ClipboardList className="h-3.5 w-3.5 text-[#ddc56f]" />
+              <span className="flex items-center gap-2">
+                <ClipboardList className="h-3.5 w-3.5 text-violet-500" />
                 Assignment due
               </span>
-              <span className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-1.5">
-                <Check className="h-3.5 w-3.5 text-[#8eb69f]" />
+              <span className="flex items-center gap-2">
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
                 Completed
               </span>
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToToday}
-              className="border-white/15 bg-white/8 text-[#fffaf0] hover:bg-white/15 hover:text-white"
-            >
+            <Button variant="outline" size="sm" onClick={goToToday}>
               Today
             </Button>
-            <div className="flex items-center rounded-xl border border-white/15 bg-white/8 p-0.5">
+            <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-sm"
                 aria-label="Previous month"
                 onClick={() => changeMonth(-1)}
-                className="text-[#fffaf0] hover:bg-white/15 hover:text-white"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -296,7 +290,6 @@ export default function CalendarPage() {
                 size="icon-sm"
                 aria-label="Next month"
                 onClick={() => changeMonth(1)}
-                className="text-[#fffaf0] hover:bg-white/15 hover:text-white"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -315,14 +308,11 @@ export default function CalendarPage() {
 
         <div className="min-h-0 flex-1 overflow-hidden">
           <div className="flex h-full min-h-0 flex-col">
-              <div className="grid shrink-0 grid-cols-7 border-b border-[#19241f]/10 bg-[#ddc56f]/55">
-                {WEEK_DAYS.map((day, dayIndex) => (
+              <div className="grid shrink-0 grid-cols-7 border-b border-slate-200 bg-slate-50/80">
+                {WEEK_DAYS.map((day) => (
                   <div
                     key={day}
-                    className={cn(
-                      "px-1 py-2 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-[#526159] sm:px-3 sm:py-2.5 sm:text-xs",
-                      (dayIndex === 0 || dayIndex === 6) && "text-[#9e3f28]",
-                    )}
+                    className="px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500 sm:px-3 sm:py-2.5 sm:text-xs"
                   >
                     <span className="sm:hidden">{day.slice(0, 1)}</span>
                     <span className="hidden sm:inline">{day.slice(0, 3)}</span>
@@ -340,7 +330,6 @@ export default function CalendarPage() {
                   const dateKey = toDateKey(calendarDay.date);
                   const dayItems = itemsByDate[dateKey] ?? [];
                   const isToday = isSameDay(calendarDay.date, today);
-                  const isWeekend = index % 7 === 0 || index % 7 === 6;
                   const isLastColumn = index % 7 === 6;
                   const isLastRow = index >= calendarDays.length - 7;
 
@@ -348,10 +337,8 @@ export default function CalendarPage() {
                     <div
                       key={dateKey}
                       className={cn(
-                        "flex min-h-0 flex-col overflow-hidden border-b border-r border-[#19241f]/10 bg-[#fffdf8] p-1 sm:p-2",
-                        !calendarDay.isCurrentMonth && "bg-[#f4efe3]",
-                        calendarDay.isCurrentMonth && isWeekend && "bg-[#f3e8bd]/45",
-                        isToday && "bg-[#f3d7c9]/50 shadow-[inset_0_0_0_2px_rgba(215,101,67,0.22)]",
+                        "flex min-h-0 flex-col overflow-hidden border-b border-r border-slate-200 p-1 sm:p-2",
+                        !calendarDay.isCurrentMonth && "bg-slate-50/70",
                         isLastColumn && "border-r-0",
                         isLastRow && "border-b-0",
                       )}
@@ -362,7 +349,7 @@ export default function CalendarPage() {
                           className={cn(
                             "flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-medium sm:h-7 sm:min-w-7 sm:px-1.5 sm:text-sm",
                             isToday
-                              ? "bg-[#d76543] text-white shadow-sm"
+                              ? "bg-blue-600 text-white shadow-sm"
                               : calendarDay.isCurrentMonth
                                 ? "text-slate-800"
                                 : "text-slate-400",
@@ -371,7 +358,7 @@ export default function CalendarPage() {
                           {calendarDay.day}
                         </time>
                         {dayItems.length > 0 ? (
-                          <span className="rounded-full bg-[#e9dfc7] px-1.5 py-0.5 text-[10px] font-semibold text-[#526159]">
+                          <span className="text-[11px] font-medium text-slate-400">
                             {dayItems.length}
                           </span>
                         ) : null}
@@ -436,12 +423,11 @@ function CalendarItemChip({
     </>
   );
   const className = cn(
-    "group flex min-h-7 items-center gap-1.5 rounded-lg border px-2 py-1 text-xs shadow-[0_5px_14px_-12px_rgba(25,36,31,0.8)] transition hover:-translate-y-px hover:shadow-sm",
-    item.isComplete
-      ? "border-[#4d765f]/25 bg-[#e5eddf] text-[#31503f] opacity-70"
-      : item.kind === "assignment"
-        ? "border-[#d76543]/25 bg-[#f3d7c9] text-[#7c3524]"
-        : [color.bg, color.border, color.text],
+    "group flex min-h-7 items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition hover:-translate-y-px hover:shadow-sm",
+    color.bg,
+    color.border,
+    color.text,
+    item.isComplete && "opacity-55",
   );
 
   const demoTaskHref =

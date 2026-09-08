@@ -164,7 +164,7 @@ export default function PracticeQuizMaterialPicker({
         </Link>
 
         <header className="mt-7 flex flex-col gap-5 sm:flex-row sm:items-start">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[#f3d7c9] text-[#9e3f28]">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
             <FileQuestionMark className="size-7" aria-hidden="true" />
           </span>
           <div>
@@ -183,7 +183,7 @@ export default function PracticeQuizMaterialPicker({
           {quiz ? (
             <QuizPlayer quiz={quiz} onStartOver={startOver} />
           ) : (
-            <section className="workspace-card overflow-hidden">
+            <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
               <div className="border-b border-slate-100 px-5 py-5 sm:px-7">
                 <h2 className="text-lg font-semibold text-slate-950">
                   Choose your material
@@ -226,7 +226,7 @@ export default function PracticeQuizMaterialPicker({
                     id="practice-quiz-class"
                     value={classId}
                     onChange={(event) => setClassId(event.target.value)}
-                    className="mt-2 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-[#4d765f] focus:ring-3 focus:ring-[#4d765f]/15"
+                    className="mt-2 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none focus:border-blue-600 focus:ring-3 focus:ring-blue-600/15"
                   >
                     <option value="">No class</option>
                     {classes.map((classItem) => (
@@ -300,11 +300,11 @@ export default function PracticeQuizMaterialPicker({
                         className={cn(
                           "flex min-h-64 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors",
                           isDragging
-                            ? "border-[#4d765f] bg-[#e5eddf]"
-                            : "border-[#19241f]/20 bg-[#f4efe3] hover:border-[#4d765f] hover:bg-[#e5eddf]/60",
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-slate-300 bg-slate-50 hover:border-blue-600 hover:bg-blue-50/60",
                         )}
                       >
-                        <span className="flex size-14 items-center justify-center rounded-2xl bg-[#fffaf0] text-[#4d765f]">
+                        <span className="flex size-14 items-center justify-center rounded-2xl bg-slate-50 text-blue-600">
                           <Upload className="size-6" aria-hidden="true" />
                         </span>
                         <span className="mt-4 font-semibold text-slate-950">
@@ -334,7 +334,7 @@ export default function PracticeQuizMaterialPicker({
                       value={notes}
                       onChange={(event) => setNotes(event.target.value)}
                       placeholder="Paste or type your notes here…"
-                      className="mt-4 min-h-64 w-full resize-y rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-[#4d765f] focus:bg-white focus:ring-3 focus:ring-[#4d765f]/15"
+                      className="mt-4 min-h-64 w-full resize-y rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:bg-white focus:ring-3 focus:ring-blue-600/15"
                     />
                     <p className="mt-2 text-right text-xs text-slate-400">
                       {notes.trim().length.toLocaleString()} characters
@@ -418,8 +418,8 @@ function QuizPlayer({
     const percentage = Math.round((score / quiz.questions.length) * 100);
 
     return (
-      <section className="workspace-card overflow-hidden p-6 text-center sm:p-10">
-        <span className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-[#f7e9b5] text-[#9a6810]">
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden p-6 text-center sm:p-10">
+        <span className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
           <Trophy className="size-8" aria-hidden="true" />
         </span>
         <p className="mt-6 text-sm font-semibold text-slate-500">Quiz complete</p>
@@ -429,7 +429,7 @@ function QuizPlayer({
         <p className="mt-2 text-base text-slate-600">{percentage}% correct</p>
         <div className="mx-auto mt-6 h-3 max-w-md overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-[#4d765f]"
+            className="h-full rounded-full bg-blue-600"
             style={{ width: `${percentage}%` }}
           />
         </div>
@@ -484,7 +484,7 @@ function QuizPlayer({
   }
 
   return (
-    <section className="workspace-card overflow-hidden">
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
       <div className="border-b border-slate-100 px-5 py-5 sm:px-7">
         <div className="flex items-center justify-between gap-4 text-sm">
           <span className="font-semibold text-slate-700">
@@ -496,7 +496,7 @@ function QuizPlayer({
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-[#4d765f] transition-[width]"
+            className="h-full rounded-full bg-blue-600 transition-[width]"
             style={{
               width: `${((questionIndex + 1) / quiz.questions.length) * 100}%`,
             }}
@@ -506,7 +506,7 @@ function QuizPlayer({
 
       <div className="p-5 sm:p-7">
         <div className="flex flex-wrap gap-2 text-xs font-medium">
-          <span className="rounded-full bg-[#e5eddf] px-3 py-1 text-[#365543]">
+          <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
             {question.topic}
           </span>
           <span className="rounded-full bg-slate-100 px-3 py-1 capitalize text-slate-600">
@@ -608,8 +608,8 @@ function AnswerChoice({
       disabled={answerIsRevealed}
       onClick={onSelect}
       className={cn(
-        "flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left text-sm leading-6 outline-none transition focus-visible:ring-3 focus-visible:ring-[#4d765f]/20 disabled:opacity-100",
-        !answerIsRevealed && isSelected && "border-[#4d765f] bg-[#e5eddf]",
+        "flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left text-sm leading-6 outline-none transition focus-visible:ring-3 focus-visible:ring-blue-600/20 disabled:opacity-100",
+        !answerIsRevealed && isSelected && "border-blue-600 bg-blue-50",
         !answerIsRevealed &&
           !isSelected &&
           "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50",
@@ -625,7 +625,7 @@ function AnswerChoice({
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
           isSelected
-            ? "border-[#4d765f] bg-[#4d765f] text-white"
+            ? "border-blue-600 bg-blue-600 text-white"
             : "border-slate-300 bg-white text-slate-600",
           answerIsRevealed &&
             isCorrect &&
@@ -666,16 +666,16 @@ function SourceButton({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "relative flex items-start gap-3 rounded-2xl border p-4 text-left outline-none transition focus-visible:ring-3 focus-visible:ring-[#4d765f]/25",
+        "relative flex items-start gap-3 rounded-2xl border p-4 text-left outline-none transition focus-visible:ring-3 focus-visible:ring-blue-600/25",
         active
-          ? "border-[#4d765f] bg-[#e5eddf]"
-          : "border-[#19241f]/10 bg-[#fffdf8] hover:border-[#19241f]/20 hover:bg-[#f0eadc]",
+          ? "border-blue-600 bg-blue-50"
+          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-100",
       )}
     >
       <span
         className={cn(
           "flex size-10 shrink-0 items-center justify-center rounded-xl",
-          active ? "bg-[#19241f] text-white" : "bg-[#f0eadc] text-[#526159]",
+          active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600",
         )}
       >
         <Icon className="size-5" aria-hidden="true" />
@@ -687,7 +687,7 @@ function SourceButton({
         </span>
       </span>
       {active ? (
-        <span className="absolute right-3 top-3 flex size-5 items-center justify-center rounded-full bg-[#d76543] text-white">
+        <span className="absolute right-3 top-3 flex size-5 items-center justify-center rounded-full bg-blue-600 text-white">
           <Check className="size-3.5" aria-hidden="true" />
         </span>
       ) : null}

@@ -82,7 +82,7 @@ export default function ReportBugPage() {
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
           <form
             onSubmit={openGitHubIssue}
-            className="workspace-card p-6"
+            className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
           >
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-2">
@@ -153,7 +153,7 @@ export default function ReportBugPage() {
               />
             </div>
 
-            <label className="workspace-inset mt-5 flex cursor-pointer items-start gap-3 p-4">
+            <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
               <input
                 type="checkbox"
                 checked={draft.includeTechnicalDetails}
@@ -181,16 +181,16 @@ export default function ReportBugPage() {
           </form>
 
           <aside className="space-y-4 lg:sticky lg:top-6">
-            <div className="workspace-card workspace-card-gold p-6">
-              <Lightbulb className="size-5 text-[#9e3f28]" aria-hidden="true" />
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6 text-blue-950 shadow-sm">
+              <Lightbulb className="size-5 text-blue-700" aria-hidden="true" />
               <h2 className="mt-3 font-semibold">A useful report includes</h2>
-              <ul className="mt-3 space-y-2 text-sm leading-6 text-[#526159]">
+              <ul className="mt-3 space-y-2 text-sm leading-6 text-blue-900/75">
                 <li>What you were trying to do</li>
                 <li>What you expected to see</li>
                 <li>What appeared instead</li>
               </ul>
             </div>
-            <div className="workspace-card flex items-start gap-3 p-6 text-sm leading-6 text-gray-600">
+            <div className="flex items-start gap-3 rounded-2xl border border-gray-200 bg-white p-6 text-sm leading-6 text-gray-600 shadow-sm">
               <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-700" aria-hidden="true" />
               <p>Avoid including passwords, private notes, or personal school information in a public issue.</p>
             </div>

@@ -54,7 +54,7 @@ export default function StudyGuideLibrary({
   }
 
   return (
-    <aside className="workspace-card flex h-full min-h-0 flex-col overflow-hidden">
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="shrink-0 border-b border-slate-100 p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -101,7 +101,7 @@ export default function StudyGuideLibrary({
                 onClick={() => onSelectGuide(guide.id)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "group w-full cursor-pointer items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+                  "group w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
                   active || (activeIndex === -1 && visibleIndex === 0)
                     ? "flex"
                     : "hidden lg:flex",

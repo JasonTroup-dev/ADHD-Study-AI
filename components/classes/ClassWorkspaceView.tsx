@@ -38,7 +38,7 @@ export function ClassWorkspaceView({
   });
 
   return (
-    <main className="min-h-full w-full bg-transparent text-slate-950">
+    <main className="min-h-full w-full bg-[#f7f8fb] text-slate-950">
       <div className="mx-auto w-full max-w-7xl px-6 py-8 lg:px-8">
         <header className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>

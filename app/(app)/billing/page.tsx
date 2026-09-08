@@ -56,7 +56,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         ) : null}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-          <section className="workspace-card overflow-hidden" aria-labelledby="plan-heading">
+          <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden" aria-labelledby="plan-heading">
             <div className="border-b border-gray-100 px-6 py-5">
               <div className="flex items-center gap-3">
                 <span className="flex size-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
@@ -102,7 +102,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             </div>
           </section>
 
-          <aside className="workspace-card workspace-card-soft p-6">
+          <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
             <CreditCard className="size-6 text-emerald-700" aria-hidden="true" />
             <h2 className="mt-4 text-lg font-semibold text-gray-950">Handled by Paddle</h2>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-gray-600">

@@ -6,7 +6,7 @@ import ComingSoonOverlay from "./ComingSoonOverlay"
 export default function AssignmentBreakdownCard() {
     return (
         <div
-            className="workspace-card workspace-card-soft relative isolate flex min-h-60 cursor-not-allowed flex-col justify-between overflow-hidden p-6 grayscale lg:col-span-4"
+            className="relative isolate cursor-not-allowed overflow-hidden rounded-2xl border border-gray-300 bg-gray-50 p-6 min-h-60 flex flex-col justify-between shadow-sm grayscale lg:col-span-4"
             aria-disabled="true"
         >
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-100">
@@ -17,7 +17,7 @@ export default function AssignmentBreakdownCard() {
                 <p className="text-gray-600">Break overwhelming assignments into smaller, manageable steps</p>
             </div>
 
-            <div className="workspace-inset my-4 p-2">
+            <div className="rounded-2xl border border-gray-200 bg-gray-100 p-2 my-4">
                 <div className="flex gap-1">
                     <Dot className="text-gray-600" />
                     <p className="text-gray-600">Research</p>

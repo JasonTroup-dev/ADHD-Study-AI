@@ -52,8 +52,8 @@ export default function PracticeQuizPlayer({
     const percentage = Math.round((score / quiz.questions.length) * 100);
 
     return (
-      <section className="workspace-card p-6 text-center sm:p-10">
-        <span className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-[#f7e9b5] text-[#9a6810]">
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm p-6 text-center sm:p-10">
+        <span className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
           <Trophy className="size-8" aria-hidden="true" />
         </span>
         <p className="mt-6 text-sm font-semibold text-slate-500">Quiz complete</p>
@@ -63,7 +63,7 @@ export default function PracticeQuizPlayer({
         <p className="mt-2 text-slate-600">{percentage}% correct</p>
         <div className="mx-auto mt-6 h-3 max-w-md overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-[#4d765f]"
+            className="h-full rounded-full bg-blue-600"
             style={{ width: `${percentage}%` }}
           />
         </div>
@@ -110,7 +110,7 @@ export default function PracticeQuizPlayer({
   }
 
   return (
-    <section className="workspace-card overflow-hidden">
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
       <div className="border-b border-slate-100 px-5 py-5 sm:px-7">
         <div className="flex items-center justify-between gap-4 text-sm">
           <span className="font-semibold text-slate-700">
@@ -122,7 +122,7 @@ export default function PracticeQuizPlayer({
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-[#4d765f] transition-[width]"
+            className="h-full rounded-full bg-blue-600 transition-[width]"
             style={{ width: `${((questionIndex + 1) / quiz.questions.length) * 100}%` }}
           />
         </div>
@@ -130,7 +130,7 @@ export default function PracticeQuizPlayer({
 
       <div className="p-5 sm:p-7">
         <div className="flex flex-wrap gap-2 text-xs font-medium">
-          <span className="rounded-full bg-[#e5eddf] px-3 py-1 text-[#365543]">
+          <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
             {question.topic}
           </span>
           <span className="rounded-full bg-slate-100 px-3 py-1 capitalize text-slate-600">
@@ -223,8 +223,8 @@ function AnswerChoice({
       disabled={answerIsRevealed}
       onClick={onSelect}
       className={cn(
-        "flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left text-sm leading-6 outline-none transition focus-visible:ring-3 focus-visible:ring-[#4d765f]/20 disabled:opacity-100",
-        !answerIsRevealed && selected && "border-[#4d765f] bg-[#e5eddf]",
+        "flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left text-sm leading-6 outline-none transition focus-visible:ring-3 focus-visible:ring-blue-600/20 disabled:opacity-100",
+        !answerIsRevealed && selected && "border-blue-600 bg-blue-50",
         !answerIsRevealed && !selected && "border-slate-200 bg-white hover:bg-slate-50",
         answerIsRevealed && correct && "border-emerald-300 bg-emerald-50",
         answerIsRevealed && selected && !correct && "border-red-200 bg-red-50",
@@ -234,7 +234,7 @@ function AnswerChoice({
       <span
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
-          selected ? "border-[#4d765f] bg-[#4d765f] text-white" : "border-slate-300 bg-white text-slate-600",
+          selected ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-600",
           answerIsRevealed && correct && "border-emerald-600 bg-emerald-600 text-white",
           answerIsRevealed && selected && !correct && "border-red-500 bg-red-500 text-white",
         )}
