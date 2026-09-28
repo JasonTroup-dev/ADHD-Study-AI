@@ -2,6 +2,8 @@
 
 import { ArrowLeft, FileText, ListChecks, LoaderCircle, Sparkles } from "lucide-react";
 
+import { AvailabilityEditor } from '@/components/StudyPlanner/AvailabilityEditor';
+import { SchedulePreview } from '@/components/StudyPlanner/SchedulePreview';
 import { Button } from "@/components/ui/button";
 
 import { AssignmentReviewCard } from "./AssignmentReviewCard";
@@ -26,7 +28,7 @@ export function ReviewStep({
     <div className="flex min-h-0 flex-col overflow-hidden">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="grid items-start gap-5 p-5 sm:p-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
-          <CourseSetupCard
+          <div className="space-y-4"><CourseSetupCard
             course={state.course}
             classMatch={state.classMatch}
             classes={classes}
@@ -36,7 +38,6 @@ export function ReviewStep({
             newClassCode={state.newClassCode}
             newClassInstructor={state.newClassInstructor}
             newClassColor={state.newClassColor}
-            maxTasksPerDay={state.maxTasksPerDay}
             isBusy={state.isBusy}
             onClassResolutionChange={actions.chooseClassResolution}
             onSelectedClassChange={actions.setSelectedClassId}
@@ -44,9 +45,10 @@ export function ReviewStep({
             onNewClassCodeChange={actions.setNewClassCode}
             onNewClassInstructorChange={actions.setNewClassInstructor}
             onNewClassColorChange={actions.setNewClassColor}
-            onMaxTasksPerDayChange={actions.setMaxTasksPerDay}
           />
 
+          <AvailabilityEditor value={state.preferences} onChange={actions.setPreferences} disabled={state.isBusy} />
+          </div>
           <section className="min-w-0">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
@@ -74,11 +76,15 @@ export function ReviewStep({
               ))}
             </div>
 
+            <div className="mt-5 space-y-4 border-t border-slate-200 pt-5">
+              <Button type="button" variant="outline" disabled={state.isBusy} onClick={() => void actions.previewStudyPlan()}>{state.isPreviewing ? 'Preparing preview…' : 'Preview schedule'}</Button>
+              {state.preview ? <SchedulePreview preview={state.preview} /> : null}
+            </div>
             <label className={`mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border bg-white p-4 shadow-sm transition ${state.isReviewConfirmed ? "border-emerald-300 ring-2 ring-emerald-100" : "border-slate-200 hover:border-slate-300"}`}>
-              <input type="checkbox" checked={state.isReviewConfirmed} disabled={state.isBusy} onChange={(event) => actions.setIsReviewConfirmed(event.target.checked)} className="mt-0.5 size-4 rounded border-slate-300 accent-emerald-600" />
+              <input type="checkbox" checked={state.isReviewConfirmed} disabled={state.isBusy || !state.preview || state.preview.conflicts.length > 0} onChange={(event) => actions.setIsReviewConfirmed(event.target.checked)} className="mt-0.5 size-4 rounded border-slate-300 accent-emerald-600" />
               <span>
                 <span className="block text-sm font-semibold text-slate-900">Everything looks right</span>
-                <span className="mt-1 block text-xs leading-5 text-slate-500">I reviewed the course, workload, and assignment details above.</span>
+                <span className="mt-1 block text-xs leading-5 text-slate-500">I reviewed the assignments and proposed schedule above.</span>
               </span>
             </label>
             {state.error ? <ErrorMessage message={state.error} /> : null}
@@ -98,7 +104,7 @@ export function ReviewStep({
           <Button
             type="button"
             onClick={() => void actions.createStudyPlan()}
-            disabled={state.isBusy || state.assignments.length === 0 || !state.classResolution || !state.isReviewConfirmed}
+            disabled={state.isBusy || state.assignments.length === 0 || !state.classResolution || !state.isReviewConfirmed || !state.preview || state.preview.conflicts.length > 0}
             className="min-w-48 bg-blue-600 text-white hover:bg-blue-700"
           >
             {state.isImporting ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : <Sparkles className="size-4" aria-hidden="true" />}

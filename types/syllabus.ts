@@ -24,6 +24,8 @@ export type SyllabusAssignment = {
   difficulty: SyllabusAssignmentDifficulty;
   confidence: number;
   notes: string;
+  sourceQuote?: string | null;
+  dueDateOrigin?: "source" | "user";
 };
 
 export type StudyPlanImportSummary = {

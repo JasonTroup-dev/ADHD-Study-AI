@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, CheckCircle2, ChevronDown, CircleAlert, Clock3, SlidersHorizontal } from "lucide-react";
+import { BookOpen, CheckCircle2, ChevronDown, CircleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,6 @@ export function CourseSetupCard({
   newClassCode,
   newClassInstructor,
   newClassColor,
-  maxTasksPerDay,
   isBusy,
   onClassResolutionChange,
   onSelectedClassChange,
@@ -31,7 +30,6 @@ export function CourseSetupCard({
   onNewClassCodeChange,
   onNewClassInstructorChange,
   onNewClassColorChange,
-  onMaxTasksPerDayChange,
 }: {
   course: DetectedSyllabusCourse | null;
   classMatch: SyllabusClassMatch | null;
@@ -42,7 +40,6 @@ export function CourseSetupCard({
   newClassCode: string;
   newClassInstructor: string;
   newClassColor: ClassColor;
-  maxTasksPerDay: number;
   isBusy: boolean;
   onClassResolutionChange: (resolution: ClassResolution) => void;
   onSelectedClassChange: (value: string) => void;
@@ -50,7 +47,6 @@ export function CourseSetupCard({
   onNewClassCodeChange: (value: string) => void;
   onNewClassInstructorChange: (value: string) => void;
   onNewClassColorChange: (value: ClassColor) => void;
-  onMaxTasksPerDayChange: (value: number) => void;
 }) {
   const detectedLabel =
     [course?.classCode, course?.name].filter(Boolean).join(" — ") || "Unknown course";
@@ -149,22 +145,6 @@ export function CourseSetupCard({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-          <SlidersHorizontal className="size-3.5" aria-hidden="true" /> Workload
-        </div>
-        <Label htmlFor="study-plan-daily-limit" className="mt-4 text-xs text-slate-600">Maximum study blocks per day</Label>
-        <div className="relative mt-2">
-          <select id="study-plan-daily-limit" value={maxTasksPerDay} disabled={isBusy} onChange={(event) => onMaxTasksPerDayChange(Number(event.target.value))} className={selectClassName}>
-            {[1, 2, 3, 4, 5].map((limit) => <option key={limit} value={limit}>{limit} {limit === 1 ? "block" : "blocks"} per day</option>)}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-        </div>
-        <div className="mt-3 flex items-start gap-2 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-          <Clock3 className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-          We&apos;ll spread work across available days and never exceed this limit.
-        </div>
-      </section>
     </aside>
   );
 }

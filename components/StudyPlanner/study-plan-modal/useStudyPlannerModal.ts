@@ -4,6 +4,8 @@ import { type FormEvent, useEffect, useRef, useState } from "react";
 
 import type { ClassColor } from "@/lib/classColors";
 import { notifyClassesChanged } from "@/lib/classEvents";
+import { defaultPlanningPreferences, type PlanningPreferences } from "@/lib/planner/preferences";
+import type { PlannerPreview } from "@/lib/planner/types";
 
 import { analyzeSyllabusFile, importStudyPlan } from "./api";
 import type {
@@ -44,10 +46,13 @@ export function useStudyPlannerModal({
   const [newClassColor, setNewClassColorState] = useState<ClassColor>("blue");
   const [analysisFileName, setAnalysisFileName] = useState("");
   const [isReviewConfirmed, setIsReviewConfirmedState] = useState(false);
-  const [maxTasksPerDay, setMaxTasksPerDayState] = useState(3);
+
+  const [preferences, setPreferencesState] = useState<PlanningPreferences>(defaultPlanningPreferences);
+  const [preview, setPreview] = useState<PlannerPreview | null>(null);
+  const [isPreviewing, setIsPreviewing] = useState(false);
   const [step, setStep] = useState<StudyPlannerModalState["step"]>("upload");
   const analysisControllerRef = useRef<AbortController | null>(null);
-  const isBusy = isAnalyzing || isImporting;
+  const isBusy = isAnalyzing || isImporting || isPreviewing;
 
   useEffect(() => () => analysisControllerRef.current?.abort(), []);
 
@@ -69,7 +74,8 @@ export function useStudyPlannerModal({
     setNewClassColorState("blue");
     setAnalysisFileName("");
     setIsReviewConfirmedState(false);
-    setMaxTasksPerDayState(3);
+
+    setPreview(null);
     setStep("upload");
   }
 
@@ -131,6 +137,10 @@ export function useStudyPlannerModal({
       setAnalysisFileName(payload.originalFileName ?? sourceFile.name);
       setIsReviewConfirmedState(false);
       setStep("review");
+      const availability = await fetch("/api/planner", { signal: controller.signal });
+      const saved = await availability.json();
+      if (!availability.ok) throw new Error(saved.error ?? "Your availability could not be loaded.");
+      setPreferencesState(saved.preferences);
 
       if (reviewAssignments.length === 0) {
         setError(
@@ -156,6 +166,8 @@ export function useStudyPlannerModal({
   }
 
   async function createStudyPlan() {
+    if (isBusy) return;
+    if (!preview || preview.conflicts.length) return setError("Preview a schedule without conflicts before creating your plan.");
     const validationError = getReviewValidationError(assignments);
     if (validationError) return setError(validationError);
     if (
@@ -190,13 +202,16 @@ export function useStudyPlannerModal({
             : undefined,
         assignments: assignments.map(toImportAssignment),
         planningDate: getLocalDateOnly(),
-        maxTasksPerDay,
+        preferences,
+        version: preview.version,
+        action: "apply",
       });
       if (summary.classCreated) notifyClassesChanged();
       onStudyPlanCreated(summary);
       resetModal();
       onClose();
     } catch (importError) {
+      setPreview(null);
       setError(
         importError instanceof Error
           ? importError.message
@@ -220,8 +235,28 @@ export function useStudyPlannerModal({
   }
 
   function invalidateConfirmation() {
+    setPreview(null);
     setIsReviewConfirmedState(false);
     setError(null);
+  }
+
+  async function previewStudyPlan() {
+    if (isBusy) return;
+    const validationError = getReviewValidationError(assignments);
+    if (validationError) return setError(validationError);
+    setIsPreviewing(true);
+    setError(null);
+    setIsReviewConfirmedState(false);
+    try {
+      const response = await fetch("/api/syllabus/import", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "preview", assignments: assignments.map(toImportAssignment), planningDate: getLocalDateOnly(), preferences }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error ?? "The schedule could not be previewed.");
+      setPreview(payload);
+    } catch (e) { setError(e instanceof Error ? e.message : "The schedule could not be previewed."); }
+    finally { setIsPreviewing(false); }
   }
 
   return {
@@ -244,7 +279,9 @@ export function useStudyPlannerModal({
       newClassColor,
       analysisFileName,
       isReviewConfirmed,
-      maxTasksPerDay,
+      preferences,
+      preview,
+      isPreviewing,
       step,
     },
     actions: {
@@ -256,6 +293,8 @@ export function useStudyPlannerModal({
       },
       closeModal,
       createStudyPlan,
+      previewStudyPlan,
+      setPreferences: (value) => { setPreferencesState(value); invalidateConfirmation(); },
       goBack: () => {
         setStep("upload");
         invalidateConfirmation();
@@ -268,10 +307,6 @@ export function useStudyPlannerModal({
       setIsReviewConfirmed: (confirmed) => {
         setIsReviewConfirmedState(confirmed);
         setError(null);
-      },
-      setMaxTasksPerDay: (value) => {
-        setMaxTasksPerDayState(value);
-        invalidateConfirmation();
       },
       setNewClassCode: (value) => {
         setNewClassCodeState(value);
