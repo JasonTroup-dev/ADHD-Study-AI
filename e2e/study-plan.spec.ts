@@ -61,6 +61,7 @@ test("signup to syllabus import to study plan to study session", async ({
     page.getByRole("heading", { name: "Review your assignments" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Create detected class" }).click();
+  await page.getByRole("button", { name: "Preview schedule", exact: true }).click();
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Create study plan" }).click();
 

@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { WorkBreakdownPlanner } from './WorkBreakdownPlanner';
 import { FileProcessingStatus } from "@/components/ui/file-processing-status";
 import { getClipboardFiles } from "@/lib/files/clipboardFiles";
 import {
@@ -477,7 +478,7 @@ export function AssignmentMaterialsPanel({
               className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-800 transition-colors hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 disabled:cursor-wait disabled:opacity-60"
             >
               <RefreshCw className="size-4" aria-hidden="true" />
-              Redistribute work across tasks
+              Refresh task titles
             </button>
           ) : null}
           {imageMaterials.length > 0 && !isReanalyzing ? (
@@ -503,6 +504,7 @@ export function AssignmentMaterialsPanel({
           {error}
         </p>
       ) : null}
+      <div className="mt-3"><WorkBreakdownPlanner assignmentId={assignmentId} /></div>
       {notice ? (
         <p
           className="mt-3 flex items-start gap-2 text-sm font-medium text-emerald-700"

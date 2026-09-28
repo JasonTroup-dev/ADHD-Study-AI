@@ -4,7 +4,7 @@ import { runAIRequest } from "@/lib/ai/runtime";
 import { syllabusAnalysisSchema } from "@/lib/ai/schemas";
 import { prepareStudyGuideSourceText } from "@/lib/files/extractTextFromFile";
 import {
-  getSyllabusDateEvidence,
+  getAssignmentDateEvidence,
   shouldExcludeUndatedSyllabusItem,
 } from "@/lib/syllabus/dateEvidence";
 import type {
@@ -51,6 +51,8 @@ Rules:
 - Classify midterms and finals as exam, quizzes as quiz, and homework, projects, papers, labs, presentations, and other graded deliverables as assignment.
 - confidence is 0 to 1 and should be lower for inferred dates, vague titles, or uncertain rows.
 - notes should be brief and useful during review.
+- Preserve explicit exam coverage in notes, including numbered problem sets or homework ranges (for example, "Covers Problem Sets 1 and 2"). Copy the coverage wording from the syllabus; never infer coverage from dates or exam numbers.
+- sourceQuote must be an exact, short passage pairing this assignment name with its deadline, never a date from another schedule row. Use null if that pairing is absent. Preserve the source's assignment title so the passage can be verified.
 `;
 
 type AnalyzeSyllabusTextInput = {
@@ -181,9 +183,10 @@ function normalizeSyllabusAssignment(
 
   const proposedDueDate = getString(value.dueDate).trim();
   const proposedDueDateStatus = getDueDateStatus(value.dueDateStatus);
-  const dateEvidence = isValidDateOnly(proposedDueDate)
-    ? getSyllabusDateEvidence(sourceText, proposedDueDate)
-    : "missing";
+  const evidence = isValidDateOnly(proposedDueDate)
+    ? getAssignmentDateEvidence(sourceText, title, proposedDueDate, getString(value.sourceQuote))
+    : { status: "missing" as const, quote: null };
+  const dateEvidence = evidence.status;
   const dueDate = dateEvidence === "missing" ? null : proposedDueDate;
   const kind = getItemKind(value.kind);
   const difficulty = getDifficulty(value.difficulty);
@@ -215,6 +218,8 @@ function normalizeSyllabusAssignment(
     difficulty,
     confidence,
     notes: notes.slice(0, 500),
+    sourceQuote: evidence.quote,
+    dueDateOrigin: "source",
   };
 }
 

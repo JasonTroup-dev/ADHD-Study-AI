@@ -53,6 +53,8 @@ export function toImportAssignment(
     difficulty: assignment.difficulty,
     confidence: assignment.confidence,
     notes: assignment.notes,
+    sourceQuote: assignment.sourceQuote,
+    dueDateOrigin: assignment.dueDateOrigin,
   };
 }
 

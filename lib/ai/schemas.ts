@@ -96,6 +96,7 @@ export const syllabusAnalysisSchema = z.strictObject({
         kind: z.enum(["assignment", "exam", "quiz"]),
         dueDate: z.string().nullable(),
         dueDateStatus: z.enum(["explicit", "inferred", "missing"]),
+        sourceQuote: z.string().max(1500).nullable().describe("Exact passage containing this assignment's name and deadline. Null when no such passage exists."),
         points: z.number().nullable(),
         difficulty: z.enum(["easy", "medium", "hard"]),
         confidence: z.number().min(0).max(1),

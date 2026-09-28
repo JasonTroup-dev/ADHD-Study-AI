@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase/client";
 import { retainStudyTutorMessages } from "@/lib/ai/studyTutorContext";
+import { confirmedStudyMinutes, parseStudyMinutes } from "@/lib/studyTime";
 import type {
   StudySession,
   StudySessionInsert,
@@ -155,7 +156,9 @@ export async function completeStudySession(
   sessionId: string,
   plannerTaskId?: string | null,
   assignmentIdToComplete?: string | null,
+  studyMinutes: string = "",
 ): Promise<CompleteStudySessionResult> {
+  const actualMinutes = parseStudyMinutes(studyMinutes);
   const userId = await getCurrentUserId();
   const session = await getStudySessionById(sessionId);
 
@@ -172,18 +175,12 @@ export async function completeStudySession(
   }
 
   const endedAt = new Date();
-  const startedAt = session.started_at
-    ? new Date(session.started_at)
-    : endedAt;
-  const actualMinutes = Math.max(
-    1,
-    Math.ceil((endedAt.getTime() - startedAt.getTime()) / 60_000),
-  );
 
   const { data, error } = await supabase
     .from("study_sessions")
     .update({
       actual_minutes: actualMinutes,
+      time_confirmed_at: actualMinutes === null ? null : endedAt.toISOString(),
       ended_at: endedAt.toISOString(),
       status: "completed",
       updated_at: endedAt.toISOString(),
@@ -227,6 +224,18 @@ export async function completeStudySession(
     taskCompletionError,
     assignmentCompletionError,
   };
+}
+
+export async function updateStudySessionTime(sessionId: string, value: string): Promise<StudySession> {
+  const minutes = parseStudyMinutes(value);
+  const userId = await getCurrentUserId();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase.from("study_sessions")
+    .update({ actual_minutes: minutes, time_confirmed_at: minutes === null ? null : now, updated_at: now })
+    .eq("id", sessionId).eq("user_id", userId).eq("status", "completed")
+    .select("*").single();
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 export async function cancelStudySession(
@@ -313,7 +322,7 @@ export async function getTodayTotalStudyMinutes(
     sessions ?? (await getTodayCompletedStudySessions());
 
   return completedSessions.reduce(
-    (total, session) => total + (session.actual_minutes ?? 0),
+    (total, session) => total + confirmedStudyMinutes(session),
     0,
   );
 }

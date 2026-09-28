@@ -18,7 +18,7 @@ export function StudySessionReview({ session }: { session: StudySession }) {
           </p>
           <p className="mt-1 text-emerald-800">
             {session.title ?? "Study session"}
-            {session.actual_minutes ? ` · ${session.actual_minutes} minutes studied` : ""}
+            {session.time_confirmed_at ? ` · ${session.actual_minutes} minutes logged` : " · Time not logged"}
           </p>
         </div>
         <Button asChild size="sm" variant="outline">

@@ -27,6 +27,7 @@ export type AssignmentDetailsData = {
   title: string;
   description: string | null;
   dueDate: string | null;
+  deadlineEvidence?: unknown;
   importance: string;
   points: number | null;
   status: string;
@@ -66,6 +67,7 @@ export function AssignmentDetailsView({
   const classColor = assignment.assignmentClass
     ? getClassColor(assignment.assignmentClass.color)
     : null;
+  const evidence = assignment.deadlineEvidence && typeof assignment.deadlineEvidence === 'object' && 'quote' in assignment.deadlineEvidence ? assignment.deadlineEvidence as { quote?: string; origin?: string } : null;
   const completedTasks = assignment.tasks.filter(
     (task) => task.status === "completed",
   ).length;
@@ -169,6 +171,7 @@ export function AssignmentDetailsView({
               </div>
             </div>
 
+            {evidence ? <details className="mt-4 text-sm text-slate-600"><summary className="cursor-pointer font-medium">Deadline evidence{evidence.origin === 'user' ? ' · date edited by you' : ''}</summary><blockquote className="mt-2 border-l-2 border-blue-200 pl-3 text-xs leading-5">{typeof evidence.quote === 'string' ? evidence.quote : 'No source passage was recorded.'}</blockquote></details> : null}
             {assignment.description ? (
               <p className="mt-5 max-w-3xl text-[15px] leading-6 text-slate-700">
                 {assignment.description}

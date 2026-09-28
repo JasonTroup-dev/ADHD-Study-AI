@@ -397,12 +397,12 @@ export function useGuidedStudySession({
     }
   }
 
-  async function completeSession() {
+  async function completeSession(studyMinutes = "") {
     if (!completionUnlocked || isCompleting) return;
     setIsCompleting(true);
     setTutorError(null);
     try {
-      const result = await completeStudySession(session.id, plannerTaskId);
+      const result = await completeStudySession(session.id, plannerTaskId, null, studyMinutes);
       window.localStorage.removeItem(`study-session-task:${session.id}`);
       if (result.taskCompletionError || result.assignmentCompletionError) {
         setTutorError(result.taskCompletionError ?? result.assignmentCompletionError ?? "The session was saved, but linked work could not be updated.");

@@ -51,6 +51,12 @@ export function AssignmentReviewCard({
           <span>{warning}</span>
         </div>
       ) : null}
+      {assignment.sourceQuote ? (
+        <details className="mt-3 text-xs text-slate-600">
+          <summary className="cursor-pointer font-medium">View deadline evidence{assignment.dueDateOrigin === "user" ? " · date edited by you" : ""}</summary>
+          <blockquote className="mt-2 border-l-2 border-blue-200 pl-3 leading-5">{assignment.sourceQuote}</blockquote>
+        </details>
+      ) : <p className="mt-3 text-xs text-amber-700">{assignment.dueDateOrigin === "user" ? "Date entered by you." : "No assignment-specific deadline passage was verified. Check the original syllabus."}</p>}
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-12">
         <div className="xl:col-span-6">
           <Label htmlFor={`${assignment.id}-title`} className="text-xs text-slate-600">Assignment title</Label>
@@ -67,7 +73,7 @@ export function AssignmentReviewCard({
         </div>
         <div className="xl:col-span-3">
           <Label htmlFor={`${assignment.id}-due-date`} className="text-xs text-slate-600">Due date</Label>
-          <Input id={`${assignment.id}-due-date`} type="date" value={assignment.dueDate ?? ""} disabled={isBusy} onChange={(event) => onChange({ dueDate: event.target.value || null, dueDateStatus: event.target.value ? "explicit" : "missing" })} className="mt-1.5" />
+          <Input id={`${assignment.id}-due-date`} type="date" value={assignment.dueDate ?? ""} disabled={isBusy} onChange={(event) => onChange({ dueDate: event.target.value || null, dueDateStatus: event.target.value ? "explicit" : "missing", dueDateOrigin: "user" })} className="mt-1.5" />
         </div>
         <div className="xl:col-span-3">
           <Label htmlFor={`${assignment.id}-points`} className="text-xs text-slate-600">Points <span className="font-normal text-slate-400">(optional)</span></Label>

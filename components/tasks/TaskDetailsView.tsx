@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { PinTaskButton } from '@/components/tasks/PinTaskButton';
+import { WorkBreakdownPlanner } from '@/components/assignments/WorkBreakdownPlanner';
 import { ResetStudySessionButton } from "@/components/study-sessions/ResetStudySessionButton";
 import { StartStudySessionButton } from "@/components/study-sessions/StartStudySessionButton";
 import { AssignmentFileDropzone } from "@/components/tasks/AssignmentFileDropzone";
@@ -29,6 +31,9 @@ export type TaskDetailsData = {
   priority: string | null;
   status: string;
   scheduledDate: string;
+  pinned?: boolean;
+  checklist?: string[];
+  sourceEvidence?: string | null;
   studySessionId: string | null;
   taskClass: {
     name: string;
@@ -131,6 +136,7 @@ export function TaskDetailsView({
                 inert={readOnly || undefined}
                 aria-disabled={readOnly || undefined}
               >
+                <PinTaskButton taskId={task.id} pinned={task.pinned ?? false} />
                 <ResetStudySessionButton plannerTaskId={task.id} className="shrink-0" />
                 {isCompleted && task.studySessionId ? (
                   <Button asChild size="sm" className="shrink-0">
@@ -177,6 +183,9 @@ export function TaskDetailsView({
                   supportingMaterials: task.assignment?.supportingMaterials ?? [],
                 })}
               </p>
+              {task.checklist?.length ? <div className="mt-4 rounded-xl bg-emerald-50 p-4"><h3 className="text-sm font-semibold text-emerald-950">Done when</h3><ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-emerald-900">{task.checklist.map(item => <li key={item}>{item}</li>)}</ul></div> : null}
+              {task.sourceEvidence ? <details className="mt-4 text-xs text-slate-600"><summary className="cursor-pointer font-medium">Source for this step</summary><blockquote className="mt-2 border-l-2 border-blue-200 pl-3 leading-5">{task.sourceEvidence}</blockquote></details> : null}
+              {task.assignmentId && !readOnly ? <div className="mt-4"><WorkBreakdownPlanner assignmentId={task.assignmentId} /></div> : null}
               {task.assignment && task.assignment.title !== task.title ? (
                 <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
                   <span className="font-semibold text-slate-900">Part of:</span>{" "}

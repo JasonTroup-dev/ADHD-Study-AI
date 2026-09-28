@@ -1,4 +1,6 @@
 import type { FormEvent } from "react";
+import type { PlanningPreferences } from "@/lib/planner/preferences";
+import type { PlannerPreview } from "@/lib/planner/types";
 
 import type { ClassColor } from "@/lib/classColors";
 import type {
@@ -51,7 +53,9 @@ export type StudyPlannerModalState = {
   newClassColor: ClassColor;
   analysisFileName: string;
   isReviewConfirmed: boolean;
-  maxTasksPerDay: number;
+  preferences: PlanningPreferences;
+  preview: PlannerPreview | null;
+  isPreviewing: boolean;
   step: StudyPlannerStep;
 };
 
@@ -61,11 +65,12 @@ export type StudyPlannerModalActions = {
   chooseClassResolution: (resolution: ClassResolution) => void;
   closeModal: () => void;
   createStudyPlan: () => Promise<void>;
+  previewStudyPlan: () => Promise<void>;
+  setPreferences: (value: PlanningPreferences) => void;
   goBack: () => void;
   removeAssignment: (id: string) => void;
   setIsDragging: (dragging: boolean) => void;
   setIsReviewConfirmed: (confirmed: boolean) => void;
-  setMaxTasksPerDay: (value: number) => void;
   setNewClassCode: (value: string) => void;
   setNewClassColor: (value: ClassColor) => void;
   setNewClassInstructor: (value: string) => void;

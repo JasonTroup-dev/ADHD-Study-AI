@@ -52,6 +52,9 @@ export default async function TaskDetailsPage({
       priority,
       status,
       scheduled_date,
+      pinned,
+      checklist,
+      description,
       classes (name, color),
       assignments (
         id,
@@ -98,6 +101,9 @@ export default async function TaskDetailsPage({
     priority: task.priority,
     status: task.status,
     scheduledDate: task.scheduled_date,
+    pinned: task.pinned,
+    checklist: Array.isArray(task.checklist) ? task.checklist.filter((item): item is string => typeof item === 'string') : [],
+    sourceEvidence: task.description,
     studySessionId,
     taskClass,
     assignment: assignment

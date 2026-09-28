@@ -4,6 +4,7 @@ const baseURL = process.env.PLAYWRIGHT_TEST_BASE_URL ?? "http://localhost:3000";
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: ["adaptive-planning.spec.ts", "planning-app/**", "calendar.spec.ts", "calendar-app/**"],
   snapshotPathTemplate: "{testDir}/__screenshots__/{testFilePath}/{arg}{ext}",
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),

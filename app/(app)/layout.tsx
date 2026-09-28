@@ -396,6 +396,7 @@ function Navigation({
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const routePathname = usePathname();
+  const fixedPlanner = routePathname === '/planner' || routePathname === '/demo/planner';
   const demoWorkspace = useDemoWorkspace();
   const readOnlyDemo = demoWorkspace !== null;
   const pathname = getWorkspacePathname(routePathname, readOnlyDemo);
@@ -466,6 +467,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       className={cn(
         "flex min-h-svh bg-slate-50 text-slate-950",
         readOnlyDemo && "h-svh overflow-hidden",
+        fixedPlanner && "h-dvh min-h-0 overflow-hidden",
       )}
     >
       <a
@@ -561,7 +563,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex min-h-0 flex-1 flex-col overflow-x-clip focus:outline-none"
+          className={cn("flex min-h-0 flex-1 flex-col overflow-x-clip focus:outline-none", fixedPlanner && "overflow-hidden")}
         >
           {readOnlyDemo ? (
             <div
@@ -578,7 +580,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
           ) : null}
           {readOnlyDemo ? (
-            <div className="min-h-0 flex-1 overflow-y-auto [&>*]:h-full [&>*]:min-h-0">
+            <div className={cn("min-h-0 flex-1 [&>*]:h-full [&>*]:min-h-0", fixedPlanner ? "overflow-hidden" : "overflow-y-auto")}>
               {children}
             </div>
           ) : (

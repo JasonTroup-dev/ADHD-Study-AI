@@ -147,6 +147,7 @@ export type Database = {
           context_version: number
           created_at: string | null
           description: string | null
+          deadline_evidence: Json | null
           due_date: string | null
           estimated_minutes: number | null
           extracted_text: string | null
@@ -169,6 +170,7 @@ export type Database = {
           context_version?: number
           created_at?: string | null
           description?: string | null
+          deadline_evidence?: Json | null
           due_date?: string | null
           estimated_minutes?: number | null
           extracted_text?: string | null
@@ -191,6 +193,7 @@ export type Database = {
           context_version?: number
           created_at?: string | null
           description?: string | null
+          deadline_evidence?: Json | null
           due_date?: string | null
           estimated_minutes?: number | null
           extracted_text?: string | null
@@ -687,6 +690,8 @@ export type Database = {
           start_time: string | null
           status: string
           title: string
+          pinned: boolean
+          checklist: Json
           user_edited: boolean
           user_id: string
         }
@@ -706,6 +711,8 @@ export type Database = {
           start_time?: string | null
           status?: string
           title: string
+          pinned?: boolean
+          checklist?: Json
           user_edited?: boolean
           user_id: string
         }
@@ -725,6 +732,8 @@ export type Database = {
           start_time?: string | null
           status?: string
           title?: string
+          pinned?: boolean
+          checklist?: Json
           user_edited?: boolean
           user_id?: string
         }
@@ -782,6 +791,7 @@ export type Database = {
       }
       study_sessions: {
         Row: {
+          time_confirmed_at: string | null
           actual_minutes: number | null
           assignment_id: string | null
           class_id: string | null
@@ -800,6 +810,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          time_confirmed_at?: string | null
           actual_minutes?: number | null
           assignment_id?: string | null
           class_id?: string | null
@@ -818,6 +829,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          time_confirmed_at?: string | null
           actual_minutes?: number | null
           assignment_id?: string | null
           class_id?: string | null
@@ -864,6 +876,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      planner_workspace: { Args: Record<PropertyKey, never>; Returns: Json }
+      commit_planner_change: {
+        Args: { p_version: string; p_kind: string; p_changes: Json; p_preferences: Json; p_assignments?: Json; p_class?: Json; p_undo_id?: string | null }
+        Returns: string
+      }
       consume_ai_quota: {
         Args: { requested_quota: string }
         Returns: Json

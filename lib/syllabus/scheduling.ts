@@ -1,4 +1,6 @@
 import type { AssignmentImportance } from "@/types/assignments";
+import { capacityOnDate, defaultPlanningPreferences, type PlanningPreferences } from "@/lib/planner/preferences";
+import { getExamBoundary, type CourseSequenceItem } from "@/lib/planner/courseSequence";
 import type {
   SyllabusAssignment,
   SyllabusAssignmentDifficulty,
@@ -35,7 +37,7 @@ const projectTitlePattern =
 type StudyItem = Pick<
   SyllabusAssignment,
   "title" | "kind" | "dueDate" | "difficulty" | "points"
->;
+> & { notes?: string };
 
 export type ScheduledStudySession = {
   title: string;
@@ -46,17 +48,24 @@ export type ScheduledStudySession = {
 export type SyllabusStudyPlanInput = {
   itemId: string;
   item: StudyItem;
+  classId?: string;
 };
 
 export type BalancedStudySession = ScheduledStudySession & {
   itemId: string;
+  reason?: string;
 };
 
 export type CreateBalancedStudyPlanOptions = {
   fromDate?: Date | string;
   existingTaskCounts?: ReadonlyMap<string, number> | Record<string, number>;
   maxTasksPerDay?: number;
+  preferences?: PlanningPreferences;
+  courseContext?: CourseSequenceItem[];
 };
+
+export type PlanningConflict = { itemId: string; title: string; dueDate: string; reason: string };
+export type StudyPlanPreview = { sessions: BalancedStudySession[]; conflicts: PlanningConflict[] };
 
 type StudySessionCandidate = BalancedStudySession & {
   dueDate: string;
@@ -91,52 +100,94 @@ export function createBalancedStudyPlan(
   planItems: SyllabusStudyPlanInput[],
   options: CreateBalancedStudyPlanOptions = {},
 ): BalancedStudySession[] {
+  const preview = previewBalancedStudyPlan(planItems, options);
+  if (preview.conflicts.length) throw new StudyPlanCapacityError(preview);
+  return preview.sessions;
+}
+
+export class StudyPlanCapacityError extends Error {
+  constructor(public readonly preview: StudyPlanPreview) {
+    super("The work does not fit before its deadlines. Adjust availability or reduce the selected workload.");
+    this.name = "StudyPlanCapacityError";
+  }
+}
+
+export function previewBalancedStudyPlan(
+  planItems: SyllabusStudyPlanInput[],
+  options: CreateBalancedStudyPlanOptions = {},
+): StudyPlanPreview {
   const planningDate = getDateOnly(options.fromDate ?? new Date());
   const maxTasksPerDay = Math.max(
     1,
     Math.floor(options.maxTasksPerDay ?? DEFAULT_MAX_STUDY_TASKS_PER_DAY),
   );
   const taskCounts = getTaskCountMap(options.existingTaskCounts);
+  const preferences = options.preferences ?? { ...defaultPlanningPreferences, maxTasksPerDay, weekdayCapacity: Array(7).fill(maxTasksPerDay) };
+  const conflicts: PlanningConflict[] = [];
   const nextDateByItem = new Map<string, string>();
+  const courseItems = planItems.map(({ itemId, item, classId }) => ({
+    id: itemId, classId: classId ?? 'import', ...item,
+  }));
+  const courseContext = [...courseItems, ...(options.courseContext ?? [])];
   const candidates = planItems
-    .flatMap(({ itemId, item }) =>
-      createStudySessionCandidates(itemId, item, planningDate),
-    )
+    .flatMap(({ itemId, item }, index) => {
+      const boundary = getExamBoundary(courseItems[index], courseContext, planningDate);
+      // Keep the original amount of work. A shorter window is a conflict to
+      // review, not a reason to silently drop sessions or cross the exam.
+      const sessions = createStudySessionCandidates(itemId, item, planningDate);
+      return sessions.map(candidate => {
+        const earliestDate = boundary && boundary.earliestDate > candidate.earliestDate ? boundary.earliestDate : candidate.earliestDate;
+        const preferredStart = boundary && boundary.earliestDate > sessions[0].idealDate ? boundary.earliestDate : sessions[0].idealDate;
+        const startDay = dateOnlyToDayNumber(preferredStart);
+        const span = Math.max(0, dateOnlyToDayNumber(candidate.latestDate) - startDay);
+        return {
+          ...candidate, earliestDate,
+          idealDate: boundary ? dayNumberToDateOnly(startDay + (sessions.length === 1 ? 0 : Math.round(candidate.sequence * span / (sessions.length - 1)))) : candidate.idealDate,
+          reason: boundary?.reason,
+        };
+      });
+    })
     .sort(compareCandidates);
 
-  const scheduledSessions = candidates.map((candidate) => {
+  const scheduledSessions = candidates.flatMap((candidate) => {
     const nextDate = nextDateByItem.get(candidate.itemId);
     const latestDate = nextDate
-      ? maxDate(
-          candidate.earliestDate,
-          minDate(candidate.latestDate, addDays(nextDate, -1)),
-        )
+      ? minDate(candidate.latestDate, addDays(nextDate, -1))
       : candidate.latestDate;
     const scheduledDate = findBestAvailableDate(
       candidate.idealDate,
       candidate.earliestDate,
       latestDate,
       taskCounts,
-      maxTasksPerDay,
+      preferences,
+      candidate.reason ? candidate.sequence : 0,
     );
+
+    if (!scheduledDate) {
+      conflicts.push({ itemId: candidate.itemId, title: candidate.title, dueDate: candidate.dueDate, reason: candidate.reason
+        ? `${candidate.reason} There is not enough availability afterward to fit all sessions before the deadline.`
+        : "No available block before the deadline while preserving task order." });
+      return [];
+    }
 
     taskCounts.set(scheduledDate, (taskCounts.get(scheduledDate) ?? 0) + 1);
     nextDateByItem.set(candidate.itemId, scheduledDate);
 
-    return {
+    return [{
       itemId: candidate.itemId,
       title: candidate.title,
       scheduledDate,
       priority: candidate.priority,
-    };
+      ...(candidate.reason ? { reason: candidate.reason } : {}),
+    }];
   });
 
-  return scheduledSessions.sort(
+  return { conflicts, sessions: scheduledSessions.sort(
     (first, second) =>
       first.scheduledDate.localeCompare(second.scheduledDate) ||
       first.itemId.localeCompare(second.itemId) ||
       first.title.localeCompare(second.title),
-  );
+  ) };
 }
 
 export function createStudyTasksForSyllabusItem(
@@ -305,8 +356,10 @@ function findBestAvailableDate(
   earliestDate: string,
   latestDate: string,
   taskCounts: Map<string, number>,
-  maxTasksPerDay: number,
+  preferences: PlanningPreferences,
+  precedingSessions = 0,
 ) {
+  if (latestDate < earliestDate) return null;
   const earliestDay = dateOnlyToDayNumber(earliestDate);
   const latestDay = dateOnlyToDayNumber(latestDate);
   const idealDay = Math.min(
@@ -327,16 +380,23 @@ function findBestAvailableDate(
     }
   }
 
-  const availableDate = datesByPreference.find(
-    (date) => (taskCounts.get(date) ?? 0) < maxTasksPerDay,
+  // Reserve distinct available days for earlier steps when a course boundary
+  // narrows the window. Otherwise a later milestone can consume the first
+  // available day and falsely make its own preceding steps impossible.
+  const availableDaysBefore = new Map<string, number>();
+  let availableDays = 0;
+  for (let day = earliestDay; day <= latestDay; day++) {
+    const date = dayNumberToDateOnly(day);
+    availableDaysBefore.set(date, availableDays);
+    if ((taskCounts.get(date) ?? 0) < capacityOnDate(date, preferences)) availableDays++;
+  }
+  const availableDate = datesByPreference.find(date =>
+    (taskCounts.get(date) ?? 0) < capacityOnDate(date, preferences)
+    && (availableDaysBefore.get(date) ?? 0) >= precedingSessions,
   );
   if (availableDate) return availableDate;
 
-  return datesByPreference.reduce((leastBusyDate, date) => {
-    const count = taskCounts.get(date) ?? 0;
-    const leastBusyCount = taskCounts.get(leastBusyDate) ?? 0;
-    return count < leastBusyCount ? date : leastBusyDate;
-  }, datesByPreference[0] ?? latestDate);
+  return null;
 }
 
 function getTaskCountMap(
@@ -356,9 +416,6 @@ function getDateOnly(value: Date | string) {
   return value.toISOString().slice(0, 10);
 }
 
-function maxDate(first: string, second: string) {
-  return first > second ? first : second;
-}
 
 function minDate(first: string, second: string) {
   return first < second ? first : second;

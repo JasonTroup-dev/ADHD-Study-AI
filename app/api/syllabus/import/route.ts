@@ -1,575 +1,79 @@
-import {
-  createBalancedStudyPlan,
-  DEFAULT_MAX_STUDY_TASKS_PER_DAY,
-  getAssignmentImportance,
-} from "@/lib/syllabus/scheduling";
-import { classColorOptions, type ClassColor } from "@/lib/classColors";
-import { createClient } from "@/lib/supabase/server";
-import type {
-  SyllabusAssignment,
-  SyllabusAssignmentDifficulty,
-  SyllabusDueDateStatus,
-  SyllabusItemKind,
-} from "@/types/syllabus";
+import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
+import { classColorOptions } from '@/lib/classColors';
+import { createClient } from '@/lib/supabase/server';
+import { previewBalancedStudyPlan, getAssignmentImportance } from '@/lib/syllabus/scheduling';
+import { countTasks } from '@/lib/planner/catchUp';
+import { plannerCourseItems } from '@/lib/planner/courseSequence';
+import { dateOnlySchema, planningPreferencesSchema } from '@/lib/planner/preferences';
+import { commitPlannerChange, loadPlannerWorkspace, PlannerError } from '@/lib/planner/server';
+import type { PlannerTask, PlannerPreview } from '@/lib/planner/types';
 
-export const runtime = "nodejs";
-
-const MAX_IMPORT_ASSIGNMENTS = 80;
-const difficultyValues = new Set<SyllabusAssignmentDifficulty>([
-  "easy",
-  "medium",
-  "hard",
-]);
-const itemKindValues = new Set<SyllabusItemKind>([
-  "assignment",
-  "exam",
-  "quiz",
-]);
-const dueDateStatusValues = new Set<SyllabusDueDateStatus>([
-  "explicit",
-  "inferred",
-  "missing",
-]);
-const classColorValues = new Set<ClassColor>(
-  classColorOptions.map((option) => option.value),
-);
-
-type ImportPayload = {
-  classId?: unknown;
-  newClass?: unknown;
-  assignments?: unknown;
-  planningDate?: unknown;
-  maxTasksPerDay?: unknown;
-};
-
-type NewClassInput = {
-  name: string;
-  classCode: string;
-  professorName: string;
-  color: ClassColor;
-};
-
-type CreatedAssignmentSummary = {
-  id: string;
-  title: string;
-  studySessionCount: number;
-};
-
+export const runtime = 'nodejs';
+const assignmentSchema = z.object({
+  title: z.string().trim().min(1).max(180), kind: z.enum(['assignment','exam','quiz']),
+  dueDate: dateOnlySchema.nullable(), dueDateStatus: z.enum(['explicit','inferred','missing']),
+  points: z.number().min(0).nullable(), difficulty: z.enum(['easy','medium','hard']),
+  confidence: z.number().min(0).max(1), notes: z.string().max(500),
+  sourceQuote: z.string().max(1500).nullable().optional(), dueDateOrigin: z.enum(['source','user']).optional(),
+});
+const requestSchema = z.object({
+  action: z.enum(['preview','apply']).default('apply'), version: z.string().optional(),
+  classId: z.string().uuid().optional(),
+  newClass: z.object({ name: z.string().trim().min(1).max(180), classCode: z.string().trim().min(1).max(80),
+    professorName: z.string().trim().min(1).max(180), color: z.string().refine(c => classColorOptions.some(v => v.value === c)) }).optional(),
+  assignments: z.array(assignmentSchema).min(1).max(80), planningDate: dateOnlySchema,
+  preferences: planningPreferencesSchema, maxTasksPerDay: z.number().optional(),
+});
 export async function POST(request: Request) {
-  let payload: ImportPayload;
-
-  try {
-    payload = (await request.json()) as ImportPayload;
-  } catch {
-    return Response.json(
-      { error: "Import reviewed assignments using valid JSON." },
-      { status: 400 },
-    );
-  }
-
-  const requestedClassId =
-    typeof payload.classId === "string" ? payload.classId.trim() : "";
-  const newClass = normalizeNewClass(payload.newClass);
-
-  if (typeof newClass === "string") {
-    return Response.json({ error: newClass }, { status: 400 });
-  }
-
-  if ((!requestedClassId && !newClass) || (requestedClassId && newClass)) {
-    return Response.json(
-      {
-        error:
-          "Confirm an existing class or approve the detected new class before importing.",
-      },
-      { status: 400 },
-    );
-  }
-
-  if (!Array.isArray(payload.assignments) || payload.assignments.length === 0) {
-    return Response.json(
-      { error: "Review and approve at least one assignment before importing." },
-      { status: 400 },
-    );
-  }
-
-  if (payload.assignments.length > MAX_IMPORT_ASSIGNMENTS) {
-    return Response.json(
-      { error: `Import ${MAX_IMPORT_ASSIGNMENTS} assignments or fewer at once.` },
-      { status: 400 },
-    );
-  }
-
-  const normalizedAssignments: SyllabusAssignment[] = [];
-
-  for (let index = 0; index < payload.assignments.length; index += 1) {
-    const normalized = normalizeReviewedAssignment(
-      payload.assignments[index],
-      index,
-    );
-
-    if (typeof normalized === "string") {
-      return Response.json({ error: normalized }, { status: 400 });
-    }
-
-    normalizedAssignments.push(normalized);
-  }
-
-  const planningDate = resolvePlanningDate(payload.planningDate);
-  const maxTasksPerDay = resolveMaxTasksPerDay(payload.maxTasksPerDay);
-  const pastDueAssignment = normalizedAssignments.find(
-    (assignment) =>
-      assignment.dueDate !== null && assignment.dueDate < planningDate,
-  );
-
-  if (pastDueAssignment) {
-    return Response.json(
-      {
-        error: `"${pastDueAssignment.title}" is past due. Update its date, clear the date to keep it unscheduled, or remove it before importing.`,
-      },
-      { status: 400 },
-    );
-  }
-
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    return Response.json(
-      { error: "You must be logged in to import assignments." },
-      { status: 401 },
-    );
-  }
-
-  const createdAssignmentIds: string[] = [];
-  const createdTaskIds: string[] = [];
-  const createdAssignments: CreatedAssignmentSummary[] = [];
-  let createdClassId: string | null = null;
-  let studySessionCount = 0;
-
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return Response.json({ error: 'You must be signed in to build a plan.' }, { status: 401 });
   try {
-    const resolvedClass = requestedClassId
-      ? await getExistingClass(supabase, user.id, requestedClassId)
-      : await createDetectedClass(supabase, user.id, newClass as NewClassInput);
-
-    if (!resolvedClass) {
-      return Response.json(
-        { error: "The selected class could not be found." },
-        { status: 400 },
-      );
+    const input = requestSchema.parse(await request.json());
+    const serverDate = new Date().toISOString().slice(0,10);
+    if (Math.abs(Date.parse(input.planningDate) - Date.parse(serverDate)) > 86400000) throw new PlannerError('Your planning date changed. Reopen the planner.');
+    if (input.assignments.some(a => a.dueDate && a.dueDate < input.planningDate)) throw new PlannerError('Review past-due assignments: update or clear their dates before importing.');
+    if (input.assignments.some(a => a.dueDate && Number(a.dueDate.slice(0,4)) > Number(serverDate.slice(0,4)) + 2)) throw new PlannerError('Choose deadlines within the next two years.');
+    const workspace = await loadPlannerWorkspace(supabase);
+    const existingCounts = countTasks(workspace.tasks);
+    const plan = previewBalancedStudyPlan(input.assignments.map((item,index) => ({ itemId: String(index), item, classId: input.classId ?? 'import' })),
+      { fromDate: input.planningDate, existingTaskCounts: existingCounts, preferences: input.preferences,
+        courseContext: plannerCourseItems(workspace.assignments) });
+    const preview: PlannerPreview = {
+      version: workspace.version, preferences: input.preferences, existingCounts, conflicts: plan.conflicts,
+      blocks: plan.sessions.map((s,index) => ({ id: String(index), title: s.title, scheduledDate: s.scheduledDate,
+        reason: s.reason ?? `Spread before ${input.assignments[Number(s.itemId)].dueDate}, around your existing blocks and availability.` })),
+    };
+    if (input.action === 'preview') return Response.json(preview);
+    if (!input.version || input.version !== workspace.version) throw new PlannerError('Your planner changed. Preview the schedule again.', 409);
+    if (plan.conflicts.length) return Response.json({ error: 'The work does not fit. Adjust availability or remove assignments, then preview again.', preview }, { status: 409 });
+    if (Boolean(input.classId) === Boolean(input.newClass)) throw new PlannerError('Choose an existing class or create a new one.');
+    const classId = input.classId ?? randomUUID();
+    let className = input.newClass?.name ?? '';
+    if (input.classId) {
+      const { data, error } = await supabase.from('classes').select('name').eq('id', input.classId).eq('user_id', user.id).maybeSingle();
+      if (error || !data) throw new PlannerError('The selected class could not be found.');
+      className = data.name ?? 'Class';
     }
-
-    if (resolvedClass.created) createdClassId = resolvedClass.id;
-
-    const existingTaskCounts = await getExistingTaskCounts(
-      supabase,
-      user.id,
-      planningDate,
-      normalizedAssignments,
-    );
-    const planItems: Array<{
-      itemId: string;
-      item: SyllabusAssignment;
-    }> = [];
-
-    for (const assignment of normalizedAssignments) {
-      const importance = getAssignmentImportance(assignment);
-      const { data: createdAssignment, error: assignmentError } = await supabase
-        .from("assignments")
-        .insert({
-          user_id: user.id,
-          class_id: resolvedClass.id,
-          title: assignment.title,
-          description: assignment.notes || null,
-          due_date: assignment.dueDate,
-          importance,
-          points: assignment.points,
-          status: "not_started",
-        })
-        .select("id, title")
-        .single();
-
-      if (assignmentError || !createdAssignment) {
-        throw new Error(assignmentError?.message ?? "Assignment save failed.");
-      }
-
-      createdAssignmentIds.push(createdAssignment.id);
-      planItems.push({ itemId: createdAssignment.id, item: assignment });
-      createdAssignments.push({
-        id: createdAssignment.id,
-        title: createdAssignment.title,
-        studySessionCount: 0,
-      });
-    }
-
-    const sessions = createBalancedStudyPlan(planItems, {
-      fromDate: planningDate,
-      existingTaskCounts,
-      maxTasksPerDay,
+    const assignmentIds = input.assignments.map(() => randomUUID());
+    const changes = plan.sessions.map(s => ({ before: null, after: {
+      id: randomUUID(), user_id: user.id, class_id: classId, assignment_id: assignmentIds[Number(s.itemId)],
+      title: s.title, description: null, scheduled_date: s.scheduledDate, priority: s.priority,
+      status: 'todo', source: 'generic_generated', context_version: 0, user_edited: false, pinned: false, checklist: [],
+    } satisfies PlannerTask }));
+    await commitPlannerChange(supabase, {
+      version: input.version, kind: 'import', changes, preferences: input.preferences,
+      newClass: input.newClass ? { id: classId, ...input.newClass } : undefined,
+      assignments: input.assignments.map((a,index) => ({ id: assignmentIds[index], class_id: classId, title: a.title,
+        description: a.notes || null, due_date: a.dueDate, importance: getAssignmentImportance(a), points: a.points,
+        deadline_evidence: { quote: a.sourceQuote ?? null, origin: a.dueDateOrigin ?? 'source', status: a.dueDateStatus, kind: a.kind } })),
     });
-    const taskRows = sessions.map((session) => ({
-      user_id: user.id,
-      class_id: resolvedClass.id,
-      assignment_id: session.itemId,
-      title: session.title,
-      priority: session.priority,
-      status: "todo",
-      scheduled_date: session.scheduledDate,
-      source: "generic_generated",
-      context_version: 0,
-      user_edited: false,
-    }));
-
-    if (taskRows.length > 0) {
-      const { data: createdTasks, error: taskError } = await supabase
-        .from("study_plan_tasks")
-        .insert(taskRows)
-        .select("id");
-
-      if (taskError || !createdTasks) {
-        throw new Error(taskError?.message ?? "Study sessions save failed.");
-      }
-
-      createdTaskIds.push(
-        ...createdTasks
-          .map((task) => task.id)
-          .filter((id): id is string => typeof id === "string"),
-      );
-      studySessionCount = createdTasks.length;
-    }
-
-    const sessionCountByAssignment = new Map<string, number>();
-    sessions.forEach((session) => {
-      sessionCountByAssignment.set(
-        session.itemId,
-        (sessionCountByAssignment.get(session.itemId) ?? 0) + 1,
-      );
-    });
-    createdAssignments.forEach((assignment) => {
-      assignment.studySessionCount =
-        sessionCountByAssignment.get(assignment.id) ?? 0;
-    });
-
-    return Response.json({
-      importedAssignments: createdAssignments,
-      assignmentCount: createdAssignments.length,
-      studySessionCount,
-      classId: resolvedClass.id,
-      className: resolvedClass.name,
-      classCreated: resolvedClass.created,
-    });
+    return Response.json({ assignmentCount: input.assignments.length, studySessionCount: changes.length, classId, className, classCreated: Boolean(input.newClass) });
   } catch (error) {
-    console.error("Syllabus import error:", error);
-    await cleanupCreatedRows(
-      supabase,
-      user.id,
-      createdTaskIds,
-      createdAssignmentIds,
-      createdClassId,
-    );
-
-    return Response.json(
-      {
-        error:
-          "The import could not be saved. No syllabus assignments were kept.",
-      },
-      { status: 500 },
-    );
-  }
-}
-
-function normalizeNewClass(value: unknown): NewClassInput | null | string {
-  if (value === null || value === undefined) return null;
-  if (!isRecord(value)) return "The detected class details are invalid.";
-
-  const name = getString(value.name).replace(/\s+/g, " ").trim();
-  const classCode = getString(value.classCode).replace(/\s+/g, " ").trim();
-  const professorName = getString(value.professorName)
-    .replace(/\s+/g, " ")
-    .trim();
-  const color = normalizeClassColor(value.color);
-
-  if (!name) return "Enter a class name before creating the new class.";
-  if (!classCode) return "Enter a course code before creating the new class.";
-  if (!professorName) {
-    return "Enter the instructor before creating the new class.";
-  }
-  if (!color) return "Choose a valid class color before creating the new class.";
-
-  return {
-    name: name.slice(0, 180),
-    classCode: classCode.slice(0, 80),
-    professorName: professorName.slice(0, 180),
-    color,
-  };
-}
-
-async function getExistingClass(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  classId: string,
-) {
-  const { data, error } = await supabase
-    .from("classes")
-    .select("id, name")
-    .eq("id", classId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  if (!data) return null;
-
-  return {
-    id: data.id as string,
-    name: typeof data.name === "string" ? data.name : "Untitled class",
-    created: false,
-  };
-}
-
-async function createDetectedClass(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  newClass: NewClassInput,
-) {
-  const { data, error } = await supabase
-    .from("classes")
-    .insert({
-      user_id: userId,
-      name: newClass.name,
-      class_code: newClass.classCode,
-      prof_name: newClass.professorName,
-      color: newClass.color,
-    })
-    .select("id, name")
-    .single();
-
-  if (error || !data) {
-    throw new Error(error?.message ?? "Class creation failed.");
-  }
-
-  return {
-    id: data.id as string,
-    name: typeof data.name === "string" ? data.name : newClass.name,
-    created: true,
-  };
-}
-
-function normalizeReviewedAssignment(
-  value: unknown,
-  index: number,
-): SyllabusAssignment | string {
-  if (!isRecord(value)) {
-    return `Assignment ${index + 1} needs review before import.`;
-  }
-
-  const title = getString(value.title).replace(/\s+/g, " ").trim();
-  if (!title) return `Assignment ${index + 1} needs a title.`;
-
-  const proposedDueDate = getString(value.dueDate).trim();
-  const dueDate = proposedDueDate || null;
-  if (dueDate && !isValidDateOnly(dueDate)) {
-    return `"${title}" has an invalid due date.`;
-  }
-
-  const difficulty = getDifficulty(value.difficulty);
-  if (!difficulty) {
-    return `"${title}" needs a valid difficulty.`;
-  }
-
-  const kind = getItemKind(value.kind);
-  if (!kind) {
-    return `"${title}" needs a valid item type.`;
-  }
-
-  const points = getPoints(value.points);
-  if (points === false) {
-    return `"${title}" has an invalid point value.`;
-  }
-
-  return {
-    title: title.slice(0, 180),
-    kind,
-    dueDate,
-    dueDateStatus: dueDate
-      ? getDueDateStatus(value.dueDateStatus, "explicit")
-      : "missing",
-    points,
-    difficulty,
-    confidence: getConfidence(value.confidence),
-    notes: getString(value.notes).replace(/\s+/g, " ").trim().slice(0, 500),
-  };
-}
-
-function getString(value: unknown) {
-  return typeof value === "string" ? value : "";
-}
-
-function normalizeClassColor(value: unknown): ClassColor | null {
-  if (value === null || value === undefined || value === "") return "blue";
-  if (typeof value !== "string") return null;
-
-  return classColorValues.has(value as ClassColor)
-    ? (value as ClassColor)
-    : null;
-}
-
-function getDifficulty(value: unknown): SyllabusAssignmentDifficulty | null {
-  if (typeof value !== "string") return null;
-
-  return difficultyValues.has(value as SyllabusAssignmentDifficulty)
-    ? (value as SyllabusAssignmentDifficulty)
-    : null;
-}
-
-function getItemKind(value: unknown): SyllabusItemKind | null {
-  if (typeof value !== "string") return null;
-
-  return itemKindValues.has(value as SyllabusItemKind)
-    ? (value as SyllabusItemKind)
-    : null;
-}
-
-function getDueDateStatus(
-  value: unknown,
-  fallback: SyllabusDueDateStatus,
-): SyllabusDueDateStatus {
-  if (
-    typeof value === "string" &&
-    dueDateStatusValues.has(value as SyllabusDueDateStatus)
-  ) {
-    return value as SyllabusDueDateStatus;
-  }
-
-  return fallback;
-}
-
-function getPoints(value: unknown): number | null | false {
-  if (value === null || value === undefined || value === "") return null;
-
-  const points = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(points) && points >= 0 ? points : false;
-}
-
-function getConfidence(value: unknown) {
-  const confidence = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(confidence)) return 0.5;
-
-  return Math.min(1, Math.max(0, confidence));
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function isValidDateOnly(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-
-  const date = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
-}
-
-function resolvePlanningDate(value: unknown) {
-  const serverDate = new Date().toISOString().slice(0, 10);
-  const candidate = getString(value).trim();
-
-  if (!isValidDateOnly(candidate)) return serverDate;
-
-  const difference = Math.abs(
-    Date.parse(`${candidate}T00:00:00Z`) -
-      Date.parse(`${serverDate}T00:00:00Z`),
-  );
-
-  return difference <= 86_400_000 ? candidate : serverDate;
-}
-
-function resolveMaxTasksPerDay(value: unknown) {
-  const candidate = typeof value === "number" ? value : Number(value);
-
-  if (!Number.isInteger(candidate) || candidate < 1 || candidate > 5) {
-    return DEFAULT_MAX_STUDY_TASKS_PER_DAY;
-  }
-
-  return candidate;
-}
-
-async function getExistingTaskCounts(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  planningDate: string,
-  assignments: SyllabusAssignment[],
-) {
-  const latestDueDate = assignments.reduce<string | null>(
-    (latest, assignment) => {
-      if (!assignment.dueDate) return latest;
-      return !latest || assignment.dueDate > latest ? assignment.dueDate : latest;
-    },
-    null,
-  );
-
-  if (!latestDueDate) return new Map<string, number>();
-
-  const { data, error } = await supabase
-    .from("study_plan_tasks")
-    .select("scheduled_date")
-    .eq("user_id", userId)
-    .neq("status", "completed")
-    .gte("scheduled_date", planningDate)
-    .lte("scheduled_date", latestDueDate);
-
-  if (error) throw new Error(error.message);
-
-  const counts = new Map<string, number>();
-  (data ?? []).forEach((task) => {
-    if (typeof task.scheduled_date !== "string") return;
-    const date = task.scheduled_date.slice(0, 10);
-    counts.set(date, (counts.get(date) ?? 0) + 1);
-  });
-
-  return counts;
-}
-
-async function cleanupCreatedRows(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  taskIds: string[],
-  assignmentIds: string[],
-  classId: string | null,
-) {
-  if (taskIds.length > 0) {
-    const { error } = await supabase
-      .from("study_plan_tasks")
-      .delete()
-      .eq("user_id", userId)
-      .in("id", taskIds);
-
-    if (error) {
-      console.error("Could not clean up syllabus study sessions:", error);
-    }
-  }
-
-  if (assignmentIds.length > 0) {
-    const { error } = await supabase
-      .from("assignments")
-      .delete()
-      .eq("user_id", userId)
-      .in("id", assignmentIds);
-
-    if (error) {
-      console.error("Could not clean up syllabus assignments:", error);
-    }
-  }
-
-  if (classId) {
-    const { error } = await supabase
-      .from("classes")
-      .delete()
-      .eq("user_id", userId)
-      .eq("id", classId);
-
-    if (error) {
-      console.error("Could not clean up the detected class:", error);
-    }
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return Response.json({ error: 'Review the assignment details and availability before continuing.' }, { status: 400 });
+    if (error instanceof PlannerError) return Response.json({ error: error.message }, { status: error.status });
+    console.error('Study plan import failed:', error);
+    return Response.json({ error: 'The plan could not be saved. Please try again.' }, { status: 500 });
   }
 }

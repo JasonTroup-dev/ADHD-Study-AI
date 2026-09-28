@@ -15,6 +15,8 @@ type RefinableTask = {
   status: string;
   source: string;
   user_edited: boolean;
+  pinned?: boolean;
+  checklist?: unknown;
 };
 
 const refinableTaskSources = new Set([
@@ -66,7 +68,7 @@ export async function previewAssignmentTaskRefinement(input: {
       .order("created_at", { ascending: false }),
     input.supabase
       .from("study_plan_tasks")
-      .select("id, title, scheduled_date, status, source, user_edited")
+      .select("id, title, scheduled_date, status, source, user_edited, pinned, checklist")
       .eq("assignment_id", input.assignmentId)
       .eq("user_id", input.userId)
       .order("scheduled_date", { ascending: true })
@@ -191,6 +193,8 @@ export function selectRefinableAssignmentTasks(
     && !startedTaskIds.has(task.id)
     && task.status === "todo"
     && !task.user_edited
+    && !task.pinned
+    && !(Array.isArray(task.checklist) && task.checklist.length > 0)
     && refinableTaskSources.has(task.source)
   );
 }
@@ -248,7 +252,7 @@ export async function applyAssignmentTaskRefinement(input: {
   const taskIds = input.tasks.map((task) => task.id);
   const { data: eligibleData, error: eligibleError } = await input.supabase
     .from("study_plan_tasks")
-    .select("id, title, scheduled_date, status, source, user_edited")
+    .select("id, title, scheduled_date, status, source, user_edited, pinned, checklist")
     .eq("assignment_id", input.assignmentId)
     .eq("user_id", input.userId);
 
@@ -285,6 +289,7 @@ export async function applyAssignmentTaskRefinement(input: {
       .eq("assignment_id", input.assignmentId)
       .eq("status", "todo")
       .eq("user_edited", false)
+      .eq("pinned", false)
       .eq("title", allTasks.find((candidate) => candidate.id === task.id)!.title)
       .in("source", input.automatic ? ["generic_generated"] : ["generic_generated", "context_generated"])
       .select("id")
