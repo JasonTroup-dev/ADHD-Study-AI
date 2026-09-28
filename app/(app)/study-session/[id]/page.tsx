@@ -98,9 +98,9 @@ export default function StudySessionPage() {
         <h1 className="text-2xl font-semibold">
           This session is {session?.status ?? "unavailable"}.
         </h1>
-        {session?.actual_minutes ? (
+        {session?.time_confirmed_at ? (
           <p className="mt-2 text-gray-600">
-            {session.actual_minutes} minutes studied
+            {session.actual_minutes} minutes logged
           </p>
         ) : null}
         <Button asChild className="mt-6 rounded-full">

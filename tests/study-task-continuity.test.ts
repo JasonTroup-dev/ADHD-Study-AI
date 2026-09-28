@@ -75,7 +75,7 @@ beforeEach(() => {
     study_plan_tasks: [1, 2, 3].map((n) => ({
       id: `task-${n}`, user_id: "user", assignment_id: "assignment", class_id: "class",
       title: `Study Session ${n}/3`, scheduled_date: `2026-09-0${n}`, status: "todo",
-      source: "generic_generated", user_edited: false,
+      source: "generic_generated", user_edited: false, pinned: false, checklist: [],
     })),
     study_sessions: [],
   };

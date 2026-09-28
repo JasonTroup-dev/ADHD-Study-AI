@@ -3,6 +3,7 @@
 import { CheckCircle2, Clock3, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { StudyTimeInput } from "./StudyTimeInput";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,7 @@ import type { StudySession } from "@/types/database";
 export function FlashcardStudySessionBar({ sessionId }: { sessionId: string }) {
   const router = useRouter();
   const [session, setSession] = useState<StudySession | null>(null);
-  const [now, setNow] = useState(() => Date.now());
+  const [studyMinutes, setStudyMinutes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,17 +42,6 @@ export function FlashcardStudySessionBar({ sessionId }: { sessionId: string }) {
     };
   }, [sessionId]);
 
-  useEffect(() => {
-    const interval = window.setInterval(() => setNow(Date.now()), 1_000);
-    return () => window.clearInterval(interval);
-  }, []);
-
-  const elapsedSeconds = session?.started_at
-    ? Math.max(
-        0,
-        Math.floor((now - new Date(session.started_at).getTime()) / 1_000),
-      )
-    : 0;
 
   async function completeSession() {
     if (!session) return;
@@ -62,7 +52,8 @@ export function FlashcardStudySessionBar({ sessionId }: { sessionId: string }) {
       const plannerTaskId = window.localStorage.getItem(
         `study-session-task:${session.id}`,
       );
-      await completeStudySession(session.id, plannerTaskId);
+      const result = await completeStudySession(session.id, plannerTaskId, null, studyMinutes);
+      if (result.taskCompletionError) throw new Error(`Session saved, but the task could not be completed: ${result.taskCompletionError}`);
       clearSessionStorage(session.id);
       router.push("/dashboard");
       router.refresh();
@@ -115,9 +106,7 @@ export function FlashcardStudySessionBar({ sessionId }: { sessionId: string }) {
             Study Session · Flashcards
           </div>
           {session ? (
-            <p className="mt-1 font-mono text-xl font-semibold text-slate-950">
-              {formatElapsedTime(elapsedSeconds)}
-            </p>
+            <div className="mt-3"><StudyTimeInput value={studyMinutes} onChange={setStudyMinutes} disabled={isSaving} /></div>
           ) : null}
           {error ? <p className="mt-1 text-sm text-red-700">{error}</p> : null}
         </div>
@@ -153,14 +142,4 @@ export function FlashcardStudySessionBar({ sessionId }: { sessionId: string }) {
 function clearSessionStorage(sessionId: string) {
   window.localStorage.removeItem(`study-session-task:${sessionId}`);
   window.localStorage.removeItem(`study-session-flashcards:${sessionId}`);
-}
-
-function formatElapsedTime(totalSeconds: number) {
-  const hours = Math.floor(totalSeconds / 3_600);
-  const minutes = Math.floor((totalSeconds % 3_600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return [hours, minutes, seconds]
-    .map((value) => String(value).padStart(2, "0"))
-    .join(":");
 }

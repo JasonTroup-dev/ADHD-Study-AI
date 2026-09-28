@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { confirmedStudyMinutes } from "@/lib/studyTime";
 
 import DashboardClient from "@/app/(app)/dashboard/DashboardClient";
 import {
@@ -89,7 +90,7 @@ export default async function DashboardPage() {
       .order("due_date", { ascending: true }),
     supabase
       .from("study_sessions")
-      .select("actual_minutes")
+      .select("actual_minutes, time_confirmed_at")
       .eq("user_id", user.id)
       .eq("status", "completed")
       .gte("ended_at", start)
@@ -119,7 +120,7 @@ export default async function DashboardPage() {
       assignmentsResult.data ?? [],
     ),
     todayStudyMinutes: completedSessions.reduce(
-      (total, session) => total + (session.actual_minutes ?? 0),
+      (total, session) => total + confirmedStudyMinutes(session),
       0,
     ),
     todayStudySessionCount: completedSessions.length,

@@ -83,5 +83,5 @@ export type GuidedSessionController = {
   uploadStudyMaterials: (files: File[]) => Promise<void>;
   applyPlanRefinement: () => Promise<void>;
   stopTutorResponse: () => void;
-  completeSession: () => Promise<void>;
+  completeSession: (studyMinutes?: string) => Promise<void>;
 };

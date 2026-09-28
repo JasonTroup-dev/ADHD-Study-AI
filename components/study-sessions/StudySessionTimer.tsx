@@ -3,7 +3,8 @@
 import { Check, CheckCircle2, Clock3, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
+import { StudyTimeInput } from "./StudyTimeInput";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,24 +31,13 @@ export function StudySessionTimer({
   className,
 }: StudySessionTimerProps) {
   const router = useRouter();
-  const [now, setNow] = useState(() => Date.now());
+  const [studyMinutes, setStudyMinutes] = useState("");
   const [isCompleting, setIsCompleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [completedMinutes, setCompletedMinutes] = useState<number | null>(null);
   const [markAssignmentCompleted, setMarkAssignmentCompleted] = useState(false);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const elapsedSeconds = useMemo(() => {
-    const startedAt = session.started_at
-      ? new Date(session.started_at).getTime()
-      : now;
-    return Math.max(0, Math.floor((now - startedAt) / 1_000));
-  }, [now, session.started_at]);
 
   async function handleComplete() {
     setIsCompleting(true);
@@ -58,9 +48,10 @@ export function StudySessionTimer({
         session.id,
         plannerTaskId,
         markAssignmentCompleted ? assignmentId : null,
+        studyMinutes,
       );
       window.localStorage.removeItem(`study-session-task:${session.id}`);
-      setCompletedMinutes(result.session.actual_minutes ?? 1);
+      setCompletedMinutes(result.session.actual_minutes ?? 0);
 
       if (result.taskCompletionError) {
         setError(
@@ -127,8 +118,7 @@ export function StudySessionTimer({
             <div>
               <p className="font-medium text-gray-950">Session complete</p>
               <p className="text-sm text-gray-500">
-                {completedMinutes}{" "}
-                {completedMinutes === 1 ? "minute" : "minutes"} saved
+                {studyMinutes.trim() ? `${completedMinutes} minutes logged` : "Completed without logging time"}
               </p>
             </div>
           </div>
@@ -158,7 +148,7 @@ export function StudySessionTimer({
           <div className="min-w-0">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
               <p className="font-mono text-xl font-semibold tracking-tight text-gray-950">
-                {formatElapsedTime(elapsedSeconds)}
+                Study session
               </p>
               <p className="text-xs text-gray-500">
                 {getSessionTypeLabel(session.session_type)}
@@ -209,17 +199,8 @@ export function StudySessionTimer({
         </div>
       </div>
 
-      {error && <p className="mt-3 px-2 text-sm text-red-700">{error}</p>}
+      <div className="mt-4 border-t border-gray-100 pt-4"><StudyTimeInput value={studyMinutes} onChange={setStudyMinutes} disabled={isBusy} /></div>
+      {error && <p role="alert" className="mt-3 px-2 text-sm text-red-700">{error}</p>}
     </div>
   );
-}
-
-function formatElapsedTime(totalSeconds: number) {
-  const hours = Math.floor(totalSeconds / 3_600);
-  const minutes = Math.floor((totalSeconds % 3_600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return [hours, minutes, seconds]
-    .map((value) => String(value).padStart(2, "0"))
-    .join(":");
 }
