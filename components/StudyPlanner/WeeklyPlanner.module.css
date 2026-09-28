@@ -1,0 +1,151 @@
+.workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+.header,
+.week,
+.tabs,
+.notice {
+  flex-shrink: 0;
+}
+.week {
+  margin-top: 22px;
+}
+.weekDays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+.day {
+  min-height: 84px;
+  padding: 8px 3px;
+}
+.content {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+  margin-top: 18px;
+  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) 17rem;
+}
+.dayPanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 20px;
+  overflow: hidden;
+}
+.dayScroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 5px;
+}
+.contextPanel {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-right: 5px;
+}
+.tabs {
+  display: none;
+}
+.notice {
+  margin-top: 12px;
+  max-height: 80px;
+  overflow-y: auto;
+}
+@media (max-width: 1023px) {
+  .frame {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+  .content {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 12px;
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+  }
+  .content[data-panel="plan"] .contextPanel,
+  .content[data-panel="upcoming"] .dayPanel {
+    display: none;
+  }
+}
+@media (max-width: 639px) {
+  .header {
+    gap: 10px;
+  }
+  .header h1 {
+    font-size: 22px;
+    line-height: 1.25;
+  }
+  .eyebrow,
+  .subtitle,
+  .dayLoad,
+  .todayLabel {
+    display: none;
+  }
+  .week {
+    margin-top: 14px;
+  }
+  .weekDays {
+    gap: 4px;
+  }
+  .day {
+    min-height: 62px;
+    padding: 6px 2px;
+  }
+  .dayPanel {
+    padding: 14px;
+  }
+  .notice {
+    font-size: 12px;
+    max-height: 60px;
+  }
+}
+@media (max-height: 700px) {
+  .frame {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 23px;
+  }
+  .eyebrow,
+  .subtitle {
+    display: none;
+  }
+  .week {
+    margin-top: 10px;
+  }
+  .day {
+    min-height: 58px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .dayLoad {
+    display: none;
+  }
+  .content {
+    margin-top: 10px;
+  }
+}
